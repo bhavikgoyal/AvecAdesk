@@ -1,25 +1,25 @@
-using AvecADeskApi.Data;
+using AvecADeskApi.Helper;
 using AvecADeskApi.Interfaces;
 using AvecADeskApi.Repositories;
-using AvecADeskApi.Services;
-using AvecADeskApi.Services.Helpers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models; // Swagger UI ke liye zaroori
+using Microsoft.OpenApi.Models;
+using Serilog;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddFile("Logs/app-{Date}.txt");
+
 builder.Services.AddControllers();
 
-// Swagger Generator Registration
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "AvecADesk API", Version = "v1" });
 
-    // JWT Security Definition (Swagger UI mein Authorize button ke liye)
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -27,7 +27,7 @@ builder.Services.AddSwaggerGen(c =>
         Scheme = "Bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "Enter your JWT token in the format: Bearer {token}"
+        Description = "Enter your JWT token: Bearer {token}"
     });
 
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -42,11 +42,7 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// Database
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// JWT
 var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new Exception("JWT Key missing");
 var key = Encoding.UTF8.GetBytes(jwtKey);
 
@@ -66,18 +62,15 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 });
 
 builder.Services.AddAuthorization();
-
-// DI
-builder.Services.AddScoped<IAuthRepository, AuthRepository>();
-builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<JwtTokenGenerator>();
+builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 
 var app = builder.Build();
 
-// Middleware Pipeline
+
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger(); // Swagger JSON generate karega
+    app.UseSwagger();
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "AvecADesk API v1"));
 }
 
@@ -86,7 +79,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// Root route se Swagger pe redirect
 app.MapGet("/", () => Results.Redirect("/swagger"));
 
 app.Run();

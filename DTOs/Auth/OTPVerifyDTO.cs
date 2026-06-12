@@ -2,7 +2,7 @@
 {
     public class OTPVerifyDTO
     {
-        public string Phone { get; set; }
-        public string OTP { get; set; }
+        public string Phone { get; set; } = string.Empty;
+        public string Otp { get; set; } = string.Empty;
     }
 }
