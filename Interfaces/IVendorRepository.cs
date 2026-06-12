@@ -1,0 +1,15 @@
+using AvecADeskApi.Model.Vendor;
+
+namespace AvecADeskApi.Interfaces;
+
+public interface IVendorRepository
+{
+    Task<List<VendorResponse>> GetVendorsAsync(string? status);
+    Task<VendorResponse?> GetVendorByIdAsync(int vendorId);
+    Task<int> RegisterVendorAsync(VendorRegisterRequest request);
+    Task<bool> UpdateVendorAsync(int vendorId, VendorUpdateRequest request);
+    Task<bool> UpdateVendorStatusAsync(int vendorId, string status);
+    Task<VendorResponse?> ApproveVendorAsync(int vendorId, int? approvedByUserId);
+    Task<VendorAgreementResponse?> GetVendorAgreementAsync(int vendorId);
+    Task<int> UploadVendorAgreementAsync(int vendorId, VendorAgreementUploadRequest request, string agreementPath, int? uploadedByUserId);
+}
