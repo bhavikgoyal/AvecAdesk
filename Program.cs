@@ -1,6 +1,20 @@
-using AvecADeskApi.Helper;
+
+using AvecADeskApi.Helpers;
 using AvecADeskApi.Interfaces;
+using AvecADeskApi.LOG;
 using AvecADeskApi.Repositories;
+using AvecADeskApi.Repositories.Aih;
+using AvecADeskApi.Repositories.Commissions;
+using AvecADeskApi.Repositories.Courses;
+using AvecADeskApi.Repositories.Institutes;
+using AvecADeskApi.Repositories.PaymentSchedules;
+using AvecADeskApi.Repositories.EmailTemplates;
+using AvecADeskApi.Repositories.Invoices;
+using AvecADeskApi.Repositories.Reminders;
+using AvecADeskApi.Repositories.Students;
+using AvecADeskApi.Repositories.Uploads;
+using AvecADeskApi.Repositories.Vendors;
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -62,8 +76,21 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 });
 
 builder.Services.AddAuthorization();
-builder.Services.AddScoped<JwtTokenGenerator>();
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
+builder.Services.AddScoped<SqlDbHelper>();
+builder.Services.AddSingleton<LogHelper>();
+builder.Services.AddScoped<IVendorRepository, VendorRepository>();
+builder.Services.AddScoped<IInstituteRepository, InstituteRepository>();
+builder.Services.AddScoped<ICourseRepository, CourseRepository>();
+builder.Services.AddScoped<IStudentRepository, StudentRepository>();
+builder.Services.AddScoped<IAihRepository, AihRepository>();
+builder.Services.AddScoped<ICommissionRepository, CommissionRepository>();
+builder.Services.AddScoped<IScheduleRepository, ScheduleRepository>();
+builder.Services.AddScoped<IUploadRepository, UploadRepository>();
+builder.Services.AddScoped<IInvoiceRepository, InvoiceRepository>();
+builder.Services.AddScoped<IReminderRepository, ReminderRepository>();
+builder.Services.AddScoped<IEmailTemplateRepository, EmailTemplateRepository>();
+
 
 var app = builder.Build();
 
