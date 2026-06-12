@@ -1,13 +1,19 @@
 ﻿using AvecADeskApi.DTOs.Auth;
 using AvecADeskApi.Model;
 
-namespace AvecADeskApi.Interfaces;
-
-public interface IAuthRepository
+namespace AvecADeskApi.Interfaces
 {
-    Task<UserLoginDTO?> ValidateUserAsync(string email, string password);
-    Task<User?> GetUserByPhoneAsync(string phone);
-    Task SaveRefreshTokenAsync(int userId, string refreshToken);
-    Task<bool> ValidateRefreshTokenAsync(string refreshToken);
-    Task<User?> GetUserByRefreshTokenAsync(string refreshToken);
+    public interface IAuthRepository
+    {
+        Task<UserLoginDTO?> ValidateUserAsync(string email, string password);
+        Task<UserLoginResult?> ValidateVendorByCodeAsync(string vendorCode);
+        Task<UserLoginResult?> ValidateVendorByPhoneAsync(string phone);
+
+        
+        Task<string?> SendOtpAsync(string phone);
+        Task<UserLoginResult?> VerifyOtpAndGetTokenAsync(string phone, string otp);
+
+        Task<User?> GetUserByRefreshTokenAsync(string refreshToken);
+        Task<bool> ValidateRefreshTokenAsync(string refreshToken);
+    }
 }

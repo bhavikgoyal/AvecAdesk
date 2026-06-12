@@ -1,67 +1,235 @@
-﻿using AvecADeskApi.Data;
+﻿using Microsoft.Data.SqlClient;
+using System.Data;
 using AvecADeskApi.DTOs.Auth;
 using AvecADeskApi.Interfaces;
 using AvecADeskApi.Model;
-using Microsoft.EntityFrameworkCore;
 
 namespace AvecADeskApi.Repositories
 {
     public class AuthRepository : IAuthRepository
     {
-        private readonly AppDbContext _context;
+        private readonly string _connectionString;
 
-        public AuthRepository(AppDbContext context)
+        public AuthRepository(IConfiguration configuration)
         {
-            _context = context;
+            _connectionString = configuration.GetConnectionString("DefaultConnection")
+                ?? throw new Exception("Connection string not found in appsettings.json");
         }
 
-        // ================= VALIDATE USER (SP LOGIN) =================
         public async Task<UserLoginDTO?> ValidateUserAsync(string email, string password)
         {
-            // AsNoTracking aur FromSqlRaw database se result layenge
-            var result = _context.UserLoginDTOs
-                .FromSqlRaw("EXEC sp_ValidateUser @Email={0}, @Password={1}", email, password)
-                .AsNoTracking()
-                .AsEnumerable(); // Ab ye list memory mein aa gayi
+            using var conn = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand("sp_ValidateUser", conn);
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@Email", email);
+            cmd.Parameters.AddWithValue("@Password", password);
 
-            // Memory mein se pehla item nikalne ke liye sirf .FirstOrDefault() use karein
-            return await Task.FromResult(result.FirstOrDefault());
+            await conn.OpenAsync();
+            using var reader = await cmd.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+            {
+                return new UserLoginDTO
+                {
+                    UserId = (int)reader["UserId"],
+                    UserName = reader["UserName"].ToString() ?? "",
+                  
+                    Email = reader["Email"] != DBNull.Value ? reader["Email"].ToString()! : string.Empty,
+                    UserRoleId = (int)reader["UserRoleId"]
+                };
+            }
+            return null;
         }
-        // ================= GET USER BY PHONE =================
+
+        
         public async Task<User?> GetUserByPhoneAsync(string phone)
         {
-            return await _context.Users
-                .FirstOrDefaultAsync(x => x.PhoneNo == phone);
+            using var conn = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand("sp_GetUserByPhone", conn); 
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@Phone", phone);
+
+            await conn.OpenAsync();
+            using var reader = await cmd.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+            {
+                return new User { UserId = (int)reader["UserId"], PhoneNo = reader["PhoneNo"].ToString() };
+            }
+            return null;
         }
 
-        // ================= SAVE REFRESH TOKEN =================
+        
         public async Task SaveRefreshTokenAsync(int userId, string refreshToken)
         {
-            var user = await _context.Users.FindAsync(userId);
+            using var conn = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand("sp_SaveRefreshToken", conn);
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@UserId", userId);
+            cmd.Parameters.AddWithValue("@RefreshToken", refreshToken);
+            cmd.Parameters.AddWithValue("@Expiry", DateTime.UtcNow.AddDays(7));
 
-            if (user != null)
-            {
-                user.RefreshToken = refreshToken;
-                user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(7);
-
-                await _context.SaveChangesAsync();
-            }
+            await conn.OpenAsync();
+            await cmd.ExecuteNonQueryAsync();
         }
 
-        // ================= VALIDATE REFRESH TOKEN =================
+        
         public async Task<bool> ValidateRefreshTokenAsync(string refreshToken)
         {
-            return await _context.Users.AnyAsync(x =>
-                x.RefreshToken == refreshToken &&
-                x.RefreshTokenExpiry > DateTime.UtcNow);
+            using var conn = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand("sp_ValidateRefreshToken", conn);
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@RefreshToken", refreshToken);
+
+            await conn.OpenAsync();
+            var result = await cmd.ExecuteScalarAsync();
+
+            return result != null && Convert.ToInt32(result) == 1;
         }
 
-        // ================= GET USER BY REFRESH TOKEN =================
+       
         public async Task<User?> GetUserByRefreshTokenAsync(string refreshToken)
         {
-            return await _context.Users
-                .FirstOrDefaultAsync(x => x.RefreshToken == refreshToken);
+            using var conn = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand("sp_GetUserByRefreshToken", conn);
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@RefreshToken", refreshToken);
+
+            await conn.OpenAsync();
+            using var reader = await cmd.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+            {
+                return new User { UserId = (int)reader["UserId"], UserName = reader["UserName"].ToString() ?? "" };
+            }
+            return null;
         }
 
+        public async Task<UserLoginResult?> ValidateVendorAsync(string phone)
+        {
+            using var conn = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand("sp_ValidateVendor", conn);
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@Phone", phone);
+
+            await conn.OpenAsync();
+            using var reader = await cmd.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+            {
+                return new UserLoginResult { UserId = (int)reader["UserId"], UserName = reader["UserName"].ToString() ?? "" };
+            }
+            return null;
+        }
+
+        public async Task<UserLoginResult?> ValidateVendorByCodeAsync(string vendorCode)
+        {
+            using var conn = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand("sp_ValidateVendorByCode", conn);
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@Code", vendorCode);
+
+            await conn.OpenAsync();
+            using var reader = await cmd.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+            {
+                return new UserLoginResult
+                {
+                    UserId = (int)reader["UserId"],
+                    UserName = reader["UserName"].ToString() ?? "",
+                    
+                    Email = reader["Email"] != DBNull.Value ? reader["Email"].ToString() : null,
+                    UserRoleId = reader["UserRoleId"] != DBNull.Value ? (int)reader["UserRoleId"] : 0,
+                    IsActive = true 
+                };
+            }
+            return null;
+        }
+        public async Task<UserLoginResult?> ValidateVendorByPhoneAsync(string phone)
+        {
+            using var conn = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand("sp_ValidateVendorByPhone", conn);
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@Phone", phone);
+
+            await conn.OpenAsync();
+            using var reader = await cmd.ExecuteReaderAsync();
+
+            if (await reader.ReadAsync())
+            {
+                return new UserLoginResult
+                {
+                    UserId = (int)reader["UserId"],
+                    UserName = reader["UserName"].ToString() ?? "",
+                    Email = reader["Email"] != DBNull.Value ? reader["Email"].ToString() : null,
+                    UserRoleId = reader["UserRoleId"] != DBNull.Value ? (int)reader["UserRoleId"] : 0
+                };
+            }
+            return null;
+        }
+        
+        public async Task<string?> SendOtpAsync(string phone)
+        {
+            
+            using var conn = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand("sp_SendOtp", conn);
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@Phone", phone);
+            var otpParam = new SqlParameter("@GeneratedOtp", SqlDbType.NVarChar, 6)
+            { Direction = ParameterDirection.Output };
+            cmd.Parameters.Add(otpParam);
+
+            await conn.OpenAsync();
+            await cmd.ExecuteNonQueryAsync();
+            string otp = otpParam.Value?.ToString();
+
+           
+            if (!string.IsNullOrEmpty(otp))
+            {
+                await SendSmsToMobile(phone, otp);
+            }
+
+            return otp;
+        }
+
+        private async Task SendSmsToMobile(string phone, string otp)
+        {
+            try
+            {
+                using var client = new HttpClient();
+               
+                string apiUrl = $"https://api.actual-sms-provider.com/send?key=YOUR_REAL_KEY&phone={phone}&otp={otp}";
+                await client.GetAsync(apiUrl);
+            }
+            catch (Exception ex)
+            {
+                
+                System.Diagnostics.Debug.WriteLine($"SMS Error: {ex.Message}");
+            }
+        }
+       
+        public async Task<UserLoginResult?> VerifyOtpAndGetTokenAsync(string phone, string otp)
+        {
+            using var conn = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand("sp_VerifyOtp", conn);
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@Phone", phone);
+            cmd.Parameters.AddWithValue("@OtpCode", otp);
+
+            await conn.OpenAsync();
+            using var reader = await cmd.ExecuteReaderAsync();
+
+            if (await reader.ReadAsync() && reader["UserId"] != DBNull.Value)
+            {
+                return MapReaderToUserLoginResult(reader);
+            }
+            return null;
+        }
+        private UserLoginResult MapReaderToUserLoginResult(SqlDataReader reader)
+        {
+            return new UserLoginResult
+            {
+                UserId = Convert.ToInt32(reader["UserId"]),
+                UserName = reader["UserName"]?.ToString() ?? "",
+                Email = reader["Email"] != DBNull.Value ? reader["Email"].ToString() : null,
+                UserRoleId = reader["UserRoleId"] != DBNull.Value ? Convert.ToInt32(reader["UserRoleId"]) : 0
+            };
+        }
     }
 }
