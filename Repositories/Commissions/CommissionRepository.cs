@@ -18,6 +18,22 @@ public class CommissionRepository : ICommissionRepository
         _logHelper = logHelper;
     }
 
+    public async Task<List<CommissionRateResponse>> GetCommissionRatesAsync(int? vendorId = null)
+    {
+        try
+        {
+            return await _db.ExecuteReaderListAsync(
+                "sp_GetCommissionRates",
+                cmd => cmd.Parameters.AddWithValue("@VendorId", (object?)vendorId ?? DBNull.Value),
+                MapRate);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(CommissionRepository)}.{nameof(GetCommissionRatesAsync)}", ex);
+            throw;
+        }
+    }
+
     public async Task<List<CommissionRateResponse>> GetVendorCommissionRatesAsync(int vendorId)
     {
         try
@@ -57,6 +73,56 @@ public class CommissionRepository : ICommissionRepository
         catch (Exception ex)
         {
             _logHelper.LogError($"{nameof(CommissionRepository)}.{nameof(SetVendorCommissionRateAsync)}", ex);
+            throw;
+        }
+    }
+
+    public async Task<bool> UpdateVendorCommissionRateAsync(int vendorId, int commissionId, CommissionRateUpdateRequest request)
+    {
+        try
+        {
+            var rowsAffectedParam = new SqlParameter("@RowsAffected", SqlDbType.Int) { Direction = ParameterDirection.Output };
+
+            await _db.ExecuteNonQueryAsync("sp_UpdateVendorCommissionRate", cmd =>
+            {
+                cmd.Parameters.AddWithValue("@CommissionId", commissionId);
+                cmd.Parameters.AddWithValue("@VendorId", vendorId);
+                cmd.Parameters.AddWithValue("@InstituteId", (object?)request.InstituteId ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@CourseId", (object?)request.CourseId ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@RateType", request.RateType);
+                cmd.Parameters.AddWithValue("@Rate", request.Rate);
+                cmd.Parameters.AddWithValue("@EffectiveFrom", request.EffectiveFrom);
+                cmd.Parameters.AddWithValue("@EffectiveTo", (object?)request.EffectiveTo ?? DBNull.Value);
+                cmd.Parameters.Add(rowsAffectedParam);
+            });
+
+            return (int)rowsAffectedParam.Value > 0;
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(CommissionRepository)}.{nameof(UpdateVendorCommissionRateAsync)}", ex);
+            throw;
+        }
+    }
+
+    public async Task<bool> DeleteVendorCommissionRateAsync(int vendorId, int commissionId)
+    {
+        try
+        {
+            var rowsAffectedParam = new SqlParameter("@RowsAffected", SqlDbType.Int) { Direction = ParameterDirection.Output };
+
+            await _db.ExecuteNonQueryAsync("sp_DeleteVendorCommissionRate", cmd =>
+            {
+                cmd.Parameters.AddWithValue("@CommissionId", commissionId);
+                cmd.Parameters.AddWithValue("@VendorId", vendorId);
+                cmd.Parameters.Add(rowsAffectedParam);
+            });
+
+            return (int)rowsAffectedParam.Value > 0;
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(CommissionRepository)}.{nameof(DeleteVendorCommissionRateAsync)}", ex);
             throw;
         }
     }

@@ -80,8 +80,16 @@ public class VendorsController : ControllerBase
             if (string.IsNullOrWhiteSpace(request.Phone))
                 return BadRequest("Phone is required");
 
+            request.UserId ??= GetCurrentUserId();
+            if (request.UserId == null || request.UserId <= 0)
+                return BadRequest("User ID is required. Please login again.");
+
             var vendorId = await _vendorRepository.RegisterVendorAsync(request);
             var created = await _vendorRepository.GetVendorByIdAsync(vendorId);
+            if (created != null && string.IsNullOrWhiteSpace(created.VendorCode))
+            {
+                created.VendorCode = await _vendorRepository.EnsureVendorCodeAsync(vendorId);
+            }
             return Ok(created);
         }
         catch (Exception ex)

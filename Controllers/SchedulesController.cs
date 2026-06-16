@@ -12,6 +12,7 @@ namespace AvecADeskApi.Controllers;
 public class SchedulesController : ControllerBase
 {
     private readonly IScheduleRepository _scheduleRepository;
+    private readonly IStudentRepository _studentRepository;
     private readonly LogHelper _logHelper;
 
     private static readonly HashSet<string> AllowedStatuses = new(StringComparer.OrdinalIgnoreCase)
@@ -19,10 +20,31 @@ public class SchedulesController : ControllerBase
         "Paid", "Partial", "Pending"
     };
 
-    public SchedulesController(IScheduleRepository scheduleRepository, LogHelper logHelper)
+    public SchedulesController(
+        IScheduleRepository scheduleRepository,
+        IStudentRepository studentRepository,
+        LogHelper logHelper)
     {
         _scheduleRepository = scheduleRepository;
+        _studentRepository = studentRepository;
         _logHelper = logHelper;
+    }
+
+    [HttpGet("summary")]
+    public async Task<IActionResult> GetPaymentSummary()
+    {
+        try
+        {
+            var summary = await _scheduleRepository.GetPaymentSummaryAsync();
+            var students = await _studentRepository.GetStudentsAsync(null);
+            summary.ActiveStudents = students.Count(student => student.IsActive);
+            return Ok(summary);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(GetPaymentSummary), ex);
+            return StatusCode(500, "An error occurred while fetching payment summary.");
+        }
     }
 
     [HttpGet]
@@ -47,8 +69,8 @@ public class SchedulesController : ControllerBase
             if (request.StudentId <= 0)
                 return BadRequest("Valid student ID is required");
 
-            if (request.AmountDue <= 0)
-                return BadRequest("Amount due must be greater than zero");
+            if (request.AmountDue < 0)
+                return BadRequest("Amount due must be zero or greater");
 
             var scheduleId = await _scheduleRepository.CreatePaymentScheduleAsync(request);
             return Ok(await _scheduleRepository.GetPaymentScheduleByIdAsync(scheduleId));

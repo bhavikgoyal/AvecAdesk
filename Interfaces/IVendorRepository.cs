@@ -7,6 +7,7 @@ public interface IVendorRepository
     Task<List<VendorResponse>> GetVendorsAsync(string? status);
     Task<VendorResponse?> GetVendorByIdAsync(int vendorId);
     Task<int> RegisterVendorAsync(VendorRegisterRequest request);
+    Task<string> EnsureVendorCodeAsync(int vendorId);
     Task<bool> UpdateVendorAsync(int vendorId, VendorUpdateRequest request);
     Task<bool> UpdateVendorStatusAsync(int vendorId, string status);
     Task<VendorResponse?> ApproveVendorAsync(int vendorId, int? approvedByUserId);

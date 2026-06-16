@@ -27,6 +27,20 @@ public class CommissionsController : ControllerBase
         _logHelper = logHelper;
     }
 
+    [HttpGet("rates")]
+    public async Task<IActionResult> GetCommissionRates([FromQuery] int? vendorId)
+    {
+        try
+        {
+            return Ok(await _commissionRepository.GetCommissionRatesAsync(vendorId));
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(GetCommissionRates), ex);
+            return StatusCode(500, "An error occurred while fetching commission rates.");
+        }
+    }
+
     [HttpGet("vendor/{vendorId:int}")]
     public async Task<IActionResult> GetVendorCommissionRates(int vendorId)
     {
@@ -58,6 +72,47 @@ public class CommissionsController : ControllerBase
         {
             _logHelper.LogError(nameof(SetVendorCommissionRate), ex);
             return StatusCode(500, "An error occurred while setting vendor commission rate.");
+        }
+    }
+
+    [HttpPut("vendor/{vendorId:int}/rates/{commissionId:int}")]
+    public async Task<IActionResult> UpdateVendorCommissionRate(int vendorId, int commissionId, [FromBody] CommissionRateUpdateRequest request)
+    {
+        try
+        {
+            if (!AllowedRateTypes.Contains(request.RateType))
+                return BadRequest("Invalid rate type. Use: Percentage or Fixed.");
+
+            var updated = await _commissionRepository.UpdateVendorCommissionRateAsync(vendorId, commissionId, request);
+            if (!updated)
+                return NotFound("Commission rate not found.");
+
+            var rates = await _commissionRepository.GetVendorCommissionRatesAsync(vendorId);
+            var rate = rates.FirstOrDefault(x => x.CommissionId == commissionId);
+            return Ok(rate);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(UpdateVendorCommissionRate), ex);
+            return StatusCode(500, "An error occurred while updating vendor commission rate.");
+        }
+    }
+
+    [HttpDelete("vendor/{vendorId:int}/rates/{commissionId:int}")]
+    public async Task<IActionResult> DeleteVendorCommissionRate(int vendorId, int commissionId)
+    {
+        try
+        {
+            var deleted = await _commissionRepository.DeleteVendorCommissionRateAsync(vendorId, commissionId);
+            if (!deleted)
+                return NotFound("Commission rate not found.");
+
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(DeleteVendorCommissionRate), ex);
+            return StatusCode(500, "An error occurred while deleting vendor commission rate.");
         }
     }
 
