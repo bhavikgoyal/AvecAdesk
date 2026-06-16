@@ -129,4 +129,23 @@ public class ReminderRepository : IReminderRepository
         SentAt = r.GetDateTime(r.GetOrdinal("SentAt")),
         EmailStatus = r.GetString(r.GetOrdinal("EmailStatus"))
     };
+
+    public async Task<ReminderStatsResponse> GetReminderStatsAsync()
+    {
+        try
+        {
+            return await _db.ExecuteReaderSingleAsync("sp_GetReminderStats", _ => { }, r => new ReminderStatsResponse
+            {
+                Active = r.GetInt32(r.GetOrdinal("ActiveRules")),
+                SentToday = r.GetInt32(r.GetOrdinal("SentToday")),
+                Paused = r.GetInt32(r.GetOrdinal("PausedRules")),
+                Failed = r.GetInt32(r.GetOrdinal("FailedCount"))
+            });
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(ReminderRepository)}.{nameof(GetReminderStatsAsync)}", ex);
+            throw;
+        }
+    }
 }

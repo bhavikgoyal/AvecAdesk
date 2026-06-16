@@ -9,4 +9,5 @@ public interface IReminderRepository
     Task<bool> UpdateReminderRuleAsync(int ruleId, ReminderRuleUpdateRequest request);
     Task<List<ReminderLogResponse>> GetReminderLogsAsync();
     Task<int> TriggerReminderAsync(int ruleId, int referenceId);
+    Task<ReminderStatsResponse> GetReminderStatsAsync();
 }

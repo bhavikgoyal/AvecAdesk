@@ -71,4 +71,19 @@ public class RemindersController : ControllerBase
         }
         catch (Exception ex) { _logHelper.LogError(nameof(TriggerReminder), ex); return StatusCode(500, "An error occurred while triggering reminder."); }
     }
+    [HttpGet("stats")]
+    public async Task<IActionResult> GetReminderStats()
+    {
+        try
+        {
+            
+            var stats = await _reminderRepository.GetReminderStatsAsync();
+            return Ok(stats);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(GetReminderStats), ex);
+            return StatusCode(500, "An error occurred while fetching reminder stats.");
+        }
+    }
 }
