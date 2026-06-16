@@ -10,4 +10,5 @@ public interface IScheduleRepository
     Task<bool> UpdatePaymentScheduleAsync(int scheduleId, PaymentScheduleUpdateRequest request);
     Task<bool> UpdatePaymentScheduleStatusAsync(int scheduleId, string status, decimal? amountPaid);
     Task<int> BulkUpdatePaymentScheduleStatusAsync(PaymentScheduleBulkStatusRequest request);
+    Task<PaymentScheduleSummaryResponse> GetPaymentSummaryAsync();
 }

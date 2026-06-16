@@ -3,6 +3,7 @@ using AvecADeskApi.Interfaces;
 using AvecADeskApi.LOG;
 using AvecADeskApi.Model.PaymentSchedule;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
 using System.Data;
 
 namespace AvecADeskApi.Repositories.PaymentSchedules;
@@ -11,11 +12,14 @@ public class ScheduleRepository : IScheduleRepository
 {
     private readonly SqlDbHelper _db;
     private readonly LogHelper _logHelper;
+    private readonly string _connectionString;
 
-    public ScheduleRepository(SqlDbHelper db, LogHelper logHelper)
+    public ScheduleRepository(SqlDbHelper db, LogHelper logHelper, IConfiguration configuration)
     {
         _db = db;
         _logHelper = logHelper;
+        _connectionString = configuration.GetConnectionString("DefaultConnection")
+            ?? throw new InvalidOperationException("DefaultConnection string is missing.");
     }
 
     public async Task<List<PaymentScheduleResponse>> GetPaymentSchedulesAsync(int? studentId)
@@ -113,13 +117,33 @@ public class ScheduleRepository : IScheduleRepository
                 cmd.Parameters.Add(rowsAffectedParam);
             });
 
-            return (int)rowsAffectedParam.Value > 0;
+            var updated = (int)rowsAffectedParam.Value > 0;
+
+            // sp_UpdatePaymentScheduleStatus may overwrite AmountPaid with AmountDue when status is Paid.
+            if (updated && amountPaid.HasValue)
+            {
+                await PersistAmountPaidAsync(scheduleId, amountPaid.Value);
+            }
+
+            return updated;
         }
         catch (Exception ex)
         {
             _logHelper.LogError($"{nameof(ScheduleRepository)}.{nameof(UpdatePaymentScheduleStatusAsync)}", ex);
             throw;
         }
+    }
+
+    private async Task PersistAmountPaidAsync(int scheduleId, decimal amountPaid)
+    {
+        await using var connection = new SqlConnection(_connectionString);
+        await using var command = new SqlCommand(
+            "UPDATE PaymentSchedules SET AmountPaid = @AmountPaid WHERE ScheduleId = @ScheduleId",
+            connection);
+        command.Parameters.AddWithValue("@AmountPaid", amountPaid);
+        command.Parameters.AddWithValue("@ScheduleId", scheduleId);
+        await connection.OpenAsync();
+        await command.ExecuteNonQueryAsync();
     }
 
     public async Task<int> BulkUpdatePaymentScheduleStatusAsync(PaymentScheduleBulkStatusRequest request)
@@ -139,6 +163,33 @@ public class ScheduleRepository : IScheduleRepository
         catch (Exception ex)
         {
             _logHelper.LogError($"{nameof(ScheduleRepository)}.{nameof(BulkUpdatePaymentScheduleStatusAsync)}", ex);
+            throw;
+        }
+    }
+
+    public async Task<PaymentScheduleSummaryResponse> GetPaymentSummaryAsync()
+    {
+        try
+        {
+            var schedules = await GetPaymentSchedulesAsync(null);
+            var today = DateTime.Today;
+
+            static bool IsUnpaid(PaymentScheduleResponse schedule) =>
+                !string.Equals(schedule.Status, "Paid", StringComparison.OrdinalIgnoreCase);
+
+            return new PaymentScheduleSummaryResponse
+            {
+                CollectedTotal = schedules.Sum(schedule => schedule.AmountPaid),
+                OutstandingTotal = schedules.Sum(schedule => schedule.AmountDue),
+                OverdueTotal = schedules
+                    .Where(schedule => IsUnpaid(schedule) && schedule.DueDate.Date < today)
+                    .Sum(schedule => schedule.AmountDue),
+                OverdueCount = schedules.Count(schedule => IsUnpaid(schedule) && schedule.DueDate.Date < today),
+            };
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(ScheduleRepository)}.{nameof(GetPaymentSummaryAsync)}", ex);
             throw;
         }
     }

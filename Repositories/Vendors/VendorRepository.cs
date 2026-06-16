@@ -9,18 +9,39 @@ namespace AvecADeskApi.Repositories.Vendors;
 public class VendorRepository : IVendorRepository
 {
     private readonly SqlDbHelper _db;
+    private readonly string _connectionString;
 
-    public VendorRepository(SqlDbHelper db)
+    public VendorRepository(SqlDbHelper db, IConfiguration configuration)
     {
         _db = db;
+        _connectionString = configuration.GetConnectionString("DefaultConnection")
+            ?? throw new InvalidOperationException("DefaultConnection string is missing.");
     }
 
     public Task<List<VendorResponse>> GetVendorsAsync(string? status)
     {
-        return _db.ExecuteReaderListAsync(
+        return GetVendorsInternalAsync(status, backfillMissingCodes: true);
+    }
+
+    private async Task<List<VendorResponse>> GetVendorsInternalAsync(string? status, bool backfillMissingCodes)
+    {
+        var vendors = await _db.ExecuteReaderListAsync(
             "sp_GetVendors",
             cmd => cmd.Parameters.AddWithValue("@Status", (object?)status ?? DBNull.Value),
             MapVendor);
+
+        if (!backfillMissingCodes)
+            return vendors;
+
+        for (var i = 0; i < vendors.Count; i++)
+        {
+            if (string.IsNullOrWhiteSpace(vendors[i].VendorCode))
+            {
+                vendors[i].VendorCode = await EnsureVendorCodeAsync(vendors[i].VendorId);
+            }
+        }
+
+        return vendors;
     }
 
     public Task<VendorResponse?> GetVendorByIdAsync(int vendorId)
@@ -50,7 +71,60 @@ public class VendorRepository : IVendorRepository
             cmd.Parameters.Add(vendorIdParam);
         });
 
-        return (int)vendorIdParam.Value;
+        var vendorId = (int)vendorIdParam.Value;
+        await EnsureVendorCodeAsync(vendorId);
+        return vendorId;
+    }
+
+    public async Task<string> EnsureVendorCodeAsync(int vendorId)
+    {
+        var vendor = await GetVendorByIdAsync(vendorId);
+        if (vendor == null)
+            throw new InvalidOperationException($"Vendor {vendorId} was not found.");
+
+        if (!string.IsNullOrWhiteSpace(vendor.VendorCode))
+            return vendor.VendorCode;
+
+        var vendorCode = await GenerateNextVendorCodeAsync();
+        await UpdateVendorCodeAsync(vendorId, vendorCode);
+
+        return vendorCode;
+    }
+
+    private async Task<string> GenerateNextVendorCodeAsync()
+    {
+        var vendors = await _db.ExecuteReaderListAsync(
+            "sp_GetVendors",
+            cmd => cmd.Parameters.AddWithValue("@Status", DBNull.Value),
+            MapVendor);
+
+        var maxSequence = vendors
+            .Select(v => v.VendorCode)
+            .Where(code => !string.IsNullOrWhiteSpace(code)
+                && code.StartsWith("VND-", StringComparison.OrdinalIgnoreCase))
+            .Select(ParseVendorCodeSequence)
+            .DefaultIfEmpty(0)
+            .Max();
+
+        return $"VND-{(maxSequence + 1):D5}";
+    }
+
+    private static int ParseVendorCodeSequence(string code)
+    {
+        var suffix = code[4..];
+        return int.TryParse(suffix, out var sequence) ? sequence : 0;
+    }
+
+    private async Task UpdateVendorCodeAsync(int vendorId, string vendorCode)
+    {
+        await using var connection = new SqlConnection(_connectionString);
+        await using var command = new SqlCommand(
+            "UPDATE Vendors SET VendorCode = @VendorCode WHERE VendorId = @VendorId AND (VendorCode IS NULL OR LTRIM(RTRIM(VendorCode)) = '')",
+            connection);
+        command.Parameters.AddWithValue("@VendorCode", vendorCode);
+        command.Parameters.AddWithValue("@VendorId", vendorId);
+        await connection.OpenAsync();
+        await command.ExecuteNonQueryAsync();
     }
 
     public async Task<bool> UpdateVendorAsync(int vendorId, VendorUpdateRequest request)
