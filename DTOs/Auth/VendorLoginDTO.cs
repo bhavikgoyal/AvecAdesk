@@ -2,7 +2,7 @@
 {
     public class VendorLoginDTO
     {
-        public string Phone { get; set; }
-        public string VendorCode { get; set; }
+        public string? Phone { get; set; }
+        public string? VendorCode { get; set; }
     }
 }
