@@ -3,6 +3,7 @@ using AvecADeskApi.Helpers;
 using AvecADeskApi.Interfaces;
 using AvecADeskApi.LOG;
 using AvecADeskApi.Repositories;
+using AvecADeskApi.Repositories.Members;
 using AvecADeskApi.Repositories.Aih;
 using AvecADeskApi.Repositories.Commissions;
 using AvecADeskApi.Repositories.Courses;
@@ -11,12 +12,14 @@ using AvecADeskApi.Repositories.Institutes;
 using AvecADeskApi.Services;
 using AvecADeskApi.Repositories.PaymentSchedules;
 using AvecADeskApi.Repositories.EmailTemplates;
+using AvecADeskApi.Repositories.Institutes;
 using AvecADeskApi.Repositories.Invoices;
+using AvecADeskApi.Repositories.PaymentSchedules;
 using AvecADeskApi.Repositories.Reminders;
 using AvecADeskApi.Repositories.Students;
 using AvecADeskApi.Repositories.Uploads;
 using AvecADeskApi.Repositories.Vendors;
-
+using AvecADeskApi.Repositories.UserRoles;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -121,6 +124,8 @@ builder.Services.AddScoped<IUploadRepository, UploadRepository>();
 builder.Services.AddScoped<IInvoiceRepository, InvoiceRepository>();
 builder.Services.AddScoped<IReminderRepository, ReminderRepository>();
 builder.Services.AddScoped<IEmailTemplateRepository, EmailTemplateRepository>();
+builder.Services.AddScoped<IMembersRepository, MembersRepository>();
+builder.Services.AddScoped<IUserRoleRepository, UserRoleRepository>();
 
 
 var app = builder.Build();
