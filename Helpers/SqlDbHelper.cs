@@ -74,6 +74,37 @@ public class SqlDbHelper
         await command.ExecuteNonQueryAsync();
     }
 
+    public async Task<int> ExecuteNonQueryWithResultAsync(
+        string storedProcedure,
+        Action<SqlCommand> configureParameters)
+    {
+        await using var connection = await OpenConnectionAsync();
+        await using var command = CreateCommand(connection, storedProcedure);
+        configureParameters(command);
+        return await command.ExecuteNonQueryAsync();
+    }
+
+    public async Task<object?> ExecuteScalarAsync(
+        string storedProcedure,
+        Action<SqlCommand> configureParameters)
+    {
+        await using var connection = await OpenConnectionAsync();
+        await using var command = CreateCommand(connection, storedProcedure);
+        configureParameters(command);
+        return await command.ExecuteScalarAsync();
+    }
+
+    public async Task<T> ExecuteCommandAsync<T>(
+        string storedProcedure,
+        Action<SqlCommand> configureParameters,
+        Func<SqlCommand, Task<T>> execute)
+    {
+        await using var connection = await OpenConnectionAsync();
+        await using var command = CreateCommand(connection, storedProcedure);
+        configureParameters(command);
+        return await execute(command);
+    }
+
     private async Task<SqlConnection> OpenConnectionAsync()
     {
         var connection = new SqlConnection(_connectionString);
