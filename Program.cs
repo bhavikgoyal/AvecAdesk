@@ -7,6 +7,10 @@ using AvecADeskApi.Repositories.Members;
 using AvecADeskApi.Repositories.Aih;
 using AvecADeskApi.Repositories.Commissions;
 using AvecADeskApi.Repositories.Courses;
+using AvecADeskApi.Repositories.InstituteScrapping;
+using AvecADeskApi.Repositories.Institutes;
+using AvecADeskApi.Services;
+using AvecADeskApi.Repositories.PaymentSchedules;
 using AvecADeskApi.Repositories.EmailTemplates;
 using AvecADeskApi.Repositories.Institutes;
 using AvecADeskApi.Repositories.Invoices;
@@ -77,11 +81,40 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 });
 
 builder.Services.AddAuthorization();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("VendorPortal", policy =>
+    {
+        policy.WithOrigins(
+                "http://localhost:5173",
+                "http://localhost:5174",
+                "http://localhost:5175")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<SqlDbHelper>();
 builder.Services.AddSingleton<LogHelper>();
 builder.Services.AddScoped<IVendorRepository, VendorRepository>();
 builder.Services.AddScoped<IInstituteRepository, InstituteRepository>();
+builder.Services.AddScoped<IInstituteScrappingRepository, InstituteScrappingRepository>();
+builder.Services.AddScoped<IInstituteWebsiteFetcher, InstituteWebsiteFetcher>();
+builder.Services.AddScoped<IInstituteScrappingService, InstituteScrappingService>();
+builder.Services.AddHttpClient("InstituteScraper", client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(60);
+    client.DefaultRequestHeaders.UserAgent.ParseAdd(
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36");
+    client.DefaultRequestHeaders.Accept.ParseAdd(
+        "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8");
+    client.DefaultRequestHeaders.AcceptLanguage.ParseAdd("en-AU,en;q=0.9");
+});
+builder.Services.AddHttpClient("OpenAI", client =>
+{
+    client.Timeout = TimeSpan.FromMinutes(5);
+});
 builder.Services.AddScoped<ICourseRepository, CourseRepository>();
 builder.Services.AddScoped<IStudentRepository, StudentRepository>();
 builder.Services.AddScoped<IAihRepository, AihRepository>();
@@ -104,7 +137,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "AvecADesk API v1"));
 }
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
+app.UseCors("VendorPortal");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

@@ -63,14 +63,23 @@ namespace AvecADeskApi.Controllers
                 if (request == null)
                     return BadRequest("Request body is required.");
 
-                var result = !string.IsNullOrEmpty(request.VendorCode)
-                    ? await _repo.ValidateVendorByCodeAsync(request.VendorCode)
-                    : await _repo.ValidateVendorByPhoneAsync(request.Phone);
+                if (string.IsNullOrWhiteSpace(request.VendorCode) && string.IsNullOrWhiteSpace(request.Phone))
+                    return BadRequest("Vendor code or phone number is required.");
+
+                var result = !string.IsNullOrWhiteSpace(request.VendorCode)
+                    ? await _repo.ValidateVendorByCodeAsync(request.VendorCode.Trim())
+                    : await _repo.ValidateVendorByPhoneAsync(request.Phone!.Trim());
 
                 if (result == null)
                     return NotFound("Vendor not found.");
 
-                return Ok(result);
+                var token = _tokenGenerator.GenerateToken(result.UserId, result.UserName);
+
+                return Ok(new
+                {
+                    Token = token,
+                    User = result
+                });
             }
             catch (Exception ex)
             {
