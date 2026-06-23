@@ -1,25 +1,29 @@
 
 using AvecADeskApi.Helpers;
 using AvecADeskApi.Interfaces;
+using AvecADeskApi.IRepository;
+using AvecADeskApi.Repository;
+using AvecADeskApi.IRepository;
 using AvecADeskApi.LOG;
 using AvecADeskApi.Repositories;
-using AvecADeskApi.Repositories.Members;
 using AvecADeskApi.Repositories.Aih;
 using AvecADeskApi.Repositories.Commissions;
 using AvecADeskApi.Repositories.Courses;
-using AvecADeskApi.Repositories.InstituteScrapping;
-using AvecADeskApi.Repositories.Institutes;
-using AvecADeskApi.Services;
-using AvecADeskApi.Repositories.PaymentSchedules;
 using AvecADeskApi.Repositories.EmailTemplates;
 using AvecADeskApi.Repositories.Institutes;
+using AvecADeskApi.Repositories.Institutes;
+using AvecADeskApi.Repositories.InstituteScrapping;
 using AvecADeskApi.Repositories.Invoices;
+using AvecADeskApi.Repositories.Members;
+using AvecADeskApi.Repositories.PaymentSchedules;
 using AvecADeskApi.Repositories.PaymentSchedules;
 using AvecADeskApi.Repositories.Reminders;
 using AvecADeskApi.Repositories.Students;
 using AvecADeskApi.Repositories.Uploads;
-using AvecADeskApi.Repositories.Vendors;
 using AvecADeskApi.Repositories.UserRoles;
+using AvecADeskApi.Repositories.Vendors;
+using AvecADeskApi.Repository;
+using AvecADeskApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -126,6 +130,7 @@ builder.Services.AddScoped<IReminderRepository, ReminderRepository>();
 builder.Services.AddScoped<IEmailTemplateRepository, EmailTemplateRepository>();
 builder.Services.AddScoped<IMembersRepository, MembersRepository>();
 builder.Services.AddScoped<IUserRoleRepository, UserRoleRepository>();
+builder.Services.AddScoped<IStartStopRepository, StartStopRepository>();
 
 
 var app = builder.Build();
