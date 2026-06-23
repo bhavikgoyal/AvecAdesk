@@ -25,6 +25,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
 using System.Text;
+using AvecADeskApi.Repositories.UserActivity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -126,6 +127,8 @@ builder.Services.AddScoped<IReminderRepository, ReminderRepository>();
 builder.Services.AddScoped<IEmailTemplateRepository, EmailTemplateRepository>();
 builder.Services.AddScoped<IMembersRepository, MembersRepository>();
 builder.Services.AddScoped<IUserRoleRepository, UserRoleRepository>();
+builder.Services.AddScoped<IUserActivityRepository, UserActivityRepository>();
+builder.Services.AddScoped<IViewActivityHistoryRepository, ViewActivityHistoryRepository>();
 
 
 var app = builder.Build();
