@@ -8,5 +8,7 @@
         public string? TotalTime { get; set; }
         public string? Productive { get; set; }
         public string? Neutral { get; set; }
+        public string? Avatar { get; set; }
+        public byte[]? AvatarBinary { get; set; }
     }
 }

@@ -34,7 +34,8 @@ namespace AvecADeskApi.Repositories
                     UserName = reader["UserName"].ToString() ?? "",
                   
                     Email = reader["Email"] != DBNull.Value ? reader["Email"].ToString()! : string.Empty,
-                    UserRoleId = (int)reader["UserRoleId"]
+                    UserRoleId = (int)reader["UserRoleId"],
+                    UserRoleName = reader["UserRoleName"]?.ToString() ?? string.Empty
                 };
             }
             return null;

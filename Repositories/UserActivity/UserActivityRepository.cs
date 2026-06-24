@@ -26,7 +26,7 @@ namespace AvecADeskApi.Repositories.UserActivity
             try
             {
                 return await _db.ExecuteReaderCustomAsync(
-                    "dbo.sp_GetUserActivityReport",
+                    "sp_ActivityReport_Get",
                     cmd =>
                     {
                         cmd.Parameters.Add("@FromDate", SqlDbType.Date).Value = fromDate.Date;
@@ -120,7 +120,9 @@ namespace AvecADeskApi.Repositories.UserActivity
                                 WorkDate = workDate,
                                 TotalTime = totalTimeStr,
                                 Productive = activeTimeStr,
-                                Neutral = idleTimeStr
+                                Neutral = idleTimeStr,
+                                Avatar = GetValue(reader, "Avatar")?.ToString(),
+                                AvatarBinary = GetValue(reader, "AvatarBinary") as byte[],
                             });
                         }
 
