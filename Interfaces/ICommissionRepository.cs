@@ -15,4 +15,5 @@ public interface ICommissionRepository
     Task<CommissionForecastResponse?> GetCommissionEarningsForecastAsync(int? vendorId);
     Task<CommissionEarningResponse?> ApproveCommissionEarningAsync(int earningId, int? approvedByUserId);
     Task<List<CommissionEarningResponse>> GetCommissionStatementAsync(int vendorId);
+    Task<List<CommissionRateResponse>> GetCommissionHistoryAsync(int vendorId, int? instituteId, int? courseId);
 }

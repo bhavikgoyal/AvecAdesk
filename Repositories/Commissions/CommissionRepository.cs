@@ -279,4 +279,20 @@ public class CommissionRepository : ICommissionRepository
             RecordCount = reader.GetInt32(reader.GetOrdinal("RecordCount"))
         };
     }
+
+    public async Task<List<CommissionRateResponse>> GetCommissionHistoryAsync(
+    int vendorId, int? instituteId, int? courseId)
+    {
+        return await _db.ExecuteReaderListAsync(
+            "sp_GetVendorCommissionHistory",
+            cmd =>
+            {
+                cmd.Parameters.AddWithValue("@VendorId", vendorId);
+                cmd.Parameters.AddWithValue("@InstituteId",
+                    (object?)instituteId ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@CourseId",
+                    (object?)courseId ?? DBNull.Value);
+            },
+            MapRate);
+    }
 }
