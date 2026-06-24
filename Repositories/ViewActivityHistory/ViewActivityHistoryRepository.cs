@@ -1,7 +1,6 @@
 using AvecADeskApi.Helpers;
 using AvecADeskApi.Interfaces;
 using AvecADeskApi.LOG;
-using AvecADeskApi.Model;
 using AvecADeskApi.Model.UserActivity;
 using AvecADeskApi.Model.ViewActivityHistory;
 using System.Data;
@@ -14,13 +13,17 @@ namespace AvecADeskApi.Repositories
         private readonly SqlDbHelper _db;
         private readonly LogHelper _logHelper;
 
-        public ViewActivityHistoryRepository(SqlDbHelper db, LogHelper logHelper)
+        public ViewActivityHistoryRepository(
+            SqlDbHelper db,
+            LogHelper logHelper)
         {
             _db = db;
             _logHelper = logHelper;
         }
 
-        public async Task<List<ViewActivityHistoryResponse>>GetActivityHistoryByUserAsync(int userId,DateTime date)
+        public async Task<List<ViewActivityHistoryResponse>> GetActivityHistoryByUserAsync(
+            int userId,
+            DateTime date)
         {
             try
             {
@@ -38,16 +41,16 @@ namespace AvecADeskApi.Repositories
                         while (await reader.ReadAsync())
                         {
                             List<SnapDetails> snaps = new();
+                            var snapsObj = reader["Snaps"];
 
-                            var snapsJsonObj = reader["SnapsJson"];
-
-                            if (snapsJsonObj != DBNull.Value)
+                            if (snapsObj != DBNull.Value)
                             {
-                                var snapsJson = snapsJsonObj?.ToString();
+                                var snapsJson = snapsObj.ToString();
 
                                 if (!string.IsNullOrWhiteSpace(snapsJson))
                                 {
-                                    snaps = JsonSerializer.Deserialize<List<SnapDetails>>(snapsJson)
+                                    snaps = JsonSerializer.Deserialize<List<SnapDetails>>(
+                                                snapsJson)
                                             ?? new List<SnapDetails>();
                                 }
                             }
