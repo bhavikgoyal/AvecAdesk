@@ -20,11 +20,11 @@ namespace AvecADeskApi.Controllers
         }
 
         [HttpGet("daily")]
-        public async Task<IActionResult> GetDailyReport([FromQuery] DateTime fromDate,[FromQuery] DateTime toDate)
+        public async Task<IActionResult> GetDailyReport([FromQuery] DateTime fromDate,[FromQuery] DateTime toDate,string? employeeName = null)
         {
             try
             {
-                var result = await _repo.GetWorkReportAsync(fromDate, toDate);
+                var result = await _repo.GetWorkReportAsync(fromDate, toDate, employeeName);
 
                 if (result == null || !result.Any())
                 {
