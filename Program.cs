@@ -1,6 +1,9 @@
 
 using AvecADeskApi.Helpers;
 using AvecADeskApi.Interfaces;
+using AvecADeskApi.IRepository;
+using AvecADeskApi.Repository;
+using AvecADeskApi.IRepository;
 using AvecADeskApi.LOG;
 using AvecADeskApi.Repositories;
 using AvecADeskApi.Repositories.Aih;
@@ -21,6 +24,7 @@ using AvecADeskApi.Repositories.TaskRepo;
 using AvecADeskApi.Repositories.Uploads;
 using AvecADeskApi.Repositories.UserRoles;
 using AvecADeskApi.Repositories.Vendors;
+using AvecADeskApi.Repository;
 using AvecADeskApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -131,6 +135,8 @@ builder.Services.AddScoped<ICardStatusRepository, CardStatusRepository>();
 builder.Services.AddScoped<IMembersRepository, MembersRepository>();
 builder.Services.AddScoped<IUserRoleRepository, UserRoleRepository>();
 builder.Services.AddScoped<IChecklistRepository, ChecklistRepository>();
+builder.Services.AddScoped<IStartStopRepository, StartStopRepository>();
+
 
 var app = builder.Build();
 
