@@ -146,6 +146,7 @@ builder.Services.AddScoped<IChecklistRepository, ChecklistRepository>();
 builder.Services.AddScoped<IStartStopRepository, StartStopRepository>();
 builder.Services.AddScoped<IUserActivityRepository, UserActivityRepository>();
 builder.Services.AddScoped<IViewActivityHistoryRepository, ViewActivityHistoryRepository>();
+builder.Services.AddScoped<IUserRepository, UserPasswordRepository>();
 
 
 var app = builder.Build();
