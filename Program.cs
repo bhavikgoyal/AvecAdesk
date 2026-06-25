@@ -1,31 +1,39 @@
 
 using AvecADeskApi.Helpers;
 using AvecADeskApi.Interfaces;
+using AvecADeskApi.IRepository;
+using AvecADeskApi.Repository;
+using AvecADeskApi.IRepository;
 using AvecADeskApi.LOG;
 using AvecADeskApi.Repositories;
-using AvecADeskApi.Repositories.Members;
 using AvecADeskApi.Repositories.Aih;
+using AvecADeskApi.Repositories.Checklist;
 using AvecADeskApi.Repositories.Commissions;
 using AvecADeskApi.Repositories.Courses;
+using AvecADeskApi.Repositories.EmailTemplates;
 using AvecADeskApi.Repositories.Colleges;
 using AvecADeskApi.Repositories.InstituteScrapping;
 using AvecADeskApi.Repositories.Institutes;
-using AvecADeskApi.Services;
-using AvecADeskApi.Repositories.PaymentSchedules;
-using AvecADeskApi.Repositories.EmailTemplates;
 using AvecADeskApi.Repositories.Institutes;
+using AvecADeskApi.Repositories.InstituteScrapping;
 using AvecADeskApi.Repositories.Invoices;
+using AvecADeskApi.Repositories.Members;
+using AvecADeskApi.Repositories.PaymentSchedules;
 using AvecADeskApi.Repositories.PaymentSchedules;
 using AvecADeskApi.Repositories.Reminders;
 using AvecADeskApi.Repositories.Students;
+using AvecADeskApi.Repositories.TaskRepo;
 using AvecADeskApi.Repositories.Uploads;
-using AvecADeskApi.Repositories.Vendors;
 using AvecADeskApi.Repositories.UserRoles;
+using AvecADeskApi.Repositories.Vendors;
+using AvecADeskApi.Repository;
+using AvecADeskApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
 using System.Text;
+using AvecADeskApi.Repositories.UserActivity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -127,8 +135,14 @@ builder.Services.AddScoped<IUploadRepository, UploadRepository>();
 builder.Services.AddScoped<IInvoiceRepository, InvoiceRepository>();
 builder.Services.AddScoped<IReminderRepository, ReminderRepository>();
 builder.Services.AddScoped<IEmailTemplateRepository, EmailTemplateRepository>();
+builder.Services.AddScoped<ICardRepository, CardRepository>();
+builder.Services.AddScoped<ICardStatusRepository, CardStatusRepository>();
 builder.Services.AddScoped<IMembersRepository, MembersRepository>();
 builder.Services.AddScoped<IUserRoleRepository, UserRoleRepository>();
+builder.Services.AddScoped<IChecklistRepository, ChecklistRepository>();
+builder.Services.AddScoped<IStartStopRepository, StartStopRepository>();
+builder.Services.AddScoped<IUserActivityRepository, UserActivityRepository>();
+builder.Services.AddScoped<IViewActivityHistoryRepository, ViewActivityHistoryRepository>();
 
 
 var app = builder.Build();

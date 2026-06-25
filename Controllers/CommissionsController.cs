@@ -184,7 +184,7 @@ public class CommissionsController : ControllerBase
     {
         try
         {
-      var userId = 15;//GetCurrentUserId();
+            var userId = 15;//GetCurrentUserId();
             if (userId == null)
                 return Unauthorized("User ID not found in token. Please login again.");
 
@@ -244,5 +244,20 @@ public class CommissionsController : ControllerBase
         sb.AppendLine(new string('-', 60));
         sb.AppendLine($"Total: {total}");
         return sb.ToString();
+    }
+
+    [HttpGet("vendor/{vendorId:int}/history")]
+    public async Task<IActionResult> GetVendorCommissionHistory(int vendorId, [FromQuery] int? instituteId, [FromQuery] int? courseId)
+    {
+        try
+        {
+            var history = await _commissionRepository.GetCommissionHistoryAsync(vendorId, instituteId, courseId);
+            return Ok(history);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(GetVendorCommissionHistory), ex);
+            return StatusCode(500, "Error fetching history.");
+        }
     }
 }

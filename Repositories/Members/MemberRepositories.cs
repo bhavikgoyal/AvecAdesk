@@ -46,8 +46,8 @@ namespace AvecADeskApi.Repositories.Members
                        IsActive = SafeBool(reader["IsActive"]),
 
                        AvatarBase64 = reader["Avatar"] == DBNull.Value
-        ? null
-        : SafeString(reader["Avatar"]),
+    ? null
+    : reader["Avatar"].ToString(),
 
                        CreatedOn = reader["CreatedOn"] == DBNull.Value
         ? (DateTime?)null
@@ -118,11 +118,12 @@ namespace AvecADeskApi.Repositories.Members
                     cmd.Parameters.AddWithValue("@UserRoleId", request.UserRoleId);
                     cmd.Parameters.AddWithValue("@CompaniesId", request.CompaniesId);
                     cmd.Parameters.AddWithValue("@Password", request.Password);
-                    var avatarBytes = Base64ToBytes(request.AvatarBase64);
-                    if (avatarBytes == null)
-                        cmd.Parameters.AddWithValue("@Avatar", DBNull.Value);
-                    else
-                        cmd.Parameters.Add("@Avatar", SqlDbType.VarBinary, avatarBytes.Length).Value = avatarBytes;
+                    cmd.Parameters.AddWithValue(
+    "@Avatar",
+    string.IsNullOrWhiteSpace(request.AvatarBase64)
+        ? DBNull.Value
+        : request.AvatarBase64
+);
                 });
 
                 var newUserId = Convert.ToInt32(obj);
@@ -182,11 +183,12 @@ namespace AvecADeskApi.Repositories.Members
                     cmd.Parameters.AddWithValue("@CompaniesId", request.CompaniesId);
                     cmd.Parameters.AddWithValue("@IsActive", request.IsActive);
 
-                    var avatarBytes = Base64ToBytes(request.AvatarBase64);
-                    if (avatarBytes == null)
-                        cmd.Parameters.AddWithValue("@Avatar", DBNull.Value);
-                    else
-                        cmd.Parameters.Add("@Avatar", SqlDbType.VarBinary, avatarBytes.Length).Value = avatarBytes;
+                    cmd.Parameters.AddWithValue(
+     "@Avatar",
+     string.IsNullOrWhiteSpace(request.AvatarBase64)
+         ? DBNull.Value
+         : request.AvatarBase64
+ );
                 });
 
                 var result = Convert.ToInt32(obj);
