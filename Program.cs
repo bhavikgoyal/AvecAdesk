@@ -11,6 +11,8 @@ using AvecADeskApi.Repositories.Checklist;
 using AvecADeskApi.Repositories.Commissions;
 using AvecADeskApi.Repositories.Courses;
 using AvecADeskApi.Repositories.EmailTemplates;
+using AvecADeskApi.Repositories.Colleges;
+using AvecADeskApi.Repositories.InstituteScrapping;
 using AvecADeskApi.Repositories.Institutes;
 using AvecADeskApi.Repositories.Institutes;
 using AvecADeskApi.Repositories.InstituteScrapping;
@@ -107,6 +109,8 @@ builder.Services.AddSingleton<LogHelper>();
 builder.Services.AddScoped<IVendorRepository, VendorRepository>();
 builder.Services.AddScoped<IInstituteRepository, InstituteRepository>();
 builder.Services.AddScoped<IInstituteScrappingRepository, InstituteScrappingRepository>();
+builder.Services.AddScoped<ICollegeRepository, CollegeRepository>();
+builder.Services.AddScoped<IInstitutePortalRepository, InstitutePortalRepository>();
 builder.Services.AddScoped<IInstituteWebsiteFetcher, InstituteWebsiteFetcher>();
 builder.Services.AddScoped<IInstituteScrappingService, InstituteScrappingService>();
 builder.Services.AddHttpClient("InstituteScraper", client =>
