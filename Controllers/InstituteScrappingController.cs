@@ -72,9 +72,11 @@ public class InstituteScrappingController : ControllerBase
         {
             return BadRequest(ex.Message);
         }
-        catch (TaskCanceledException)
+        catch (OperationCanceledException ex)
         {
-            return StatusCode(504, "Scraping timed out. The website is large — please try again.");
+            return StatusCode(504, ex.Message.Contains("cancelled", StringComparison.OrdinalIgnoreCase)
+                ? "Scraping timed out. Large sites are limited to about 10 minutes — try a programs listing URL for faster results."
+                : "Scraping timed out. Use the institute programs listing URL or a smaller site section.");
         }
         catch (Exception ex)
         {
