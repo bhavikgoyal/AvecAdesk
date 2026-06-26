@@ -113,6 +113,7 @@ builder.Services.AddSingleton<LogHelper>();
 builder.Services.AddScoped<IVendorRepository, VendorRepository>();
 builder.Services.AddScoped<IEmailSender, EmailSender>();
 builder.Services.AddScoped<VendorRegistrationEmailService>();
+builder.Services.AddScoped<VendorOnboardingAdminService>();
 builder.Services.AddScoped<IVendorOnboardingRepository, VendorOnboardingRepository>();
 builder.Services.AddScoped<IInstituteRepository, InstituteRepository>();
 builder.Services.AddScoped<IInstituteScrappingRepository, InstituteScrappingRepository>();
