@@ -1,4 +1,3 @@
-
 using AvecADeskApi.Helpers;
 using AvecADeskApi.Interfaces;
 using AvecADeskApi.IRepository;
@@ -32,6 +31,7 @@ using Microsoft.OpenApi.Models;
 using Serilog;
 using System.Text;
 using AvecADeskApi.Repositories.UserActivity;
+//using AvecADeskApi.Repositories.EmployeeWorkHours;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -136,7 +136,7 @@ builder.Services.AddScoped<ICardStatusRepository, CardStatusRepository>();
 builder.Services.AddScoped<IMembersRepository, MembersRepository>();
 builder.Services.AddScoped<IUserRoleRepository, UserRoleRepository>();
 builder.Services.AddScoped<IChecklistRepository, ChecklistRepository>();
-builder.Services.AddScoped<IStartStopRepository, StartStopRepository>();
+builder.Services.AddScoped<IEmployeeWorkHoursRepository, EmployeeWorkHoursRepositories>();
 builder.Services.AddScoped<IUserActivityRepository, UserActivityRepository>();
 builder.Services.AddScoped<IViewActivityHistoryRepository, ViewActivityHistoryRepository>();
 

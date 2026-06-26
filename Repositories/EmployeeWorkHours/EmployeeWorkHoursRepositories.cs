@@ -1,20 +1,20 @@
 ﻿using AvecADeskApi;
 using AvecADeskApi.Helpers;
 using AvecADeskApi.IRepository;
-using AvecADeskApi.Models;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 using System.Data;
 using AvecADeskApi.Helpers;
+using AvecADeskApi.Model.EmployeeWorkHours;
 
 namespace AvecADeskApi.Repository
 {
-    public class StartStopRepository : IStartStopRepository
+    public class EmployeeWorkHoursRepositories : IRepository.IEmployeeWorkHoursRepository
     {
         private readonly SqlDbHelper _db;
-        private readonly ILogger<StartStopRepository> _logger;
+        private readonly ILogger<EmployeeWorkHoursRepositories> _logger;
 
-        public StartStopRepository( SqlDbHelper db, ILogger<StartStopRepository> logger)
+        public EmployeeWorkHoursRepositories( SqlDbHelper db, ILogger<EmployeeWorkHoursRepositories> logger)
         {
             _db = db;
             _logger = logger;

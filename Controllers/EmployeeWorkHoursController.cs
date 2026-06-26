@@ -1,5 +1,5 @@
 ﻿using AvecADeskApi.IRepository;
-using AvecADeskApi.Models;
+using AvecADeskApi.Model.EmployeeWorkHours;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -9,15 +9,15 @@ namespace AvecADeskApi.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
-    public class StartStopController : ControllerBase
+    public class EmployeeWorkHoursController : ControllerBase
     {
-        private readonly IStartStopRepository _repo;
+        private readonly IEmployeeWorkHoursRepository _repo;
 
-        private readonly ILogger<StartStopController> _logger;
+        private readonly ILogger<EmployeeWorkHoursController> _logger;
 
-        public StartStopController(
-            IStartStopRepository repo,
-            ILogger<StartStopController> logger)
+        public EmployeeWorkHoursController(
+            IEmployeeWorkHoursRepository repo,
+            ILogger<EmployeeWorkHoursController> logger)
         {
             _repo = repo;
             _logger = logger;
@@ -59,7 +59,7 @@ namespace AvecADeskApi.Controllers
 
                 await _repo.UpdateAsync(model);
 
-                return Ok(new { message = "StartStop updated successfully." });
+                return Ok(new { message = "Employee Work Hours updated successfully." });
             }
             catch (Exception ex)
             {
@@ -99,7 +99,7 @@ namespace AvecADeskApi.Controllers
             catch (Exception ex)
             {
 
-                return StatusCode(500, "An error occurred while retrieving StartStop records.");
+                return StatusCode(500, "An error occurred while retrieving Employee Work Hours records.");
             }
         }
     }

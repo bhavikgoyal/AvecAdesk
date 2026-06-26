@@ -85,7 +85,7 @@ namespace AvecADeskApi.Repositories.Members
             if (string.IsNullOrWhiteSpace(base64))
                 return null;
 
-           
+
             if (base64.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                 return null;
 
