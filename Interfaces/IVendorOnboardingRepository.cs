@@ -15,4 +15,7 @@ public interface IVendorOnboardingRepository
     Task<VendorOnboardingStepResponse> SaveBankingAsync(VendorBankingRequest request);
     Task<int> SaveDocumentAsync(int vendorId, VendorDocumentSaveRequest request);
     Task<VendorOnboardingStepResponse> SubmitDeclarationAsync(VendorDeclarationRequest request);
+    Task<VendorOnboardingDataResponse?> GetOnboardingAsync(int vendorId);
+    Task<bool> IsOnboardingLinkExpiredAsync(int vendorId);
+    Task<int?> GetVendorUserIdAsync(int vendorId);
 }

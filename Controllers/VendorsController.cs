@@ -87,6 +87,10 @@ public class VendorsController : ControllerBase
             if (string.IsNullOrWhiteSpace(request.Email))
                 return BadRequest("Email is required to send the vendor onboarding link.");
 
+            var existingVendor = await _vendorRepository.GetVendorByEmailAsync(request.Email);
+            if (existingVendor != null)
+                return BadRequest("This email is already used.");
+
             request.UserId ??= GetCurrentUserId();
             if (request.UserId == null || request.UserId <= 0)
                 return BadRequest("User ID is required. Please login again.");
@@ -120,6 +124,13 @@ public class VendorsController : ControllerBase
     {
         try
         {
+            if (!string.IsNullOrWhiteSpace(request.Email))
+            {
+                var existingVendor = await _vendorRepository.GetVendorByEmailAsync(request.Email, vendorId);
+                if (existingVendor != null)
+                    return BadRequest("This email is already used.");
+            }
+
             var updated = await _vendorRepository.UpdateVendorAsync(vendorId, request);
             if (!updated)
                 return NotFound("Vendor not found");
@@ -152,6 +163,27 @@ public class VendorsController : ControllerBase
         {
             _logHelper.LogError(nameof(UpdateVendorStatus), ex);
             return StatusCode(500, "An error occurred while updating vendor status.");
+        }
+    }
+
+    [HttpDelete("{vendorId:int}")]
+    public async Task<IActionResult> DeleteVendor(int vendorId)
+    {
+        try
+        {
+            var deleted = await _vendorRepository.DeleteVendorAsync(vendorId);
+            if (!deleted)
+                return NotFound("Vendor not found");
+
+            return Ok(new { message = "Vendor deleted successfully." });
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(DeleteVendor), ex);
+            var message = ex.Message.Contains("institutes are linked", StringComparison.OrdinalIgnoreCase)
+                ? ex.Message
+                : "An error occurred while deleting the vendor.";
+            return StatusCode(500, message);
         }
     }
 

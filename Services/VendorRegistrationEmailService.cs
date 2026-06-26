@@ -27,7 +27,7 @@ public class VendorRegistrationEmailService
             return;
 
         var frontendBaseUrl = (_configuration["App:FrontendBaseUrl"] ?? "http://localhost:5173").TrimEnd('/');
-        var onboardingLink = $"{frontendBaseUrl}/phone-verified?vendorId={vendor.VendorId}";
+        var onboardingLink = $"{frontendBaseUrl}/onboarding?vendorId={vendor.VendorId}";
         var businessName = WebUtility.HtmlEncode(vendor.BusinessName);
         var contactName = WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(vendor.ContactPerson) ? "Partner" : vendor.ContactPerson);
 
