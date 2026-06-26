@@ -1,6 +1,7 @@
 using AvecADeskApi.Interfaces;
 using AvecADeskApi.LOG;
 using AvecADeskApi.Model.Vendor;
+using AvecADeskApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -12,6 +13,7 @@ namespace AvecADeskApi.Controllers;
 public class VendorsController : ControllerBase
 {
     private readonly IVendorRepository _vendorRepository;
+    private readonly VendorRegistrationEmailService _vendorRegistrationEmailService;
     private readonly IWebHostEnvironment _environment;
     private readonly LogHelper _logHelper;
 
@@ -29,10 +31,12 @@ public class VendorsController : ControllerBase
 
     public VendorsController(
         IVendorRepository vendorRepository,
+        VendorRegistrationEmailService vendorRegistrationEmailService,
         IWebHostEnvironment environment,
         LogHelper logHelper)
     {
         _vendorRepository = vendorRepository;
+        _vendorRegistrationEmailService = vendorRegistrationEmailService;
         _environment = environment;
         _logHelper = logHelper;
     }
@@ -80,16 +84,28 @@ public class VendorsController : ControllerBase
             if (string.IsNullOrWhiteSpace(request.Phone))
                 return BadRequest("Phone is required");
 
+            if (string.IsNullOrWhiteSpace(request.Email))
+                return BadRequest("Email is required to send the vendor onboarding link.");
+
             request.UserId ??= GetCurrentUserId();
             if (request.UserId == null || request.UserId <= 0)
                 return BadRequest("User ID is required. Please login again.");
 
             var vendorId = await _vendorRepository.RegisterVendorAsync(request);
             var created = await _vendorRepository.GetVendorByIdAsync(vendorId);
-            if (created != null && string.IsNullOrWhiteSpace(created.VendorCode))
+            if (created == null)
+                return StatusCode(500, "Vendor was created but could not be loaded.");
+
+            try
             {
-                created.VendorCode = await _vendorRepository.EnsureVendorCodeAsync(vendorId);
+                await _vendorRegistrationEmailService.SendVendorInviteAsync(created);
             }
+            catch (Exception emailEx)
+            {
+                _logHelper.LogError(nameof(RegisterVendor), emailEx);
+                return StatusCode(500, "Vendor saved as Pending, but the onboarding email could not be sent. Check Email settings in appsettings.json.");
+            }
+
             return Ok(created);
         }
         catch (Exception ex)
