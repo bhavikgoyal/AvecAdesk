@@ -14,6 +14,7 @@ public class VendorsController : ControllerBase
 {
     private readonly IVendorRepository _vendorRepository;
     private readonly VendorRegistrationEmailService _vendorRegistrationEmailService;
+    private readonly VendorOnboardingAdminService _vendorOnboardingAdminService;
     private readonly IWebHostEnvironment _environment;
     private readonly LogHelper _logHelper;
 
@@ -32,11 +33,13 @@ public class VendorsController : ControllerBase
     public VendorsController(
         IVendorRepository vendorRepository,
         VendorRegistrationEmailService vendorRegistrationEmailService,
+        VendorOnboardingAdminService vendorOnboardingAdminService,
         IWebHostEnvironment environment,
         LogHelper logHelper)
     {
         _vendorRepository = vendorRepository;
         _vendorRegistrationEmailService = vendorRegistrationEmailService;
+        _vendorOnboardingAdminService = vendorOnboardingAdminService;
         _environment = environment;
         _logHelper = logHelper;
     }
@@ -163,6 +166,33 @@ public class VendorsController : ControllerBase
         {
             _logHelper.LogError(nameof(UpdateVendorStatus), ex);
             return StatusCode(500, "An error occurred while updating vendor status.");
+        }
+    }
+
+    [Authorize]
+    [HttpPut("{vendorId:int}/onboarding")]
+    public async Task<IActionResult> SaveVendorOnboarding(int vendorId, [FromBody] VendorOnboardingAdminSaveRequest request)
+    {
+        try
+        {
+            var vendor = await _vendorRepository.GetVendorByIdAsync(vendorId);
+            if (vendor == null)
+                return NotFound("Vendor not found");
+
+            await _vendorOnboardingAdminService.SaveAsync(vendorId, request);
+            return Ok(await _vendorRepository.GetVendorByIdAsync(vendorId));
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(SaveVendorOnboarding), ex);
+            var message = ex.InnerException?.Message ?? ex.Message;
+            if (message.Contains("RAISERROR", StringComparison.OrdinalIgnoreCase)
+                || message.Contains("CK_", StringComparison.OrdinalIgnoreCase)
+                || message.Contains("required", StringComparison.OrdinalIgnoreCase))
+            {
+                return BadRequest(message);
+            }
+            return StatusCode(500, "An error occurred while saving vendor onboarding data.");
         }
     }
 
