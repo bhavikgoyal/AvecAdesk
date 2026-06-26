@@ -1,8 +1,6 @@
-
 using AvecADeskApi.Helpers;
 using AvecADeskApi.Interfaces;
 using AvecADeskApi.IRepository;
-using AvecADeskApi.Repository;
 using AvecADeskApi.IRepository;
 using AvecADeskApi.LOG;
 using AvecADeskApi.Repositories;
@@ -20,12 +18,15 @@ using AvecADeskApi.Repositories.Invoices;
 using AvecADeskApi.Repositories.Members;
 using AvecADeskApi.Repositories.PaymentSchedules;
 using AvecADeskApi.Repositories.PaymentSchedules;
+using AvecADeskApi.Repositories.Receivables;
 using AvecADeskApi.Repositories.Reminders;
 using AvecADeskApi.Repositories.Students;
 using AvecADeskApi.Repositories.TaskRepo;
 using AvecADeskApi.Repositories.Uploads;
+using AvecADeskApi.Repositories.UserActivity;
 using AvecADeskApi.Repositories.UserRoles;
 using AvecADeskApi.Repositories.Vendors;
+using AvecADeskApi.Repository;
 using AvecADeskApi.Repository;
 using AvecADeskApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -34,6 +35,8 @@ using Microsoft.OpenApi.Models;
 using Serilog;
 using System.Text;
 using AvecADeskApi.Repositories.UserActivity;
+//using AvecADeskApi.Repositories.EmployeeWorkHours;
+using AvecADeskApi.Repositories.UserPassword;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -140,9 +143,10 @@ builder.Services.AddScoped<ICardStatusRepository, CardStatusRepository>();
 builder.Services.AddScoped<IMembersRepository, MembersRepository>();
 builder.Services.AddScoped<IUserRoleRepository, UserRoleRepository>();
 builder.Services.AddScoped<IChecklistRepository, ChecklistRepository>();
-builder.Services.AddScoped<IStartStopRepository, StartStopRepository>();
+builder.Services.AddScoped<IEmployeeWorkHoursRepository, EmployeeWorkHoursRepositories>();
 builder.Services.AddScoped<IUserActivityRepository, UserActivityRepository>();
 builder.Services.AddScoped<IViewActivityHistoryRepository, ViewActivityHistoryRepository>();
+builder.Services.AddScoped<IUserRepository, UserPasswordRepository>();
 
 
 var app = builder.Build();

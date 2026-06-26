@@ -1,4 +1,4 @@
-﻿namespace AvecADeskApi.Models
+﻿namespace AvecADeskApi.Model.EmployeeWorkHours
 {
     public class StartStop
     {
