@@ -25,7 +25,7 @@ namespace AvecADeskApi.Controllers
 
 
 
-        [HttpPost("Create_Start_Stop")]
+        [HttpPost("Create Employee Work Hours")]
         public async Task<IActionResult> Insert([FromBody] StartStop model)
         {
             if (model == null)
@@ -44,7 +44,7 @@ namespace AvecADeskApi.Controllers
         }
 
 
-        [HttpPut("Update_Start_Stop")]
+        [HttpPut("Update Employee Work Hours")]
         public async Task<IActionResult> Update([FromBody] StartStop dto)
         {
             try
@@ -87,7 +87,7 @@ namespace AvecADeskApi.Controllers
             }
         }
 
-        [HttpGet("Start_Stop_ALL")]
+        [HttpGet("Employee Work Hours ALL")]
         public async Task<ActionResult<List<StartStop>>> GetAll()
 
         {
