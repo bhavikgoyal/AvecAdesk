@@ -37,6 +37,7 @@ using System.Text;
 using AvecADeskApi.Repositories.UserActivity;
 //using AvecADeskApi.Repositories.EmployeeWorkHours;
 using AvecADeskApi.Repositories.UserPassword;
+using AvecADeskApi.Repositories.DuePayment;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -151,6 +152,8 @@ builder.Services.AddScoped<IEmployeeWorkHoursRepository, EmployeeWorkHoursReposi
 builder.Services.AddScoped<IUserActivityRepository, UserActivityRepository>();
 builder.Services.AddScoped<IViewActivityHistoryRepository, ViewActivityHistoryRepository>();
 builder.Services.AddScoped<IUserRepository, UserPasswordRepository>();
+builder.Services.AddScoped<IReceivablesRepository, ReceivablesRepository>();
+builder.Services.AddScoped<IDuePaymentRepository, DuePaymentRepository>();
 
 
 var app = builder.Build();
