@@ -1,7 +1,6 @@
 using AvecADeskApi.Helpers;
 using AvecADeskApi.Interfaces;
 using AvecADeskApi.IRepository;
-using AvecADeskApi.Repository;
 using AvecADeskApi.IRepository;
 using AvecADeskApi.LOG;
 using AvecADeskApi.Repositories;
@@ -10,6 +9,8 @@ using AvecADeskApi.Repositories.Checklist;
 using AvecADeskApi.Repositories.Commissions;
 using AvecADeskApi.Repositories.Courses;
 using AvecADeskApi.Repositories.EmailTemplates;
+using AvecADeskApi.Repositories.Colleges;
+using AvecADeskApi.Repositories.InstituteScrapping;
 using AvecADeskApi.Repositories.Institutes;
 using AvecADeskApi.Repositories.Institutes;
 using AvecADeskApi.Repositories.InstituteScrapping;
@@ -17,12 +18,15 @@ using AvecADeskApi.Repositories.Invoices;
 using AvecADeskApi.Repositories.Members;
 using AvecADeskApi.Repositories.PaymentSchedules;
 using AvecADeskApi.Repositories.PaymentSchedules;
+using AvecADeskApi.Repositories.Receivables;
 using AvecADeskApi.Repositories.Reminders;
 using AvecADeskApi.Repositories.Students;
 using AvecADeskApi.Repositories.TaskRepo;
 using AvecADeskApi.Repositories.Uploads;
+using AvecADeskApi.Repositories.UserActivity;
 using AvecADeskApi.Repositories.UserRoles;
 using AvecADeskApi.Repositories.Vendors;
+using AvecADeskApi.Repository;
 using AvecADeskApi.Repository;
 using AvecADeskApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -32,6 +36,7 @@ using Serilog;
 using System.Text;
 using AvecADeskApi.Repositories.UserActivity;
 //using AvecADeskApi.Repositories.EmployeeWorkHours;
+using AvecADeskApi.Repositories.UserPassword;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -107,6 +112,8 @@ builder.Services.AddSingleton<LogHelper>();
 builder.Services.AddScoped<IVendorRepository, VendorRepository>();
 builder.Services.AddScoped<IInstituteRepository, InstituteRepository>();
 builder.Services.AddScoped<IInstituteScrappingRepository, InstituteScrappingRepository>();
+builder.Services.AddScoped<ICollegeRepository, CollegeRepository>();
+builder.Services.AddScoped<IInstitutePortalRepository, InstitutePortalRepository>();
 builder.Services.AddScoped<IInstituteWebsiteFetcher, InstituteWebsiteFetcher>();
 builder.Services.AddScoped<IInstituteScrappingService, InstituteScrappingService>();
 builder.Services.AddHttpClient("InstituteScraper", client =>
@@ -139,6 +146,7 @@ builder.Services.AddScoped<IChecklistRepository, ChecklistRepository>();
 builder.Services.AddScoped<IEmployeeWorkHoursRepository, EmployeeWorkHoursRepositories>();
 builder.Services.AddScoped<IUserActivityRepository, UserActivityRepository>();
 builder.Services.AddScoped<IViewActivityHistoryRepository, ViewActivityHistoryRepository>();
+builder.Services.AddScoped<IUserRepository, UserPasswordRepository>();
 
 
 var app = builder.Build();
