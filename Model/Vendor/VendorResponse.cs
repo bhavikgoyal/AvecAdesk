@@ -9,8 +9,6 @@ public class VendorResponse
     public string ContactPerson { get; set; } = string.Empty;
     public string Phone { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
-    public string? BankDetails { get; set; }
-    public string? CommissionPreference { get; set; }
     public string Status { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
 }
