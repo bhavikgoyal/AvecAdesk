@@ -20,28 +20,10 @@ public class VendorRepository : IVendorRepository
 
     public Task<List<VendorResponse>> GetVendorsAsync(string? status)
     {
-        return GetVendorsInternalAsync(status, backfillMissingCodes: true);
-    }
-
-    private async Task<List<VendorResponse>> GetVendorsInternalAsync(string? status, bool backfillMissingCodes)
-    {
-        var vendors = await _db.ExecuteReaderListAsync(
+        return _db.ExecuteReaderListAsync(
             "sp_GetVendors",
             cmd => cmd.Parameters.AddWithValue("@Status", (object?)status ?? DBNull.Value),
             MapVendor);
-
-        if (!backfillMissingCodes)
-            return vendors;
-
-        for (var i = 0; i < vendors.Count; i++)
-        {
-            if (string.IsNullOrWhiteSpace(vendors[i].VendorCode))
-            {
-                vendors[i].VendorCode = await EnsureVendorCodeAsync(vendors[i].VendorId);
-            }
-        }
-
-        return vendors;
     }
 
     public Task<VendorResponse?> GetVendorByIdAsync(int vendorId)
@@ -66,14 +48,10 @@ public class VendorRepository : IVendorRepository
             cmd.Parameters.AddWithValue("@ContactPerson", request.ContactPerson);
             cmd.Parameters.AddWithValue("@Phone", request.Phone);
             cmd.Parameters.AddWithValue("@Email", request.Email);
-            cmd.Parameters.AddWithValue("@BankDetails", (object?)request.BankDetails ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@CommissionPreference", (object?)request.CommissionPreference ?? DBNull.Value);
             cmd.Parameters.Add(vendorIdParam);
         });
 
-        var vendorId = (int)vendorIdParam.Value;
-        await EnsureVendorCodeAsync(vendorId);
-        return vendorId;
+        return (int)vendorIdParam.Value;
     }
 
     public async Task<string> EnsureVendorCodeAsync(int vendorId)
@@ -93,26 +71,24 @@ public class VendorRepository : IVendorRepository
 
     private async Task<string> GenerateNextVendorCodeAsync()
     {
-        var vendors = await _db.ExecuteReaderListAsync(
-            "sp_GetVendors",
-            cmd => cmd.Parameters.AddWithValue("@Status", DBNull.Value),
-            MapVendor);
-
-        var maxSequence = vendors
+        var existingCodes = new HashSet<string>(
+            (await _db.ExecuteReaderListAsync(
+                "sp_GetVendors",
+                cmd => cmd.Parameters.AddWithValue("@Status", DBNull.Value),
+                MapVendor))
             .Select(v => v.VendorCode)
-            .Where(code => !string.IsNullOrWhiteSpace(code)
-                && code.StartsWith("VND-", StringComparison.OrdinalIgnoreCase))
-            .Select(ParseVendorCodeSequence)
-            .DefaultIfEmpty(0)
-            .Max();
+            .Where(code => !string.IsNullOrWhiteSpace(code))
+            .Select(code => code!),
+            StringComparer.OrdinalIgnoreCase);
 
-        return $"VND-{(maxSequence + 1):D5}";
-    }
+        for (var attempt = 0; attempt < 100; attempt++)
+        {
+            var code = $"VND{Random.Shared.Next(1000000, 10000000)}";
+            if (!existingCodes.Contains(code))
+                return code;
+        }
 
-    private static int ParseVendorCodeSequence(string code)
-    {
-        var suffix = code[4..];
-        return int.TryParse(suffix, out var sequence) ? sequence : 0;
+        throw new InvalidOperationException("Unable to generate unique vendor code.");
     }
 
     private async Task UpdateVendorCodeAsync(int vendorId, string vendorCode)
@@ -141,8 +117,6 @@ public class VendorRepository : IVendorRepository
             cmd.Parameters.AddWithValue("@ContactPerson", request.ContactPerson);
             cmd.Parameters.AddWithValue("@Phone", request.Phone);
             cmd.Parameters.AddWithValue("@Email", request.Email);
-            cmd.Parameters.AddWithValue("@BankDetails", (object?)request.BankDetails ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@CommissionPreference", (object?)request.CommissionPreference ?? DBNull.Value);
             cmd.Parameters.Add(rowsAffectedParam);
         });
 
@@ -222,8 +196,6 @@ public class VendorRepository : IVendorRepository
             ContactPerson = reader.GetString(reader.GetOrdinal("ContactPerson")),
             Phone = reader.GetString(reader.GetOrdinal("Phone")),
             Email = reader.GetString(reader.GetOrdinal("Email")),
-            BankDetails = reader.IsDBNull(reader.GetOrdinal("BankDetails")) ? null : reader.GetString(reader.GetOrdinal("BankDetails")),
-            CommissionPreference = reader.IsDBNull(reader.GetOrdinal("CommissionPreference")) ? null : reader.GetString(reader.GetOrdinal("CommissionPreference")),
             Status = reader.GetString(reader.GetOrdinal("Status")),
             CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt"))
         };
