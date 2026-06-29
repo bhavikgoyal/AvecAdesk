@@ -12,5 +12,6 @@ namespace AvecADeskApi.Interfaces
         Task<bool> UpdateChecklistItemStatusAsync(int checklistItemId, bool isCompleted);
         Task<bool> DeleteChecklistItemAsync(int checklistItemId);
         Task<bool> UpdateChecklistItemNameAsync(int checklistItemId, string itemName);
+        //Task  UpdateChecklistItemAssigneeAsync(int checklistItemID, int assignedUserID);
     }
 }
