@@ -34,6 +34,27 @@ public class VendorRepository : IVendorRepository
             MapVendor);
     }
 
+    public async Task<VendorResponse?> GetVendorByEmailAsync(string email, int? excludeVendorId = null)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return null;
+
+        await using var connection = new SqlConnection(_connectionString);
+        await using var command = new SqlCommand(
+            """
+            SELECT TOP 1 VendorId, UserId, VendorCode, BusinessName, ContactPerson, Phone, Email, Status, CreatedAt
+            FROM Vendors
+            WHERE LOWER(LTRIM(RTRIM(Email))) = LOWER(LTRIM(RTRIM(@Email)))
+              AND (@ExcludeVendorId IS NULL OR VendorId <> @ExcludeVendorId)
+            """,
+            connection);
+        command.Parameters.AddWithValue("@Email", email.Trim());
+        command.Parameters.AddWithValue("@ExcludeVendorId", (object?)excludeVendorId ?? DBNull.Value);
+        await connection.OpenAsync();
+        await using var reader = await command.ExecuteReaderAsync();
+        return await reader.ReadAsync() ? MapVendor(reader) : null;
+    }
+
     public async Task<int> RegisterVendorAsync(VendorRegisterRequest request)
     {
         var vendorIdParam = new SqlParameter("@VendorId", SqlDbType.Int)
@@ -134,6 +155,22 @@ public class VendorRepository : IVendorRepository
         {
             cmd.Parameters.AddWithValue("@VendorId", vendorId);
             cmd.Parameters.AddWithValue("@Status", status);
+            cmd.Parameters.Add(rowsAffectedParam);
+        });
+
+        return (int)rowsAffectedParam.Value > 0;
+    }
+
+    public async Task<bool> DeleteVendorAsync(int vendorId)
+    {
+        var rowsAffectedParam = new SqlParameter("@RowsAffected", SqlDbType.Int)
+        {
+            Direction = ParameterDirection.Output
+        };
+
+        await _db.ExecuteNonQueryAsync("sp_DeleteVendor", cmd =>
+        {
+            cmd.Parameters.AddWithValue("@VendorId", vendorId);
             cmd.Parameters.Add(rowsAffectedParam);
         });
 

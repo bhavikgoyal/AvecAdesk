@@ -10,6 +10,22 @@ public class VendorOnboardingRepository : IVendorOnboardingRepository
 {
     private readonly SqlDbHelper _db;
 
+    private static readonly Dictionary<string, string> DocumentTypeToField = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["RegCert"] = "companyRegistrationCertificate",
+        ["DirectorID"] = "directorIdPassport",
+        ["OfficePhoto"] = "officePhotos",
+        ["Brochure"] = "businessProfile",
+        ["PartnerAgreement"] = "existingPartnerAgreements",
+        ["Other"] = "existingPartnerAgreements",
+        // Legacy values saved before DB code mapping was added
+        ["Company Registration Certificate"] = "companyRegistrationCertificate",
+        ["Director ID / Passport"] = "directorIdPassport",
+        ["Office Photos"] = "officePhotos",
+        ["Business Profile / Brochure"] = "businessProfile",
+        ["Existing Partner Agreements"] = "existingPartnerAgreements",
+    };
+
     public VendorOnboardingRepository(SqlDbHelper db)
     {
         _db = db;
@@ -81,7 +97,7 @@ public class VendorOnboardingRepository : IVendorOnboardingRepository
         {
             cmd.Parameters.AddWithValue("@VendorId", request.VendorId);
             cmd.Parameters.AddWithValue("@BusinessId", (object?)request.BusinessId ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@BusinessType", request.BusinessType);
+            cmd.Parameters.AddWithValue("@BusinessType", MapBusinessTypeToDb(request.BusinessType));
             cmd.Parameters.AddWithValue("@BusinessTypeOther", (object?)request.BusinessTypeOther ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@EmployeeCount", (object?)request.NumberOfEmployees ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@CounselorCount", (object?)request.NumberOfCounselors ?? DBNull.Value);
@@ -314,6 +330,285 @@ public class VendorOnboardingRepository : IVendorOnboardingRepository
             VendorCode = vendorCodeParam.Value == DBNull.Value ? null : vendorCodeParam.Value.ToString(),
             Message = "Application submitted successfully."
         };
+    }
+
+    public async Task<VendorOnboardingDataResponse?> GetOnboardingAsync(int vendorId)
+    {
+        return await _db.ExecuteReaderCustomAsync(
+            "sp_GetVendorOnboarding",
+            cmd => cmd.Parameters.AddWithValue("@VendorId", vendorId),
+            ReadOnboardingAsync);
+    }
+
+    public async Task<bool> IsOnboardingLinkExpiredAsync(int vendorId)
+    {
+        var data = await GetOnboardingAsync(vendorId);
+        return data == null || data.IsLinkExpired;
+    }
+
+    public async Task<int?> GetVendorUserIdAsync(int vendorId)
+    {
+        var results = await _db.ExecuteReaderListAsync(
+            "sp_GetVendorById",
+            cmd => cmd.Parameters.AddWithValue("@VendorId", vendorId),
+            reader =>
+            {
+                var ordinal = reader.GetOrdinal("UserId");
+                return reader.IsDBNull(ordinal) ? (int?)null : reader.GetInt32(ordinal);
+            });
+
+        return results.FirstOrDefault();
+    }
+
+    private static async Task<VendorOnboardingDataResponse?> ReadOnboardingAsync(SqlDataReader reader)
+    {
+        if (!await reader.ReadAsync())
+            return null;
+
+        var data = new VendorOnboardingDataResponse
+        {
+            VendorId = reader.GetInt32(reader.GetOrdinal("VendorId")),
+            VendorCode = GetNullableString(reader, "VendorCode"),
+            IsLinkExpired = reader.GetInt32(reader.GetOrdinal("IsLinkExpired")) == 1,
+            LegalBusinessName = GetNullableString(reader, "LegalBusinessName"),
+            BusinessId = GetNullableInt(reader, "BusinessId"),
+            TradingName = GetNullableString(reader, "TradingName"),
+            YearEstablished = GetNullableShort(reader, "YearEstablished"),
+            CompanyRegistrationNumber = GetNullableString(reader, "CompanyRegNumber"),
+            CountryOfRegistration = GetNullableString(reader, "CountryOfRegistration"),
+            RegisteredOfficeAddress = GetNullableString(reader, "RegisteredAddress"),
+            OperationalOfficeAddress = GetNullableString(reader, "OperationalAddress"),
+            Website = GetNullableString(reader, "Website"),
+            LinkedInProfile = GetNullableString(reader, "LinkedInProfile"),
+            BusinessType = MapBusinessTypeFromDb(GetNullableString(reader, "BusinessType")),
+            BusinessTypeOther = GetNullableString(reader, "BusinessTypeOther"),
+            NumberOfEmployees = GetNullableInt(reader, "EmployeeCount"),
+            NumberOfCounselors = GetNullableInt(reader, "CounselorCount"),
+            NumberOfOffices = GetNullableInt(reader, "OfficeCount"),
+            YearsOfExperience = GetNullableInt(reader, "YearsExperience"),
+            MarketId = GetNullableInt(reader, "MarketId"),
+            PrimaryStudentSourceCountries = GetNullableString(reader, "PrimarySourceCountries"),
+            SecondaryMarkets = GetNullableString(reader, "SecondaryMarkets"),
+            Top5Institutions = GetNullableString(reader, "Top5Institutions"),
+            PerformanceId = GetNullableInt(reader, "PerformanceId"),
+            StudentsRecruitedLastYear = GetNullableInt(reader, "StudentsRecruitedLastYear"),
+            ExpectedStudentsNext12Months = GetNullableInt(reader, "ExpectedStudentsNext12M"),
+            VisaSuccessRate = GetNullableDecimal(reader, "VisaSuccessRate"),
+            ComplianceId = GetNullableInt(reader, "ComplianceId"),
+            RegisteredWithRegulatoryBody = GetNullableBool(reader, "IsRegisteredWithBody") is bool registered
+                ? ToYesNo(registered) : null,
+            RegulatoryBodyDetails = GetNullableString(reader, "RegulatoryBodyDetails"),
+            CertifiedCounselors = GetNullableBool(reader, "HasCertifiedCounselors") is bool certified
+                ? ToYesNo(certified) : null,
+            VisaFraudHistory = GetNullableBool(reader, "HasFraudHistory") is bool fraud
+                ? ToYesNo(fraud) : null,
+            VisaFraudExplanation = GetNullableString(reader, "FraudHistoryDetails"),
+            ConductsSeminars = GetNullableBool(reader, "ConductsSeminars") is bool seminars
+                ? ToYesNo(seminars) : null,
+            PreferredPaymentTerms = GetNullableString(reader, "PreferredPaymentTerms"),
+            BankingId = GetNullableInt(reader, "BankingId"),
+            BankName = GetNullableString(reader, "BankName"),
+            AccountName = GetNullableString(reader, "AccountName"),
+            AccountNumber = GetNullableString(reader, "AccountNumber"),
+            SwiftCode = GetNullableString(reader, "SwiftCode"),
+            BankCountry = GetNullableString(reader, "BankCountry"),
+            AuthorizedSignatoryName = GetNullableString(reader, "SignatoryName"),
+            Signature = GetNullableString(reader, "SignatureUrl"),
+            DeclarationDate = GetNullableDateTime(reader, "DeclaredAt")
+        };
+
+        ParseDestinationCountries(GetNullableString(reader, "DestinationCountries"), data);
+        ParseMarketingChannels(GetNullableString(reader, "MarketingChannels"), data);
+        ParseComplianceAgreements(reader, data);
+        var visaSupport = GetNullableBool(reader, "HasVisaProcessingSupport");
+        data.InHouseVisaSupport = visaSupport is bool value ? ToYesNo(value) : null;
+
+        if (await reader.NextResultAsync())
+        {
+            while (await reader.ReadAsync())
+            {
+                var isPrimary = reader.GetBoolean(reader.GetOrdinal("IsPrimary"));
+                if (isPrimary)
+                {
+                    data.PrimaryContactName = reader.GetString(reader.GetOrdinal("ContactName"));
+                    data.PrimaryContactDesignation = GetNullableString(reader, "Designation");
+                    data.PrimaryContactEmail = GetNullableString(reader, "EmailAddress");
+                    data.PrimaryContactMobile = GetNullableString(reader, "MobileNumber");
+                }
+                else
+                {
+                    data.SecondaryContactName = reader.GetString(reader.GetOrdinal("ContactName"));
+                    data.SecondaryContactEmail = GetNullableString(reader, "EmailAddress");
+                    data.SecondaryContactNumber = GetNullableString(reader, "MobileNumber");
+                }
+            }
+        }
+
+        if (await reader.NextResultAsync())
+        {
+            while (await reader.ReadAsync())
+            {
+                var documentType = reader.GetString(reader.GetOrdinal("DocumentType"));
+                var fileName = GetNullableString(reader, "FileName") ?? "Uploaded file";
+                if (DocumentTypeToField.TryGetValue(documentType, out var fieldName))
+                    data.UploadedDocuments[fieldName] = fileName;
+            }
+        }
+
+        data.ResumeStep = ComputeResumeStep(data);
+        return data;
+    }
+
+    private static int ComputeResumeStep(VendorOnboardingDataResponse data)
+    {
+        if (data.IsLinkExpired)
+            return 0;
+
+        if (string.IsNullOrWhiteSpace(data.LegalBusinessName))
+            return 0;
+        if (string.IsNullOrWhiteSpace(data.PrimaryContactName))
+            return 1;
+        if (string.IsNullOrWhiteSpace(data.BusinessType))
+            return 2;
+        if (string.IsNullOrWhiteSpace(data.PrimaryStudentSourceCountries))
+            return 3;
+        if (data.StudentsRecruitedLastYear == null)
+            return 4;
+        if (string.IsNullOrWhiteSpace(data.RegisteredWithRegulatoryBody))
+            return 5;
+        if (string.IsNullOrWhiteSpace(data.ConductsSeminars))
+            return 6;
+        if (string.IsNullOrWhiteSpace(data.PreferredPaymentTerms))
+            return 7;
+
+        if (string.IsNullOrWhiteSpace(data.BankName)
+            || string.IsNullOrWhiteSpace(data.AccountName)
+            || string.IsNullOrWhiteSpace(data.AccountNumber)
+            || string.IsNullOrWhiteSpace(data.SwiftCode)
+            || string.IsNullOrWhiteSpace(data.BankCountry))
+            return 8;
+
+        var requiredDocs = new[]
+        {
+            "companyRegistrationCertificate",
+            "directorIdPassport",
+            "officePhotos",
+            "businessProfile"
+        };
+
+        if (requiredDocs.Any(field => !data.UploadedDocuments.ContainsKey(field)))
+            return 9;
+
+        if (string.IsNullOrWhiteSpace(data.AuthorizedSignatoryName))
+            return 10;
+
+        return 10;
+    }
+
+    private static void ParseComplianceAgreements(SqlDataReader reader, VendorOnboardingDataResponse data)
+    {
+        if (GetNullableBool(reader, "AgreesEthicalRecruitment") == true)
+            data.ComplianceAgreements.Add("Ethical recruitment practices");
+        if (GetNullableBool(reader, "AgreesDataProtection") == true)
+            data.ComplianceAgreements.Add("Student data protection laws");
+        if (GetNullableBool(reader, "AgreesImmigrationRegs") == true)
+            data.ComplianceAgreements.Add("Immigration regulations");
+    }
+
+    private static void ParseDestinationCountries(string? raw, VendorOnboardingDataResponse data)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return;
+
+        foreach (var part in raw.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (part.StartsWith("Other:", StringComparison.OrdinalIgnoreCase))
+            {
+                data.DestinationCountries.Add("Other");
+                data.DestinationCountriesOther = part["Other:".Length..].Trim();
+            }
+            else
+            {
+                data.DestinationCountries.Add(part);
+            }
+        }
+    }
+
+    private static void ParseMarketingChannels(string? raw, VendorOnboardingDataResponse data)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return;
+
+        foreach (var part in raw.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (part.StartsWith("Other:", StringComparison.OrdinalIgnoreCase))
+            {
+                data.MarketingChannels.Add("Other");
+                data.MarketingChannelsOther = part["Other:".Length..].Trim();
+            }
+            else
+            {
+                data.MarketingChannels.Add(part);
+            }
+        }
+    }
+
+    private static string ToYesNo(bool value) => value ? "yes" : "no";
+
+    private static string MapBusinessTypeToDb(string businessType)
+    {
+        return businessType switch
+        {
+            "Education Agent" => "Agent",
+            "Migration Agency" => "Migration",
+            _ => businessType
+        };
+    }
+
+    private static string? MapBusinessTypeFromDb(string? businessType)
+    {
+        return businessType switch
+        {
+            "Agent" => "Education Agent",
+            "Migration" => "Migration Agency",
+            _ => businessType
+        };
+    }
+
+    private static string? GetNullableString(SqlDataReader reader, string column)
+    {
+        var ordinal = reader.GetOrdinal(column);
+        return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
+    }
+
+    private static int? GetNullableInt(SqlDataReader reader, string column)
+    {
+        var ordinal = reader.GetOrdinal(column);
+        return reader.IsDBNull(ordinal) ? null : reader.GetInt32(ordinal);
+    }
+
+    private static short? GetNullableShort(SqlDataReader reader, string column)
+    {
+        var ordinal = reader.GetOrdinal(column);
+        return reader.IsDBNull(ordinal) ? null : reader.GetInt16(ordinal);
+    }
+
+    private static decimal? GetNullableDecimal(SqlDataReader reader, string column)
+    {
+        var ordinal = reader.GetOrdinal(column);
+        return reader.IsDBNull(ordinal) ? null : reader.GetDecimal(ordinal);
+    }
+
+    private static bool? GetNullableBool(SqlDataReader reader, string column)
+    {
+        var ordinal = reader.GetOrdinal(column);
+        return reader.IsDBNull(ordinal) ? null : reader.GetBoolean(ordinal);
+    }
+
+    private static DateTime? GetNullableDateTime(SqlDataReader reader, string column)
+    {
+        var ordinal = reader.GetOrdinal(column);
+        return reader.IsDBNull(ordinal) ? null : reader.GetDateTime(ordinal);
     }
 
     private static bool ParseYesNo(string? value)
