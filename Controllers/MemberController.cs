@@ -24,9 +24,8 @@ namespace AvecADeskApi.Controllers
         {
             try
             {
-                // Temporary fix
                 int loginUserId = 15;
-                string roleName = "Super Admin"; 
+                string roleName = "Super Admin";
 
                 var users = await _membersRepository.GetAllUsersAsync(loginUserId, roleName);
 
@@ -46,6 +45,7 @@ namespace AvecADeskApi.Controllers
             {
                 if (request == null)
                     return BadRequest("Invalid payload");
+
                 var existingUser = await _membersRepository.GetUserByUserNameAsync(request.UserName);
                 if (existingUser != null)
                 {
@@ -65,10 +65,10 @@ namespace AvecADeskApi.Controllers
             }
             catch (Exception ex)
             {
-                // Return full exception text to help diagnose issues (DB connectivity, missing procs, etc.)
                 return StatusCode(500, ex.ToString());
             }
         }
+
         [HttpPut("update")]
         public async Task<IActionResult> UpdateUser([FromBody] UserResponse request)
         {
@@ -136,13 +136,11 @@ namespace AvecADeskApi.Controllers
             try
             {
                 var resignDate = DateTime.UtcNow;
-                var success = await _membersRepository.ResignMemberAsync(userId, resignDate);
 
-                if (!success)
-                    return new NotFoundObjectResult(new { Message = "User not found" });
+ 
+                await _membersRepository.ResignMemberAsync(userId, resignDate);
 
                 return Ok(new MemberResignResponse
-
                 {
                     Success = true,
                     Message = "Member resigned successfully",
@@ -154,7 +152,5 @@ namespace AvecADeskApi.Controllers
                 return StatusCode(500, new { Message = "An error occurred while processing the request." });
             }
         }
-
-
     }
 }
