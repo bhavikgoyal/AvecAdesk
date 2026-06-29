@@ -122,6 +122,7 @@ namespace AvecADeskApi.Repositories.Checklist
                 {
                     cmd.Parameters.AddWithValue("@ChecklistID", request.ChecklistID);
                     cmd.Parameters.AddWithValue("@ItemName", request.ItemName);
+                    cmd.Parameters.AddWithValue("@AssignedUserID", request.AssignedUserID);
                     cmd.Parameters.Add(newIdParam);
                 });
 
@@ -133,6 +134,24 @@ namespace AvecADeskApi.Repositories.Checklist
                 throw;
             }
         }
+
+
+        //public async Task UpdateChecklistItemAssigneeAsync(int checklistItemID, int assignedUserID)
+        //{
+        //    try
+        //    {
+        //        await _db.ExecuteNonQueryAsync("UPDATE dbo.ChecklistItems SET AssignedUserID = @AssignedUserID WHERE ChecklistItemID = @ChecklistItemID", cmd =>
+        //        {
+        //            cmd.Parameters.AddWithValue("@ChecklistItemID", checklistItemID);
+        //            cmd.Parameters.AddWithValue("@AssignedUserID", assignedUserID);
+        //        });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logHelper.LogError($"{nameof(ChecklistRepository)}.{nameof(UpdateChecklistItemAssigneeAsync)}", ex);
+        //        throw;
+        //    }
+        //}
 
         public async Task<bool> UpdateChecklistItemStatusAsync(int checklistItemId, bool isCompleted)
         {

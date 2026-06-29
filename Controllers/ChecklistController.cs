@@ -73,27 +73,67 @@ namespace AvecADeskApi.Controllers
                 }
             }
 
-         
-            [HttpPost("item/create")]
-            public async Task<IActionResult> CreateItem([FromBody] CreateChecklistItemRequest request)
+
+        //[HttpPost("item/create")]
+        //public async Task<IActionResult> CreateItem([FromBody] CreateChecklistItemRequest request)
+        //{
+        //    if (string.IsNullOrWhiteSpace(request.ItemName))
+        //        return BadRequest(new { message = "Item name is required." });
+
+        //    try
+        //    {
+        //        var id = await _repo.CreateChecklistItemAsync(request);
+        //        return Ok(new { message = "Item created successfully", checklistItemId = id });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex, "Error creating checklist item for ChecklistId: {ChecklistId}", request.ChecklistID);
+        //        return StatusCode(500, new { message = "Error creating checklist item" });
+        //    }
+        //}
+        [HttpPost("item/create")]
+        public async Task<IActionResult> CreateItem([FromBody] CreateChecklistItemRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.ItemName))
+                return BadRequest(new { message = "Item name is required." });
+
+            if (request.ChecklistID <= 0)
+                return BadRequest(new { message = "Valid ChecklistID is required." });
+
+            if (request.AssignedUserID <= 0)         
+                return BadRequest(new { message = "Valid AssignedUserID is required." });
+
+            try
             {
-                if (string.IsNullOrWhiteSpace(request.ItemName))
-                    return BadRequest(new { message = "Item name is required." });
-
-                try
-                {
-                    var id = await _repo.CreateChecklistItemAsync(request);
-                    return Ok(new { message = "Item created successfully", checklistItemId = id });
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error creating checklist item for ChecklistId: {ChecklistId}", request.ChecklistID);
-                    return StatusCode(500, new { message = "Error creating checklist item" });
-                }
+                var id = await _repo.CreateChecklistItemAsync(request);
+                return Ok(new { message = "Item created successfully", checklistItemId = id });
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating checklist item for ChecklistId: {ChecklistId}", request.ChecklistID);
+                return StatusCode(500, new { message = "Error creating checklist item" });
+            }
+        }
 
-       
-            [HttpPatch("item/toggle/{checklistItemId:int}")]
+        //[HttpPut("item/update-assignee")]
+        //public async Task<IActionResult> UpdateItemAssignee([FromBody] UpdateItemAssigneeRequest request)
+        //{
+        //    if (request.ChecklistItemID <= 0 || request.AssignedUserID <= 0)
+        //        return BadRequest(new { message = "Valid ChecklistItemID and AssignedUserID are required." });
+
+        //    try
+        //    {
+        //        await _repo.UpdateChecklistItemAssigneeAsync(request.ChecklistItemID, request.AssignedUserID);
+        //        return Ok(new { message = "Assignee updated successfully" });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex, "Error updating assignee for ItemId: {ItemId}", request.ChecklistItemID);
+        //        return StatusCode(500, new { message = "Error updating checklist item assignee" });
+        //    }
+        //}
+
+        [HttpPatch("item/toggle/{checklistItemId:int}")]
             public async Task<IActionResult> ToggleItem(int checklistItemId, [FromBody] UpdateChecklistItemStatusRequest request)
             {
                 try
