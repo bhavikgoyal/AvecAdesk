@@ -120,6 +120,8 @@ builder.Services.AddScoped<ICollegeRepository, CollegeRepository>();
 builder.Services.AddScoped<IInstitutePortalRepository, InstitutePortalRepository>();
 builder.Services.AddScoped<IInstituteWebsiteFetcher, InstituteWebsiteFetcher>();
 builder.Services.AddScoped<IInstituteScrappingService, InstituteScrappingService>();
+builder.Services.AddScoped<IReceivablesRepository, ReceivablesRepository>();
+builder.Services.AddScoped<IStudentApplicationRepository, StudentApplicationRepository>();
 builder.Services.AddHttpClient("InstituteScraper", client =>
 {
     client.Timeout = TimeSpan.FromSeconds(60);
@@ -166,6 +168,10 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
 }
+var wwwroot = Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
+Directory.CreateDirectory(Path.Combine(wwwroot, "uploads"));
+
+app.UseStaticFiles();
 app.UseCors("VendorPortal");
 app.UseAuthentication();
 app.UseAuthorization();
