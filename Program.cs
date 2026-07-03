@@ -1,3 +1,4 @@
+using AvecADeskApi.Helper;
 using AvecADeskApi.Helpers;
 using AvecADeskApi.Interfaces;
 using AvecADeskApi.IRepository;
@@ -6,13 +7,13 @@ using AvecADeskApi.LOG;
 using AvecADeskApi.Repositories;
 using AvecADeskApi.Repositories.Aih;
 using AvecADeskApi.Repositories.Checklist;
+using AvecADeskApi.Repositories.Colleges;
 using AvecADeskApi.Repositories.Commissions;
 using AvecADeskApi.Repositories.Courses;
 using AvecADeskApi.Repositories.EmailTemplates;
-using AvecADeskApi.Repositories.Colleges;
+using AvecADeskApi.Repositories.Institutes;
+using AvecADeskApi.Repositories.Institutes;
 using AvecADeskApi.Repositories.InstituteScrapping;
-using AvecADeskApi.Repositories.Institutes;
-using AvecADeskApi.Repositories.Institutes;
 using AvecADeskApi.Repositories.InstituteScrapping;
 using AvecADeskApi.Repositories.Invoices;
 using AvecADeskApi.Repositories.Members;
@@ -24,6 +25,9 @@ using AvecADeskApi.Repositories.Students;
 using AvecADeskApi.Repositories.TaskRepo;
 using AvecADeskApi.Repositories.Uploads;
 using AvecADeskApi.Repositories.UserActivity;
+using AvecADeskApi.Repositories.UserActivity;
+//using AvecADeskApi.Repositories.EmployeeWorkHours;
+using AvecADeskApi.Repositories.UserPassword;
 using AvecADeskApi.Repositories.UserRoles;
 using AvecADeskApi.Repositories.Vendors;
 using AvecADeskApi.Repository;
@@ -34,9 +38,6 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
 using System.Text;
-using AvecADeskApi.Repositories.UserActivity;
-//using AvecADeskApi.Repositories.EmployeeWorkHours;
-using AvecADeskApi.Repositories.UserPassword;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -153,6 +154,7 @@ builder.Services.AddScoped<IEmployeeWorkHoursRepository, EmployeeWorkHoursReposi
 builder.Services.AddScoped<IUserActivityRepository, UserActivityRepository>();
 builder.Services.AddScoped<IViewActivityHistoryRepository, ViewActivityHistoryRepository>();
 builder.Services.AddScoped<IUserRepository, UserPasswordRepository>();
+builder.Services.AddScoped<JwtTokenGenerator>();
 
 
 var app = builder.Build();

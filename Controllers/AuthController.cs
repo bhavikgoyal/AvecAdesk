@@ -12,15 +12,13 @@ namespace AvecADeskApi.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthRepository _repo;
-        private readonly IConfiguration _configuration;
         private readonly JwtTokenGenerator _tokenGenerator;
         private readonly ILogger<AuthController> _logger;
 
-        public AuthController(IAuthRepository repo, IConfiguration configuration, ILogger<AuthController> logger)
+        public AuthController(IAuthRepository repo, JwtTokenGenerator tokenGenerator, ILogger<AuthController> logger)
         {
             _repo = repo;
-            _configuration = configuration;
-            _tokenGenerator = new JwtTokenGenerator(_configuration);
+            _tokenGenerator = tokenGenerator;
             _logger = logger;
         }
 
@@ -160,8 +158,7 @@ namespace AvecADeskApi.Controllers
                 if (user == null)
                     return Unauthorized("User context not found.");
 
-                var jwtGenerator = new JwtTokenGenerator(_configuration);
-                var newAccessToken = jwtGenerator.GenerateToken(user.UserId, user.UserName);
+                var newAccessToken = _tokenGenerator.GenerateToken(user.UserId, user.UserName);
 
                 return Ok(new TokenResponseDTO
                 {

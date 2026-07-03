@@ -1,4 +1,5 @@
-﻿using AvecADeskApi.Interfaces;
+﻿using AvecADeskApi.Helper;
+using AvecADeskApi.Interfaces;
 using AvecADeskApi.Model.Student;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,11 +10,13 @@ namespace AvecADeskApi.Controllers;
 public class StudentApplicationController : ControllerBase
 {
     private readonly IStudentApplicationRepository _repo;
+    private readonly JwtTokenGenerator _tokenGenerator;
     private readonly IWebHostEnvironment _env;
 
-    public StudentApplicationController(IStudentApplicationRepository repo, IWebHostEnvironment env)
+    public StudentApplicationController(IStudentApplicationRepository repo,JwtTokenGenerator tokenGenerator,IWebHostEnvironment env)
     {
         _repo = repo;
+        _tokenGenerator = tokenGenerator;
         _env = env;
     }
 
@@ -39,8 +42,20 @@ public class StudentApplicationController : ControllerBase
     public async Task<IActionResult> SaveDetails(Guid id, [FromBody] ApplicationDetailRequest request)
     {
         var result = await _repo.SaveApplicationDetailAsync(id, request);
-        if (!result) return NotFound();
-        return Ok(new { Message = "Details saved successfully" });
+
+        if (result == null)
+        {
+            return NotFound(new { Message = "Application not found." });
+        }
+
+        var token = _tokenGenerator.StudentGenerateToken(result.Id, result.UserName!);
+
+        return Ok(new
+        {
+            Message = "Details saved successfully.",
+            Token = token,
+            Data = result
+        });
     }
 
 
