@@ -2,6 +2,7 @@
 using AvecADeskApi.Interfaces;
 using AvecADeskApi.Model.Student;
 using Microsoft.AspNetCore.Mvc;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace AvecADeskApi.Controllers;
 
@@ -18,6 +19,21 @@ public class StudentApplicationController : ControllerBase
         _repo = repo;
         _tokenGenerator = tokenGenerator;
         _env = env;
+    }
+
+    // GET: api/GetStudentApplication
+    [HttpGet("GetStudentApplicationList")]
+    public async Task<IActionResult> GetStudentApplications([FromQuery] string? search, [FromQuery] int pagenumber, [FromQuery] int pageSize)
+    {
+        var result = await _repo.GetStudentApplicationsAsync(search, pagenumber, pageSize);
+        int totalRecords = result.Count > 0 ? result[0].TotalRecords : 0;
+        return Ok(new
+        {
+            Data = result,
+            TotalRecords = totalRecords,
+            PageNumber = pagenumber,
+            PageSize = pageSize
+        });
     }
 
     // GET: api/StudentApplication/{id}

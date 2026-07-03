@@ -14,4 +14,7 @@ public class CourseResponse
     public bool IsApproved { get; set; }
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }
+    public decimal CommissionPercentage { get; set; }
+    public decimal GSTPercentage { get; set; }
+    public decimal BonusAmount { get; set; }
 }
