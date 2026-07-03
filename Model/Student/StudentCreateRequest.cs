@@ -9,4 +9,5 @@ public class StudentCreateRequest
     public string Phone { get; set; } = string.Empty;
     public string? EnrollmentNumber { get; set; }
     public string EnrolmentStatus { get; set; } = "Interested";
+    
 }

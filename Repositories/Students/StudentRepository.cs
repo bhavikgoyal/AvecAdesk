@@ -142,7 +142,9 @@ public class StudentRepository : IStudentRepository
             EnrolmentStatus = reader.GetString(reader.GetOrdinal("EnrolmentStatus")),
             AIHFormSubmittedAt = reader.IsDBNull(reader.GetOrdinal("AIHFormSubmittedAt")) ? null : reader.GetDateTime(reader.GetOrdinal("AIHFormSubmittedAt")),
             IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
-            CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt"))
+            CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+          
+
         };
     }
 }

@@ -169,8 +169,7 @@ namespace AvecADeskApi.Repositories.TaskRepo
                 PriorityName = reader["PriorityName"] as string,
                 SheetType = reader["SheetType"] as string,
                 ChecklistTotal = reader["ChecklistTotal"] is DBNull ? 0 : reader.GetInt32(reader.GetOrdinal("ChecklistTotal")),
-                ChecklistCompleted = reader["ChecklistCompleted"] is DBNull ? 0 : reader.GetInt32(reader.GetOrdinal("ChecklistCompleted")),
-              
+                ChecklistCompleted = reader["ChecklistCompleted"] is DBNull ? 0 : reader.GetInt32(reader.GetOrdinal("ChecklistCompleted"))
             };
         }
     }

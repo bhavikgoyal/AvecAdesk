@@ -17,7 +17,26 @@ public class StudentApplicationRepository : IStudentApplicationRepository
         _db = db;
         _logHelper = logHelper;
     }
-
+    public async Task<List<StudentApplicationDetailsModel>> GetStudentApplicationsAsync(string? search, int pagenumber, int pageSize)
+    {
+        try
+        {
+            return await _db.ExecuteReaderListAsync(
+                "sp_GetStudentApplicationDetails",
+                cmd => 
+                {
+                    cmd.Parameters.AddWithValue("@Search", search ?? string.Empty);
+                    cmd.Parameters.AddWithValue("@PageNumber", pagenumber);
+                    cmd.Parameters.AddWithValue("@PageSize", pageSize);
+                },
+                MapStudentApplicationDetail);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(StudentApplicationRepository)}.{nameof(GetStudentApplicationsAsync)}", ex);
+            throw;
+        }
+    }
     public async Task<StudentApplicationResponse?> GetApplicationByIdAsync(Guid applicationId)
     {
         try
@@ -312,6 +331,37 @@ public class StudentApplicationRepository : IStudentApplicationRepository
             FileUrl = reader.GetString(reader.GetOrdinal("FileUrl")),
             IsMandatory = reader.GetBoolean(reader.GetOrdinal("IsMandatory")),
             UploadedAt = reader.GetDateTime(reader.GetOrdinal("UploadedAt"))
+        };
+    }
+    private static StudentApplicationDetailsModel MapStudentApplicationDetail(SqlDataReader reader)
+    {
+        return new StudentApplicationDetailsModel
+        {
+            Id = reader.GetGuid(reader.GetOrdinal("Id")),
+            ApplicationId = reader.GetGuid(reader.GetOrdinal("ApplicationId")),
+            FirstName = reader["FirstName"]?.ToString(),
+            LastName = reader["LastName"]?.ToString(),
+            Email = reader["Email"]?.ToString(),
+            Phone = reader["Phone"]?.ToString(),
+            DateOfBirth = reader.IsDBNull(reader.GetOrdinal("DateOfBirth")) ? null : reader.GetDateTime(reader.GetOrdinal("DateOfBirth")),
+            Nationality = reader["Nationality"]?.ToString(),
+            PassportNumber = reader["PassportNumber"]?.ToString(),
+            EmergencyContactName = reader["EmergencyContactName"]?.ToString(),
+            EmergencyContactPhone = reader["EmergencyContactPhone"]?.ToString(),
+            EmergencyContactRelation = reader["EmergencyContactRelation"]?.ToString(),
+            AppliedVisaBefore = reader.GetBoolean(reader.GetOrdinal("AppliedVisaBefore")),
+            PreviousVisaType = reader["PreviousVisaType"]?.ToString(),
+            RefusedVisa = reader.GetBoolean(reader.GetOrdinal("RefusedVisa")),
+            RefusedCountry = reader["RefusedCountry"]?.ToString(),
+            RefusedVisaType = reader["RefusedVisaType"]?.ToString(),
+            EnglishTestName = reader["EnglishTestName"]?.ToString(),
+            EnglishTestScore = reader["EnglishTestScore"]?.ToString(),
+            EnglishTestDate = reader.IsDBNull(reader.GetOrdinal("EnglishTestDate")) ? null : reader.GetDateTime(reader.GetOrdinal("EnglishTestDate")),
+            HighestQualification = reader["HighestQualification"]?.ToString(),
+            UpdatedAt = reader.IsDBNull(reader.GetOrdinal("UpdatedAt")) ? null : reader.GetDateTime(reader.GetOrdinal("UpdatedAt")),
+            TotalRecords = reader["TotalRecords"] == DBNull.Value
+                ? 0
+                : Convert.ToInt32(reader["TotalRecords"])
         };
     }
 }
