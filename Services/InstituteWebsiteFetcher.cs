@@ -1,14 +1,17 @@
 using System.Net;
+using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using AvecADeskApi.Interfaces;
+using AvecADeskApi.Model.InstituteScrapping;
 using Microsoft.Playwright;
 
 namespace AvecADeskApi.Services;
 
 public class InstituteWebsiteFetcher : IInstituteWebsiteFetcher
 {
-    private const int MaxSectionPages = 10;
-    private const int MaxProgramPages = 15;
+    private const int MaxSectionPages = 15;
+    private const int MaxProgramDetailPages = 250;
 
     private readonly IHttpClientFactory _httpClientFactory;
 
@@ -17,12 +20,13 @@ public class InstituteWebsiteFetcher : IInstituteWebsiteFetcher
         _httpClientFactory = httpClientFactory;
     }
 
-    public async Task<(string? CombinedText, string? LogoUrl, List<string> Errors, bool UsedBrowser)> FetchWebsiteTextAsync(string websiteUrl)
+    public async Task<(string? CombinedText, string? LogoUrl, List<string> Errors, bool UsedBrowser, List<ScrapedProgramRecord> ParsedPrograms)> FetchWebsiteTextAsync(string websiteUrl)
     {
         var homepage = NormalizeHomepageUrl(websiteUrl);
         var errors = new List<string>();
         var textChunks = new List<string>();
         var fetchedHtml = new List<(string Url, string Html)>();
+        var parsedPrograms = new List<ScrapedProgramRecord>();
         var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var usedBrowser = false;
         string? logoUrl = null;
@@ -62,7 +66,8 @@ public class InstituteWebsiteFetcher : IInstituteWebsiteFetcher
                 }
 
                 fetchedHtml.Add((normalized, html));
-                var text = ExtractVisibleText(html);
+                parsedPrograms.AddRange(ExtractProgramsFromHtml(html, normalized));
+                var text = ExtractPageText(html);
                 if (!string.IsNullOrWhiteSpace(text))
                     textChunks.Add($"--- Page: {normalized} ---\n{text}");
 
@@ -71,6 +76,20 @@ public class InstituteWebsiteFetcher : IInstituteWebsiteFetcher
 
             await AddPageAsync(homepage, preferBrowser: false);
 
+            if (Uri.TryCreate(homepage, UriKind.Absolute, out var homeUri))
+            {
+                var listingPaths = CommonStudyPaths
+                    .Where(path => path.Contains("program", StringComparison.OrdinalIgnoreCase)
+                        || path.Contains("course", StringComparison.OrdinalIgnoreCase)
+                        || path.Contains("academic", StringComparison.OrdinalIgnoreCase))
+                    .Select(path => NormalizePageUrl($"{homeUri.Scheme}://{homeUri.Host}{path}"))
+                    .Where(url => !visited.Contains(url))
+                    .ToList();
+
+                foreach (var listingUrl in listingPaths)
+                    await AddPageAsync(listingUrl, preferBrowser: usedBrowser);
+            }
+
             var sectionUrls = DiscoverSectionUrls(homepage, fetchedHtml)
                 .Take(MaxSectionPages)
                 .ToList();
@@ -78,24 +97,30 @@ public class InstituteWebsiteFetcher : IInstituteWebsiteFetcher
             foreach (var sectionUrl in sectionUrls)
                 await AddPageAsync(sectionUrl, preferBrowser: usedBrowser);
 
-            var programUrls = ExtractProgramLinks(fetchedHtml, homepage)
-                .Where(url => !visited.Contains(NormalizePageUrl(url)))
-                .Take(MaxProgramPages)
+            var catalogPrograms = DeduplicatePrograms(parsedPrograms);
+            var detailUrls = catalogPrograms
+                .Where(program => !string.IsNullOrWhiteSpace(program.ProgramLink))
+                .Select(program => NormalizePageUrl(program.ProgramLink!))
+                .Where(url => !visited.Contains(url))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Take(MaxProgramDetailPages)
                 .ToList();
 
-            foreach (var programUrl in programUrls)
-                await AddPageAsync(programUrl, preferBrowser: usedBrowser);
+            foreach (var detailUrl in detailUrls)
+                await AddPageAsync(detailUrl, preferBrowser: usedBrowser);
+
+            EnrichProgramsFromDetailPages(catalogPrograms, fetchedHtml);
 
             if (textChunks.Count == 0)
-                return (null, logoUrl, errors, usedBrowser);
+                return (null, logoUrl, errors, usedBrowser, catalogPrograms);
 
             var combined = string.Join("\n\n", textChunks);
-            if (combined.Length > 120000)
-                combined = combined[..120000];
+            if (combined.Length > 180000)
+                combined = combined[..180000];
 
             logoUrl ??= ExtractLogoUrl(fetchedHtml, homepage);
 
-            return (combined, logoUrl, errors, usedBrowser);
+            return (combined, logoUrl, errors, usedBrowser, catalogPrograms);
         }
         finally
         {
@@ -140,6 +165,12 @@ public class InstituteWebsiteFetcher : IInstituteWebsiteFetcher
                 yield return url;
         }
 
+        foreach (var url in ExtractEmbeddedPathUrls(pages, origin, @"/study-areas/[a-z0-9\-]+/?"))
+        {
+            if (seen.Add(url))
+                yield return url;
+        }
+
         foreach (var suffix in CommonStudyPaths)
         {
             var candidate = $"{origin}{suffix}";
@@ -157,8 +188,15 @@ public class InstituteWebsiteFetcher : IInstituteWebsiteFetcher
         "/study",
         "/courses",
         "/programs",
+        "/academics/programs",
+        "/academics",
         "/find-a-course",
         "/international-students",
+        "/international-students/international-courses",
+        "/about-us",
+        "/courses/undergraduate",
+        "/courses/short-courses",
+        "/search",
     };
 
     private static IEnumerable<string> ExtractProgramLinks(
@@ -224,6 +262,9 @@ public class InstituteWebsiteFetcher : IInstituteWebsiteFetcher
             || value.Contains("postgraduate")
             || value.Contains("international")
             || value.Contains("find-a-course")
+            || value.Contains("study-areas")
+            || value.Contains("about-us")
+            || value.Contains("academics")
             || value.Contains("degree")
             || value.Contains("qualification")
             || value.Contains("offering")
@@ -244,6 +285,7 @@ public class InstituteWebsiteFetcher : IInstituteWebsiteFetcher
         return value.Contains("/program")
             || value.Contains("/course")
             || value.Contains("/study-with-us/")
+            || value.Contains("/study-areas/")
             || value.Contains("/degrees/")
             || value.Contains("/degree/")
             || value.Contains("/bachelor")
@@ -255,6 +297,189 @@ public class InstituteWebsiteFetcher : IInstituteWebsiteFetcher
             || value.Contains("/vet/")
             || value.Contains("/certificate");
     }
+
+    private static IEnumerable<string> ExtractEmbeddedProgramUrls(
+        IEnumerable<(string Url, string Html)> pages,
+        string websiteUrl)
+    {
+        return ExtractEmbeddedPathUrls(pages, websiteUrl, @"/courses/[a-z0-9][a-z0-9\-]+/?")
+            .Where(url =>
+            {
+                if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+                    return false;
+
+                var path = uri.AbsolutePath.TrimEnd('/');
+                if (IsCourseListingPath(path))
+                    return false;
+
+                var slug = path["/courses/".Length..];
+                return slug.Length >= 12;
+            });
+    }
+
+    private static IEnumerable<string> ExtractEmbeddedPathUrls(
+        IEnumerable<(string Url, string Html)> pages,
+        string websiteUrl,
+        string pathPattern)
+    {
+        if (!Uri.TryCreate(websiteUrl, UriKind.Absolute, out var baseUri))
+            yield break;
+
+        var origin = $"{baseUri.Scheme}://{baseUri.Host}";
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var regex = new Regex($@"(?<path>{pathPattern})", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        foreach (var (_, html) in pages)
+        {
+            foreach (Match match in regex.Matches(html))
+            {
+                var path = match.Groups["path"].Value.TrimEnd('/');
+                var absolute = NormalizePageUrl($"{origin}{path}");
+                if (seen.Add(absolute))
+                    yield return absolute;
+            }
+        }
+    }
+
+    private static bool IsCourseListingPath(string path)
+    {
+        var normalized = path.TrimEnd('/').ToLowerInvariant();
+        return normalized is "/courses"
+            or "/courses/undergraduate"
+            or "/courses/short-courses"
+            or "/courses/study-options"
+            or "/courses/apprenticeships"
+            or "/courses/pre-apprenticeships"
+            or "/courses/search";
+    }
+
+    private static string ExtractPageText(string html)
+    {
+        var visible = ExtractVisibleText(html);
+        var embedded = ExtractEmbeddedJsonText(html);
+
+        if (string.IsNullOrWhiteSpace(embedded))
+            return visible;
+
+        if (string.IsNullOrWhiteSpace(visible))
+            return embedded;
+
+        return $"{visible}\n\n--- Embedded page data ---\n{embedded}";
+    }
+
+    private static string? ExtractEmbeddedJsonText(string html)
+    {
+        var match = Regex.Match(
+            html,
+            @"<script[^>]+id=[""']__NEXT_DATA__[""'][^>]*>(?<json>.*?)</script>",
+            RegexOptions.IgnoreCase | RegexOptions.Singleline);
+
+        if (!match.Success)
+            return null;
+
+        try
+        {
+            using var document = JsonDocument.Parse(match.Groups["json"].Value);
+            var flattened = FlattenJsonToText(document.RootElement);
+            return string.IsNullOrWhiteSpace(flattened)
+                ? null
+                : flattened.Length > 25000 ? flattened[..25000] : flattened;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    private static string FlattenJsonToText(JsonElement element)
+    {
+        var builder = new StringBuilder();
+        var skipKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "__typename", "_modelApiKey", "buildId", "md5", "blurhash", "blurUpThumb",
+            "mimeType", "basename", "filename", "focalPoint", "exifInfo", "customData",
+            "width", "height", "size", "format", "tags", "smartTags", "colors",
+            "createdAt", "updatedAt", "reviewDate", "isFallback", "gsp", "appGip",
+            "scriptLoader", "query", "faviconMetaTags", "_seoMetaTags", "allNavigationLinks",
+            "v2FooterLinks", "sitePopups", "preHeaderBanner", "fourColBlock",
+        };
+
+        WalkJson(element, builder, skipKeys, depth: 0);
+        return builder.ToString().Trim();
+    }
+
+    private static void WalkJson(
+        JsonElement element,
+        StringBuilder builder,
+        HashSet<string> skipKeys,
+        int depth,
+        string? currentKey = null)
+    {
+        if (depth > 12)
+            return;
+
+        switch (element.ValueKind)
+        {
+            case JsonValueKind.Object:
+                foreach (var property in element.EnumerateObject())
+                {
+                    if (skipKeys.Contains(property.Name))
+                        continue;
+
+                    WalkJson(property.Value, builder, skipKeys, depth + 1, property.Name);
+                }
+                break;
+
+            case JsonValueKind.Array:
+                foreach (var item in element.EnumerateArray())
+                    WalkJson(item, builder, skipKeys, depth + 1, currentKey);
+                break;
+
+            case JsonValueKind.String:
+                var value = element.GetString();
+                if (string.IsNullOrWhiteSpace(value) || value.Length < 8)
+                    break;
+
+                if (ShouldIncludeJsonString(currentKey, value))
+                {
+                    if (!string.IsNullOrWhiteSpace(currentKey))
+                        builder.AppendLine($"{currentKey}: {value.Trim()}");
+                    else
+                        builder.AppendLine(value.Trim());
+                }
+                break;
+        }
+    }
+
+    private static bool ShouldIncludeJsonString(string? key, string value)
+    {
+        var trimmed = value.Trim();
+        if (trimmed.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        if (key is not null && InterestingJsonKeys.Contains(key))
+            return true;
+
+        if (trimmed.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+            return key is "url" or "programLink" or "logo" or "programLogo";
+
+        if (trimmed.StartsWith('/') && trimmed.Count(c => c == '/') <= 4)
+            return key is "slug" or "path" or "pagePath";
+
+        return trimmed.Length >= 20
+            && !Regex.IsMatch(trimmed, @"^[a-f0-9\-]{20,}$", RegexOptions.IgnoreCase);
+    }
+
+    private static readonly HashSet<string> InterestingJsonKeys = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "title", "name", "programName", "courseName", "fullTitle", "heading", "subheading",
+        "description", "summary", "about", "boxHillDescription", "content", "message",
+        "cricos", "cricosCode", "duration", "intake", "feesYearly", "englishReq",
+        "country", "city", "state", "campus", "level", "qualification", "scholarshipsDetails",
+        "programDescription", "addmissionRequirements", "admissionRequirements", "eligibility",
+        "entryRequirements", "requirements", "notes", "seoSettings", "mailingAddress",
+        "footerAcknowledgement", "contactDescription", "courseEnquiryFormDescription",
+    };
 
     private async Task<(string? Html, string? Error)> TryFetchHtmlWithHttpAsync(string url)
     {
@@ -410,6 +635,356 @@ public class InstituteWebsiteFetcher : IInstituteWebsiteFetcher
             return $"{origin}{value}";
 
         return $"{origin}/{value}";
+    }
+
+    private static List<ScrapedProgramRecord> ExtractProgramsFromHtml(string html, string pageUrl)
+    {
+        var programs = new List<ScrapedProgramRecord>();
+        if (string.IsNullOrWhiteSpace(html))
+            return programs;
+
+        var origin = Uri.TryCreate(pageUrl, UriKind.Absolute, out var pageUri)
+            ? $"{pageUri.Scheme}://{pageUri.Host}"
+            : null;
+
+        var listItemPattern = new Regex(
+            @"<li\b[^>]*(?:data-query-item|class=""[^""]*card-container[^""]*"")[^>]*>(?<item>.*?)</li>",
+            RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        foreach (Match match in listItemPattern.Matches(html))
+        {
+            var item = match.Groups["item"].Value;
+            var programName = ExtractRegexGroup(
+                item,
+                @"<h[1-6][^>]*class=""[^""]*card-title[^""]*""[^>]*>.*?<a[^>]*>(?<name>[^<]+)</a>",
+                "name");
+
+            if (string.IsNullOrWhiteSpace(programName))
+                continue;
+
+            var programLink = ExtractRegexGroup(
+                item,
+                @"<a[^>]*class=""[^""]*card-link[^""]*""[^>]*href=""(?<link>[^""]+)""",
+                "link")
+                ?? ExtractRegexGroup(
+                    item,
+                    @"<h[1-6][^>]*class=""[^""]*card-title[^""]*""[^>]*>.*?<a[^>]*href=""(?<link>[^""]+)""",
+                    "link");
+
+            var meta = ExtractRegexGroup(
+                item,
+                @"<p[^>]*class=""[^""]*card-meta[^""]*""[^>]*>(?<meta>[^<]+)</p>",
+                "meta");
+
+            var level = ExtractRegexGroup(match.Value, @"data-type=""(?<type>[^""]+)""", "type");
+            var campus = meta;
+
+            if (!string.IsNullOrWhiteSpace(meta) && meta.Contains(" - ", StringComparison.Ordinal))
+            {
+                var parts = meta.Split(" - ", 2, StringSplitOptions.TrimEntries);
+                level = FirstNonEmptyString(level, parts[0]);
+                campus = parts.Length > 1 ? parts[1] : meta;
+            }
+            else
+            {
+                level = FirstNonEmptyString(level, meta);
+            }
+
+            programs.Add(new ScrapedProgramRecord
+            {
+                ProgramName = WebUtility.HtmlDecode(programName.Trim()),
+                ProgramLink = NormalizeProgramLink(programLink, origin),
+                Level = NormalizeLevel(level),
+                Campus = string.IsNullOrWhiteSpace(campus) ? null : WebUtility.HtmlDecode(campus.Trim()),
+            });
+        }
+
+        if (programs.Count == 0)
+        {
+            var cardPattern = new Regex(
+                @"<h[1-6][^>]*class=""[^""]*card-title[^""]*""[^>]*>.*?<a[^>]*href=""(?<link>[^""]+)""[^>]*>(?<name>[^<]+)</a>.*?<p[^>]*class=""[^""]*card-meta[^""]*""[^>]*>(?<meta>[^<]+)</p>",
+                RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+            foreach (Match match in cardPattern.Matches(html))
+            {
+                var meta = WebUtility.HtmlDecode(match.Groups["meta"].Value.Trim());
+                var level = meta;
+                var campus = meta;
+
+                if (meta.Contains(" - ", StringComparison.Ordinal))
+                {
+                    var parts = meta.Split(" - ", 2, StringSplitOptions.TrimEntries);
+                    level = parts[0];
+                    campus = parts.Length > 1 ? parts[1] : meta;
+                }
+
+                programs.Add(new ScrapedProgramRecord
+                {
+                    ProgramName = WebUtility.HtmlDecode(match.Groups["name"].Value.Trim()),
+                    ProgramLink = NormalizeProgramLink(match.Groups["link"].Value, origin),
+                    Level = NormalizeLevel(level),
+                    Campus = campus,
+                });
+            }
+        }
+
+        return programs;
+    }
+
+    private static List<ScrapedProgramRecord> DeduplicatePrograms(IEnumerable<ScrapedProgramRecord> programs)
+    {
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var results = new List<ScrapedProgramRecord>();
+
+        foreach (var program in programs)
+        {
+            if (string.IsNullOrWhiteSpace(program.ProgramName))
+                continue;
+
+            var key = !string.IsNullOrWhiteSpace(program.ProgramLink)
+                ? program.ProgramLink.Trim().TrimEnd('/').ToLowerInvariant()
+                : program.ProgramName.Trim().ToLowerInvariant();
+
+            if (!seen.Add(key))
+                continue;
+
+            results.Add(program);
+        }
+
+        return results;
+    }
+
+    private static void EnrichProgramsFromDetailPages(
+        IReadOnlyList<ScrapedProgramRecord> programs,
+        IReadOnlyList<(string Url, string Html)> fetchedHtml)
+    {
+        var htmlByUrl = fetchedHtml
+            .GroupBy(page => NormalizePageUrl(page.Url), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.First().Html, StringComparer.OrdinalIgnoreCase);
+
+        foreach (var program in programs)
+        {
+            if (string.IsNullOrWhiteSpace(program.ProgramLink))
+                continue;
+
+            if (!htmlByUrl.TryGetValue(NormalizePageUrl(program.ProgramLink), out var html))
+                continue;
+
+            program.ProgramLogo = FirstNonEmptyString(
+                program.ProgramLogo,
+                ExtractProgramHeroImage(html, program.ProgramLink));
+
+            program.ProgramDescription = FirstNonEmptyString(
+                program.ProgramDescription,
+                ExtractProgramDescription(html));
+
+            program.AddmissionRequirements = FirstNonEmptyString(
+                program.AddmissionRequirements,
+                ExtractAdmissionRequirements(html));
+        }
+    }
+
+    private static string? ExtractProgramHeroImage(string html, string pageUrl)
+    {
+        var origin = Uri.TryCreate(pageUrl, UriKind.Absolute, out var pageUri)
+            ? $"{pageUri.Scheme}://{pageUri.Host}"
+            : null;
+
+        var candidates = new[]
+        {
+            ExtractRegexGroup(html, @"property=""og:image""[^>]*content=""(?<url>[^""]+)""", "url"),
+            ExtractRegexGroup(html, @"content=""(?<url>[^""]+)""[^>]*property=""og:image""", "url"),
+            ExtractRegexGroup(html, @"<div[^>]*class=""[^""]*hero[^""]*""[^>]*>.*?<img[^>]*src=""(?<url>[^""]+)""", "url"),
+            ExtractRegexGroup(html, @"<img[^>]*class=""[^""]*hero-desktop[^""]*""[^>]*src=""(?<url>[^""]+)""", "url"),
+            ExtractRegexGroup(html, @"<img[^>]*src=""(?<url>[^""]+)""[^>]*class=""[^""]*hero-desktop[^""]*""", "url"),
+            ExtractRegexGroup(html, @"<img[^>]*class=""[^""]*(?:program-hero|course-hero|featured-image)[^""]*""[^>]*src=""(?<url>[^""]+)""", "url"),
+        };
+
+        foreach (var candidate in candidates)
+        {
+            var absolute = NormalizeProgramLink(candidate, origin);
+            if (!string.IsNullOrWhiteSpace(absolute) && !absolute.EndsWith(".ico", StringComparison.OrdinalIgnoreCase))
+                return absolute;
+        }
+
+        return null;
+    }
+
+    private static string? ExtractProgramDescription(string html)
+    {
+        var chunks = new List<string>();
+
+        var overviewMatch = Regex.Match(
+            html,
+            @"<section[^>]*id=""overview""[^>]*>(?<body>.*?)</section>",
+            RegexOptions.Singleline | RegexOptions.IgnoreCase);
+        if (overviewMatch.Success)
+            AppendParagraphText(overviewMatch.Groups["body"].Value, chunks, maxParagraphs: 8);
+
+        if (chunks.Count == 0)
+        {
+            var introMatch = Regex.Match(
+                html,
+                @"<p[^>]*class=""[^""]*p-intro[^""]*""[^>]*>(?<text>.*?)</p>",
+                RegexOptions.Singleline | RegexOptions.IgnoreCase);
+            if (introMatch.Success)
+            {
+                var intro = StripHtml(introMatch.Groups["text"].Value);
+                if (!string.IsNullOrWhiteSpace(intro))
+                    chunks.Add(intro);
+            }
+
+            AppendParagraphText(html, chunks, maxParagraphs: 6);
+        }
+
+        if (chunks.Count == 0)
+        {
+            foreach (Match match in Regex.Matches(
+                html,
+                @"<script[^>]+type=""application/ld\+json""[^>]*>(?<json>.*?)</script>",
+                RegexOptions.Singleline | RegexOptions.IgnoreCase))
+            {
+                try
+                {
+                    using var document = JsonDocument.Parse(match.Groups["json"].Value);
+                    var description = FindJsonDescription(document.RootElement);
+                    if (!string.IsNullOrWhiteSpace(description))
+                        chunks.Add(description);
+                }
+                catch (JsonException)
+                {
+                    // ignore invalid JSON-LD blocks
+                }
+            }
+        }
+
+        if (chunks.Count == 0)
+        {
+            var metaDescription = ExtractRegexGroup(html, @"name=""description""[^>]*content=""(?<text>[^""]+)""", "text")
+                ?? ExtractRegexGroup(html, @"property=""og:description""[^>]*content=""(?<text>[^""]+)""", "text");
+            if (!string.IsNullOrWhiteSpace(metaDescription))
+                chunks.Add(WebUtility.HtmlDecode(metaDescription));
+        }
+
+        var combined = string.Join("\n\n", chunks.Distinct(StringComparer.OrdinalIgnoreCase)).Trim();
+        if (combined.Length > 12000)
+            combined = combined[..12000];
+
+        return string.IsNullOrWhiteSpace(combined) ? null : combined;
+    }
+
+    private static void AppendParagraphText(string html, List<string> chunks, int maxParagraphs)
+    {
+        foreach (Match match in Regex.Matches(html, @"<p[^>]*>(?<text>.*?)</p>", RegexOptions.Singleline | RegexOptions.IgnoreCase))
+        {
+            var text = StripHtml(match.Groups["text"].Value);
+            if (text.Length < 40)
+                continue;
+
+            if (text.Contains("cookie", StringComparison.OrdinalIgnoreCase)
+                || text.StartsWith("View the ", StringComparison.OrdinalIgnoreCase)
+                || text.StartsWith("Download ", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            chunks.Add(text);
+            if (chunks.Count >= maxParagraphs)
+                break;
+        }
+    }
+
+    private static string? FindJsonDescription(JsonElement element)
+    {
+        switch (element.ValueKind)
+        {
+            case JsonValueKind.Object:
+                if (element.TryGetProperty("description", out var description)
+                    && description.ValueKind == JsonValueKind.String)
+                {
+                    var value = description.GetString();
+                    if (!string.IsNullOrWhiteSpace(value) && value.Length >= 40)
+                        return value;
+                }
+
+                foreach (var property in element.EnumerateObject())
+                {
+                    var nested = FindJsonDescription(property.Value);
+                    if (!string.IsNullOrWhiteSpace(nested))
+                        return nested;
+                }
+                break;
+
+            case JsonValueKind.Array:
+                foreach (var item in element.EnumerateArray())
+                {
+                    var nested = FindJsonDescription(item);
+                    if (!string.IsNullOrWhiteSpace(nested))
+                        return nested;
+                }
+                break;
+        }
+
+        return null;
+    }
+
+    private static string? ExtractAdmissionRequirements(string html)
+    {
+        var sectionMatch = Regex.Match(
+            html,
+            @"<(?:section|div)[^>]*(?:id|class)=""[^""]*(?:admission|entry-require|eligibility|apply|enrol)[^""]*""[^>]*>(?<body>.*?)</(?:section|div)>",
+            RegexOptions.Singleline | RegexOptions.IgnoreCase);
+
+        if (!sectionMatch.Success)
+            return null;
+
+        var text = StripHtml(sectionMatch.Groups["body"].Value);
+        text = Regex.Replace(text, @"\s+", " ").Trim();
+        if (text.Length < 40)
+            return null;
+
+        return text.Length > 8000 ? text[..8000] : text;
+    }
+
+    private static string StripHtml(string html)
+    {
+        var withoutTags = Regex.Replace(html, "<[^>]+>", " ");
+        return Regex.Replace(WebUtility.HtmlDecode(withoutTags), @"\s+", " ").Trim();
+    }
+
+    private static string? ExtractRegexGroup(string input, string pattern, string groupName)
+    {
+        var match = Regex.Match(input, pattern, RegexOptions.Singleline | RegexOptions.IgnoreCase);
+        return match.Success ? WebUtility.HtmlDecode(match.Groups[groupName].Value.Trim()) : null;
+    }
+
+    private static string? NormalizeProgramLink(string? link, string? origin)
+    {
+        if (string.IsNullOrWhiteSpace(link))
+            return null;
+
+        var value = WebUtility.HtmlDecode(link.Trim());
+        if (value.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+            return value;
+
+        if (origin is null)
+            return value;
+
+        return value.StartsWith('/')
+            ? $"{origin}{value}"
+            : $"{origin}/{value}";
+    }
+
+    private static string? NormalizeLevel(string? level)
+    {
+        if (string.IsNullOrWhiteSpace(level))
+            return null;
+
+        var value = level.Trim();
+        return char.ToUpperInvariant(value[0]) + value[1..];
+    }
+
+    private static string? FirstNonEmptyString(string? first, string? second)
+    {
+        return !string.IsNullOrWhiteSpace(first) ? first : second;
     }
 
     private sealed class BrowserSession : IAsyncDisposable

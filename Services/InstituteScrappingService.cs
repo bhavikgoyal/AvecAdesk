@@ -43,7 +43,8 @@ public class InstituteScrappingService : IInstituteScrappingService
         if (string.IsNullOrWhiteSpace(apiKey))
             throw new InvalidOperationException("OpenAI API key is not configured. Add OpenAI:ApiKey in appsettings.json.");
 
-        var (websiteText, scrapedLogoUrl, fetchErrors, usedBrowser) = await _websiteFetcher.FetchWebsiteTextAsync(websiteUrl);
+        var (websiteText, scrapedLogoUrl, fetchErrors, usedBrowser, parsedPrograms) =
+            await _websiteFetcher.FetchWebsiteTextAsync(websiteUrl);
         if (string.IsNullOrWhiteSpace(websiteText))
         {
             var detail = SummarizeFetchErrors(fetchErrors);
@@ -53,7 +54,7 @@ public class InstituteScrappingService : IInstituteScrappingService
 
         var extraction = await ExtractFromLiveWebsiteTextAsync(instituteName, websiteUrl, websiteText);
         var institute = extraction.Institute;
-        var extractedPrograms = extraction.Programs;
+        var extractedPrograms = MergePrograms(parsedPrograms, extraction.Programs);
 
         if (extractedPrograms.Count == 0)
             throw new InvalidOperationException("No program data could be extracted from the live website content. Try a programs listing URL.");
@@ -84,9 +85,12 @@ public class InstituteScrappingService : IInstituteScrappingService
             Logo = sharedLogo,
             Country = sharedCountry,
             City = sharedCity,
-            Description = FirstNonEmpty(program.Description, sharedAbout),
+            Description = sharedAbout,
             CountryRanking = sharedCountryRanking,
             ScholarshipsDetails = FirstNonEmpty(program.ScholarshipsDetails, sharedScholarships),
+            ProgramDescription = program.ProgramDescription,
+            ProgramLogo = program.ProgramLogo,
+            AddmissionRequirements = program.AddmissionRequirements,
         }).ToList();
 
         var records = await _repository.CreateManyAsync(upsertRequests);
@@ -135,7 +139,9 @@ public class InstituteScrappingService : IInstituteScrappingService
                   "intake": "",
                   "feesYearly": "",
                   "englishReq": "",
-                  "description": "",
+                  "programDescription": "",
+                  "programLogo": "",
+                  "addmissionRequirements": "",
                   "scholarshipsDetails": ""
                 }
               ]
@@ -143,9 +149,13 @@ public class InstituteScrappingService : IInstituteScrappingService
             Rules:
             - institute fields come from homepage/about pages: logo URL (full https URL if visible), country ranking, general about text, country, city, scholarships.
             - institute.logo must be a full image URL if found in the text (header logo, og:image, etc.).
-            - institute.about is the general institute description — NOT program-specific text.
-            - programs[].description is ONLY the program-specific about/overview when clearly different from the institute about.
+            - institute.about must contain ALL About Us / institute overview text from the website — the complete description, not a summary.
+            - programs[].programDescription must contain ALL program/course-specific description text (overview, what you will learn, course details, etc.) — the complete text, not a summary.
+            - programs[].programLogo must be the full https URL of the program/course image or logo if found on the program page.
+            - programs[].addmissionRequirements must contain ALL admission/entry requirements text for that program (eligibility, prerequisites, academic requirements, documents, etc.).
+            - Do NOT put institute about text into programDescription or vice versa.
             - Extract ALL education offerings — degrees, diplomas, certificates, VET, qualifications, etc.
+            - If a programs/courses listing page is present, include EVERY listed program in programs[] — do not stop at 2 or 10; include all visible programs.
             - Extract ONLY from the website text. NEVER invent data.
             - Use empty string when a field is not present.
             - programLink must be a full URL only if it appears in the text.
@@ -219,6 +229,79 @@ public class InstituteScrappingService : IInstituteScrappingService
             .ToList() ?? new List<ChatGptProgramRecord>();
 
         return parsed;
+    }
+
+    private static List<ChatGptProgramRecord> MergePrograms(
+        IReadOnlyList<ScrapedProgramRecord> htmlPrograms,
+        IReadOnlyList<ChatGptProgramRecord> gptPrograms)
+    {
+        if (htmlPrograms.Count == 0)
+            return gptPrograms.ToList();
+
+        var gptByLink = gptPrograms
+            .Where(program => !string.IsNullOrWhiteSpace(program.ProgramLink))
+            .GroupBy(program => NormalizeProgramKey(program.ProgramLink!), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
+
+        var gptByName = gptPrograms
+            .Where(program => !string.IsNullOrWhiteSpace(program.ProgramName))
+            .GroupBy(program => NormalizeProgramKey(program.ProgramName!), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
+
+        var merged = new List<ChatGptProgramRecord>();
+        var consumedGpt = new HashSet<ChatGptProgramRecord>();
+
+        foreach (var htmlProgram in htmlPrograms)
+        {
+            ChatGptProgramRecord? gptProgram = null;
+
+            if (!string.IsNullOrWhiteSpace(htmlProgram.ProgramLink)
+                && gptByLink.TryGetValue(NormalizeProgramKey(htmlProgram.ProgramLink), out var byLink))
+            {
+                gptProgram = byLink;
+            }
+            else if (!string.IsNullOrWhiteSpace(htmlProgram.ProgramName)
+                && gptByName.TryGetValue(NormalizeProgramKey(htmlProgram.ProgramName), out var byName))
+            {
+                gptProgram = byName;
+            }
+
+            if (gptProgram is not null)
+                consumedGpt.Add(gptProgram);
+
+            merged.Add(new ChatGptProgramRecord
+            {
+                ProgramName = htmlProgram.ProgramName,
+                Level = FirstNonEmpty(htmlProgram.Level, gptProgram?.Level),
+                ProgramLink = FirstNonEmpty(htmlProgram.ProgramLink, gptProgram?.ProgramLink),
+                Campus = FirstNonEmpty(htmlProgram.Campus, gptProgram?.Campus),
+                State = FirstNonEmpty(htmlProgram.State, gptProgram?.State),
+                CricosCode = FirstNonEmpty(htmlProgram.CricosCode, gptProgram?.CricosCode),
+                Duration = FirstNonEmpty(htmlProgram.Duration, gptProgram?.Duration),
+                Intake = FirstNonEmpty(htmlProgram.Intake, gptProgram?.Intake),
+                FeesYearly = FirstNonEmpty(htmlProgram.FeesYearly, gptProgram?.FeesYearly),
+                EnglishReq = FirstNonEmpty(htmlProgram.EnglishReq, gptProgram?.EnglishReq),
+                ProgramDescription = FirstNonEmpty(htmlProgram.ProgramDescription, gptProgram?.ProgramDescription),
+                ProgramLogo = FirstNonEmpty(htmlProgram.ProgramLogo, gptProgram?.ProgramLogo),
+                AddmissionRequirements = FirstNonEmpty(htmlProgram.AddmissionRequirements, gptProgram?.AddmissionRequirements),
+                ScholarshipsDetails = FirstNonEmpty(gptProgram?.ScholarshipsDetails, htmlProgram.ScholarshipsDetails),
+            });
+        }
+
+        foreach (var gptProgram in gptPrograms)
+        {
+            if (consumedGpt.Contains(gptProgram) || string.IsNullOrWhiteSpace(gptProgram.ProgramName))
+                continue;
+
+            merged.Add(gptProgram);
+        }
+
+        return merged;
+    }
+
+    private static string NormalizeProgramKey(string value)
+    {
+        return value.Trim().TrimEnd('/').ToLowerInvariant();
     }
 
     private static string? FirstNonEmpty(params string?[] values)
@@ -325,7 +408,9 @@ public class InstituteScrappingService : IInstituteScrappingService
         public string? Intake { get; set; }
         public string? FeesYearly { get; set; }
         public string? EnglishReq { get; set; }
-        public string? Description { get; set; }
+        public string? ProgramDescription { get; set; }
+        public string? ProgramLogo { get; set; }
+        public string? AddmissionRequirements { get; set; }
         public string? ScholarshipsDetails { get; set; }
     }
 }

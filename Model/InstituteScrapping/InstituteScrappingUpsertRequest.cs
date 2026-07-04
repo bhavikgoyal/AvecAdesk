@@ -21,4 +21,7 @@ public class InstituteScrappingUpsertRequest
     public string? Description { get; set; }
     public string? CountryRanking { get; set; }
     public string? ScholarshipsDetails { get; set; }
+    public string? ProgramDescription { get; set; }
+    public string? ProgramLogo { get; set; }
+    public string? AddmissionRequirements { get; set; }
 }

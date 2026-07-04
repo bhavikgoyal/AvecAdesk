@@ -139,6 +139,9 @@ public class InstituteScrappingRepository : IInstituteScrappingRepository
         cmd.Parameters.AddWithValue("@Description", (object?)request.Description ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@CountryRanking", (object?)request.CountryRanking ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@ScholarshipsDetails", (object?)request.ScholarshipsDetails ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@ProgramDescription", (object?)request.ProgramDescription ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@ProgramLogo", (object?)request.ProgramLogo ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@AddmissionRequirements", (object?)request.AddmissionRequirements ?? DBNull.Value);
     }
 
     private static InstituteScrappingResponse MapRow(SqlDataReader reader)
@@ -165,14 +168,24 @@ public class InstituteScrappingRepository : IInstituteScrappingRepository
             Description = ReadString(reader, "Description"),
             CountryRanking = ReadString(reader, "CountryRanking"),
             ScholarshipsDetails = ReadString(reader, "ScholarshipsDetails"),
+            ProgramDescription = ReadString(reader, "ProgramDescription"),
+            ProgramLogo = ReadString(reader, "ProgramLogo"),
+            AddmissionRequirements = ReadString(reader, "AddmissionRequirements"),
             CreatedAt = ReadDateTime(reader, "CreatedAt"),
         };
     }
 
     private static string? ReadString(SqlDataReader reader, string column)
     {
-        var ordinal = reader.GetOrdinal(column);
-        return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
+        try
+        {
+            var ordinal = reader.GetOrdinal(column);
+            return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
+        }
+        catch (IndexOutOfRangeException)
+        {
+            return null;
+        }
     }
 
     private static DateTime? ReadDateTime(SqlDataReader reader, string column)
