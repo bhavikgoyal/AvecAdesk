@@ -172,14 +172,13 @@ public class CourseRepository : ICourseRepository
             IsApproved = reader.GetBoolean(reader.GetOrdinal("IsApproved")),
             IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
             CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
-            CommissionPercentage = reader.IsDBNull(reader.GetOrdinal("CommissionPercentage"))
-            ? 0 : reader.GetDecimal(reader.GetOrdinal("CommissionPercentage")),
+            RateType = reader.IsDBNull(reader.GetOrdinal("RateType"))
+            ? string.Empty
+            : reader.GetString(reader.GetOrdinal("RateType")),
 
-            GSTPercentage = reader.IsDBNull(reader.GetOrdinal("GSTPercentage"))
-            ? 0 : reader.GetDecimal(reader.GetOrdinal("GSTPercentage")),
-
-            BonusAmount = reader.IsDBNull(reader.GetOrdinal("BonusAmount"))
-            ? 0 : reader.GetDecimal(reader.GetOrdinal("BonusAmount"))
+            CommissionRate = reader.IsDBNull(reader.GetOrdinal("CommissionRate"))
+            ? 0
+            : reader.GetDecimal(reader.GetOrdinal("CommissionRate"))
         };
     }
 }
