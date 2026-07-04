@@ -65,6 +65,8 @@ public class ScheduleRepository : IScheduleRepository
                 cmd.Parameters.AddWithValue("@StudentId", request.StudentId);
                 cmd.Parameters.AddWithValue("@DueDate", request.DueDate);
                 cmd.Parameters.AddWithValue("@AmountDue", request.AmountDue);
+                cmd.Parameters.AddWithValue("@Fees", request.Fees);
+                cmd.Parameters.AddWithValue("@Commission", request.Commission);
                 cmd.Parameters.AddWithValue("@Notes", (object?)request.Notes ?? DBNull.Value);
                 cmd.Parameters.Add(scheduleIdParam);
             });

@@ -13,11 +13,13 @@ public class CoursesController : ControllerBase
 {
     private readonly ICourseRepository _courseRepository;
     private readonly LogHelper _logHelper;
+    private readonly IConfiguration _configuration;
 
-    public CoursesController(ICourseRepository courseRepository, LogHelper logHelper)
+    public CoursesController(ICourseRepository courseRepository, LogHelper logHelper, IConfiguration configuration)
     {
         _courseRepository = courseRepository;
         _logHelper = logHelper;
+        _configuration = configuration;
     }
 
     [HttpGet]
@@ -25,7 +27,15 @@ public class CoursesController : ControllerBase
     {
         try
         {
-            return Ok(await _courseRepository.GetCoursesByInstituteAsync(instituteId));
+
+            var courses = await _courseRepository.GetCoursesByInstituteAsync(instituteId);
+            var gstPercentage = _configuration.GetValue<decimal>("GST:Percentage");
+
+            return Ok(new
+            {
+                GstPercentage = gstPercentage,
+                Courses = courses
+            });
         }
         catch (Exception ex)
         {
