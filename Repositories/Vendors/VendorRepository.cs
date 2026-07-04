@@ -57,22 +57,28 @@ public class VendorRepository : IVendorRepository
 
     public async Task<int> RegisterVendorAsync(VendorRegisterRequest request)
     {
-        var vendorIdParam = new SqlParameter("@VendorId", SqlDbType.Int)
-        {
-            Direction = ParameterDirection.Output
-        };
+    try
+    {
+      var vendorIdParam = new SqlParameter("@VendorId", SqlDbType.Int)
+      {
+        Direction = ParameterDirection.Output
+      };
 
-        await _db.ExecuteNonQueryAsync("sp_RegisterVendor", cmd =>
-        {
-            cmd.Parameters.AddWithValue("@UserId", (object?)request.UserId ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@BusinessName", request.BusinessName);
-            cmd.Parameters.AddWithValue("@ContactPerson", request.ContactPerson);
-            cmd.Parameters.AddWithValue("@Phone", request.Phone);
-            cmd.Parameters.AddWithValue("@Email", request.Email);
-            cmd.Parameters.Add(vendorIdParam);
-        });
+      await _db.ExecuteNonQueryAsync("sp_RegisterVendor", cmd =>
+      {
+        cmd.Parameters.AddWithValue("@UserId", (object?)request.UserId ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@BusinessName", request.BusinessName);
+        cmd.Parameters.AddWithValue("@ContactPerson", request.ContactPerson);
+        cmd.Parameters.AddWithValue("@Phone", request.Phone);
+        cmd.Parameters.AddWithValue("@Email", request.Email);
+        cmd.Parameters.Add(vendorIdParam);
+      });
 
-        return (int)vendorIdParam.Value;
+      return (int)vendorIdParam.Value;
+    }catch(Exception ex)
+    {
+      throw ex;
+    }
     }
 
     public async Task<string> EnsureVendorCodeAsync(int vendorId)
