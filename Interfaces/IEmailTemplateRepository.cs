@@ -8,4 +8,5 @@ public interface IEmailTemplateRepository
     Task<EmailTemplateResponse?> GetEmailTemplateByIdAsync(int templateId);
     Task<int> CreateEmailTemplateAsync(EmailTemplateCreateRequest request);
     Task<bool> UpdateEmailTemplateAsync(int templateId, EmailTemplateUpdateRequest request);
+    Task<bool> DeleteEmailTemplateAsync(int templateId);
 }

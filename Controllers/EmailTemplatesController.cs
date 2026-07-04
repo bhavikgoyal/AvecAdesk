@@ -27,6 +27,20 @@ public class EmailTemplatesController : ControllerBase
         catch (Exception ex) { _logHelper.LogError(nameof(GetEmailTemplates), ex); return StatusCode(500, "An error occurred while fetching email templates."); }
     }
 
+    [HttpGet("{templateId:int}")]
+    public async Task<IActionResult> GetEmailTemplate(int templateId)
+    {
+        try
+        {
+            var template = await _emailTemplateRepository.GetEmailTemplateByIdAsync(templateId);
+            if (template == null)
+                return NotFound("Email template not found");
+
+            return Ok(template);
+        }
+        catch (Exception ex) { _logHelper.LogError(nameof(GetEmailTemplate), ex); return StatusCode(500, "An error occurred while fetching email template."); }
+    }
+
     [HttpPost]
     public async Task<IActionResult> CreateEmailTemplate([FromBody] EmailTemplateCreateRequest request)
     {
@@ -52,5 +66,18 @@ public class EmailTemplatesController : ControllerBase
             return Ok(await _emailTemplateRepository.GetEmailTemplateByIdAsync(templateId));
         }
         catch (Exception ex) { _logHelper.LogError(nameof(UpdateEmailTemplate), ex); return StatusCode(500, "An error occurred while updating email template."); }
+    }
+
+    [HttpDelete("{templateId:int}")]
+    public async Task<IActionResult> DeleteEmailTemplate(int templateId)
+    {
+        try
+        {
+            if (!await _emailTemplateRepository.DeleteEmailTemplateAsync(templateId))
+                return NotFound("Email template not found");
+
+            return NoContent();
+        }
+        catch (Exception ex) { _logHelper.LogError(nameof(DeleteEmailTemplate), ex); return StatusCode(500, "An error occurred while deleting email template."); }
     }
 }

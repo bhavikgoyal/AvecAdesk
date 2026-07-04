@@ -18,6 +18,25 @@ public class EmailTemplateRepository : IEmailTemplateRepository
         _logHelper = logHelper;
     }
 
+    public async Task<bool> DeleteEmailTemplateAsync(int templateId)
+    {
+        try
+        {
+            await _db.ExecuteNonQueryAsync("sp_EmailTemplates_Delete", cmd =>
+            {
+                cmd.Parameters.AddWithValue("@TemplateId", templateId);
+            });
+            // Stored procedure uses SET NOCOUNT ON which may make ExecuteNonQuery return -1.
+            // Treat successful execution (no exception) as deleted.
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(EmailTemplateRepository)}.{nameof(DeleteEmailTemplateAsync)}", ex);
+            throw;
+        }
+    }
+
     public async Task<List<EmailTemplateResponse>> GetEmailTemplatesAsync()
     {
         try
