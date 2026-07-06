@@ -4,6 +4,7 @@ using AvecADeskApi.Interfaces;
 using AvecADeskApi.IRepository;
 using AvecADeskApi.IRepository;
 using AvecADeskApi.LOG;
+using AvecADeskApi.Model;
 using AvecADeskApi.Repositories;
 using AvecADeskApi.Repositories.AgrrementTemplates;
 using AvecADeskApi.Repositories.Aih;
@@ -124,6 +125,8 @@ builder.Services.AddScoped<IInstituteWebsiteFetcher, InstituteWebsiteFetcher>();
 builder.Services.AddScoped<IInstituteScrappingService, InstituteScrappingService>();
 builder.Services.AddScoped<IReceivablesRepository, ReceivablesRepository>();
 builder.Services.AddScoped<IStudentApplicationRepository, StudentApplicationRepository>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 builder.Services.AddHttpClient("InstituteScraper", client =>
 {
     client.Timeout = TimeSpan.FromSeconds(60);
