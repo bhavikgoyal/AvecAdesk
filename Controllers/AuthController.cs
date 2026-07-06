@@ -1,6 +1,7 @@
 ﻿using AvecADeskApi.DTOs.Auth;
 using AvecADeskApi.Helper;
 using AvecADeskApi.Interfaces;
+using AvecADeskApi.Model.Student;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,12 +15,15 @@ namespace AvecADeskApi.Controllers
         private readonly IAuthRepository _repo;
         private readonly JwtTokenGenerator _tokenGenerator;
         private readonly ILogger<AuthController> _logger;
+        private readonly IEmailService _emailService;
 
-        public AuthController(IAuthRepository repo, JwtTokenGenerator tokenGenerator, ILogger<AuthController> logger)
+
+        public AuthController(IAuthRepository repo, JwtTokenGenerator tokenGenerator, ILogger<AuthController> logger, IEmailService emailService)
         {
             _repo = repo;
             _tokenGenerator = tokenGenerator;
             _logger = logger;
+            _emailService = emailService;
         }
 
         // POST api/auth/login
@@ -172,6 +176,92 @@ namespace AvecADeskApi.Controllers
             {
                 _logger.LogError(ex, "Error occurred during token refresh.");
                 return StatusCode(500, "An error occurred while refreshing the token.");
+            }
+        }
+
+        // POST api/auth/register
+        [AllowAnonymous]
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] StudentRegisterRequest request)
+        {
+            try
+            {
+                if (request == null)
+                    return BadRequest("Request body is required.");
+
+                var result = await _repo.RegisterStudentAsync(request);
+
+                if (!result.Success)
+                {
+                    return BadRequest(new
+                    {
+                        Success = false,
+                        Message = result.Message
+                    });
+                }
+
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await _emailService.SendVerificationEmailAsync(
+                            request.Email,
+                            result.VerificationCode);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex,
+                            "Failed to send verification email to {Email}",
+                            request.Email);
+                    }
+                });
+
+                return Ok(new
+                {
+                    Success = true,
+                    Message = "Verification code sent successfully."
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred during student registration.");
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        // POST api/auth/verify-email
+        [AllowAnonymous]
+        [HttpPost("verify-email")]
+        public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailRequest request)
+        {
+            try
+            {
+                var result = await _repo.VerifyEmailAsync(request);
+
+                if (!result)
+                {
+                    return BadRequest(new
+                    {
+                        Success = false,
+                        Message = "Invalid verification code."
+                    });
+                }
+
+                return Ok(new
+                {
+                    Success = true,
+                    Message = "Email verified successfully."
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred during email verification.");
+
+                return StatusCode(500, new
+                {
+                    Success = false,
+                    Message = "Something went wrong."
+                });
             }
         }
     }
