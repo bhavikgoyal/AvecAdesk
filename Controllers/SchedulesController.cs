@@ -96,8 +96,17 @@ public class SchedulesController : ControllerBase
                     return BadRequest($"Invalid status for schedule {item.ScheduleId}. Use: Paid, Partial, or Pending.");
             }
 
-            var updatedCount = await _scheduleRepository.BulkUpdatePaymentScheduleStatusAsync(request);
-            return Ok(new { updatedCount, message = $"{updatedCount} schedule(s) updated." });
+            var result = await _scheduleRepository.BulkUpdatePaymentScheduleStatusAsync(request);
+
+            return Ok(new
+            {
+                result.UpdatedCount,
+                result.FailedCount,
+                result.Items,
+                message = result.FailedCount == 0
+                    ? $"{result.UpdatedCount} schedule(s) updated."
+                    : $"{result.UpdatedCount} updated, {result.FailedCount} failed. See 'items' for details."
+            });
         }
         catch (Exception ex)
         {
@@ -139,6 +148,16 @@ public class SchedulesController : ControllerBase
                 return NotFound("Payment schedule not found");
 
             return Ok(await _scheduleRepository.GetPaymentScheduleByIdAsync(scheduleId));
+        }
+        catch (InvalidOperationException ex)
+        {
+           
+            return BadRequest(ex.Message);
+        }
+        catch (ArgumentException ex)
+        {
+            
+            return BadRequest(ex.Message);
         }
         catch (Exception ex)
         {
