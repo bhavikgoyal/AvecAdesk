@@ -1,5 +1,6 @@
 ﻿using AvecADeskApi.DTOs.Auth;
 using AvecADeskApi.Model;
+using AvecADeskApi.Model.Student;
 
 namespace AvecADeskApi.Interfaces
 {
@@ -15,5 +16,8 @@ namespace AvecADeskApi.Interfaces
 
         Task<User?> GetUserByRefreshTokenAsync(string refreshToken);
         Task<bool> ValidateRefreshTokenAsync(string refreshToken);
+
+        Task<RegisterStudentResult> RegisterStudentAsync(StudentRegisterRequest request);
+        Task<bool> VerifyEmailAsync(VerifyEmailRequest request);
     }
 }

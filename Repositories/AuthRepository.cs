@@ -1,8 +1,9 @@
-﻿using Microsoft.Data.SqlClient;
-using System.Data;
-using AvecADeskApi.DTOs.Auth;
+﻿using AvecADeskApi.DTOs.Auth;
 using AvecADeskApi.Interfaces;
 using AvecADeskApi.Model;
+using AvecADeskApi.Model.Student;
+using Microsoft.Data.SqlClient;
+using System.Data;
 
 namespace AvecADeskApi.Repositories
 {
@@ -231,6 +232,60 @@ namespace AvecADeskApi.Repositories
                 Email = reader["Email"] != DBNull.Value ? reader["Email"].ToString() : null,
                 UserRoleId = reader["UserRoleId"] != DBNull.Value ? Convert.ToInt32(reader["UserRoleId"]) : 0
             };
+        }
+
+        public async Task<RegisterStudentResult> RegisterStudentAsync(StudentRegisterRequest request)
+        {
+            using var conn = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand("sp_RegisterStudent", conn);
+
+            cmd.CommandType = CommandType.StoredProcedure;
+
+            string verificationCode = new Random().Next(100000, 999999).ToString();
+
+            cmd.Parameters.AddWithValue("@FirstName", request.FirstName);
+            cmd.Parameters.AddWithValue("@LastName", request.LastName);
+            cmd.Parameters.AddWithValue("@Email", request.Email);
+            cmd.Parameters.AddWithValue("@Phone", request.Phone);
+            cmd.Parameters.AddWithValue("@Password", request.Password);
+            cmd.Parameters.AddWithValue("@VerificationCode", verificationCode);
+
+            await conn.OpenAsync();
+
+            int result = Convert.ToInt32(await cmd.ExecuteScalarAsync());
+
+            if (result == 0)
+            {
+                return new RegisterStudentResult
+                {
+                    Success = false,
+                    Message = "Email already exists."
+                };
+            }
+
+            return new RegisterStudentResult
+            {
+                Success = true,
+                Message = "Student registered successfully.",
+                VerificationCode = verificationCode
+            };
+        }
+
+        public async Task<bool> VerifyEmailAsync(VerifyEmailRequest request)
+        {
+            using var conn = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand("sp_VerifyEmail", conn);
+
+            cmd.CommandType = CommandType.StoredProcedure;
+
+            cmd.Parameters.AddWithValue("@Email", request.Email);
+            cmd.Parameters.AddWithValue("@VerificationCode", request.VerificationCode);
+
+            await conn.OpenAsync();
+
+            int result = Convert.ToInt32(await cmd.ExecuteScalarAsync());
+
+            return result == 1;
         }
     }
 }

@@ -148,23 +148,80 @@ public class ScheduleRepository : IScheduleRepository
         await command.ExecuteNonQueryAsync();
     }
 
-    public async Task<int> BulkUpdatePaymentScheduleStatusAsync(PaymentScheduleBulkStatusRequest request)
+    //public async Task<int> BulkUpdatePaymentScheduleStatusAsync(PaymentScheduleBulkStatusRequest request)
+    //{
+    //    try
+    //    {
+    //        var updatedCount = 0;
+    //        foreach (var item in request.Items)
+    //        {
+    //            var updated = await UpdatePaymentScheduleStatusAsync(item.ScheduleId, item.Status, item.AmountPaid);
+    //            if (updated)
+    //                updatedCount++;
+    //        }
+
+    //        return updatedCount;
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        _logHelper.LogError($"{nameof(ScheduleRepository)}.{nameof(BulkUpdatePaymentScheduleStatusAsync)}", ex);
+    //        throw;
+    //    }
+    //}
+
+    public async Task<PaymentScheduleBulkStatusResult> BulkUpdatePaymentScheduleStatusAsync(
+    PaymentScheduleBulkStatusRequest request)
     {
         try
         {
-            var updatedCount = 0;
+            var result = new PaymentScheduleBulkStatusResult();
+
             foreach (var item in request.Items)
             {
-                var updated = await UpdatePaymentScheduleStatusAsync(item.ScheduleId, item.Status, item.AmountPaid);
-                if (updated)
-                    updatedCount++;
+                try
+                {
+                    var updated = await UpdatePaymentScheduleStatusAsync(
+                        item.ScheduleId,
+                        item.Status,
+                        item.AmountPaid);
+
+                    if (updated)
+                    {
+                        result.UpdatedCount++;
+                    }
+                    else
+                    {
+                        result.FailedCount++;
+                    }
+
+                    result.Items.Add(new PaymentScheduleBulkItemResult
+                    {
+                        ScheduleId = item.ScheduleId,
+                        Success = updated,
+                        Error = updated ? null : "Schedule not found or update failed."
+                    });
+                }
+                catch (Exception ex)
+                {
+                    result.FailedCount++;
+
+                    result.Items.Add(new PaymentScheduleBulkItemResult
+                    {
+                        ScheduleId = item.ScheduleId,
+                        Success = false,
+                        Error = ex.Message
+                    });
+                }
             }
 
-            return updatedCount;
+            return result;
         }
         catch (Exception ex)
         {
-            _logHelper.LogError($"{nameof(ScheduleRepository)}.{nameof(BulkUpdatePaymentScheduleStatusAsync)}", ex);
+            _logHelper.LogError(
+                $"{nameof(ScheduleRepository)}.{nameof(BulkUpdatePaymentScheduleStatusAsync)}",
+                ex);
+
             throw;
         }
     }
