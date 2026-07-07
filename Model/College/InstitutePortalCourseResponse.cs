@@ -14,6 +14,7 @@ public class InstitutePortalCourseResponse
     public string? Intake { get; set; }
     public string? FeesYearly { get; set; }
     public string? EnglishReq { get; set; }
+    public string? ProgramLogo { get; set; }
     public string? Logo { get; set; }
     public string? Country { get; set; }
     public string? City { get; set; }

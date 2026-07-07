@@ -448,6 +448,12 @@ public class VendorOnboardingController : ControllerBase
             if (string.IsNullOrWhiteSpace(request.Signature))
                 return BadRequest("Signature is required.");
 
+            var signaturePath = await SaveSignatureImageAsync(request.VendorId, request.Signature);
+            if (string.IsNullOrWhiteSpace(signaturePath))
+                return BadRequest("Invalid signature. Please draw your signature again.");
+
+            request.Signature = signaturePath;
+
             if (request.DeclarationDate == null)
                 return BadRequest("Declaration date is required.");
 
@@ -496,6 +502,45 @@ public class VendorOnboardingController : ControllerBase
 
         if (ex.InnerException is SqlException innerSqlEx)
             return FormatSqlException(innerSqlEx);
+
+        return null;
+    }
+
+    private async Task<string?> SaveSignatureImageAsync(int vendorId, string signature)
+    {
+        if (string.IsNullOrWhiteSpace(signature))
+            return null;
+
+        if (signature.StartsWith("data:image", StringComparison.OrdinalIgnoreCase))
+        {
+            var commaIndex = signature.IndexOf(',');
+            if (commaIndex < 0)
+                return null;
+
+            byte[] bytes;
+            try
+            {
+                bytes = Convert.FromBase64String(signature[(commaIndex + 1)..]);
+            }
+            catch (FormatException)
+            {
+                return null;
+            }
+
+            if (bytes.Length == 0)
+                return null;
+
+            var uploadsFolder = Path.Combine(_environment.ContentRootPath, "uploads", "vendor-signatures", vendorId.ToString());
+            Directory.CreateDirectory(uploadsFolder);
+
+            var fileName = $"signature-{Guid.NewGuid()}.png";
+            var filePath = Path.Combine(uploadsFolder, fileName);
+            await System.IO.File.WriteAllBytesAsync(filePath, bytes);
+            return filePath;
+        }
+
+        if (signature.Contains("uploads", StringComparison.OrdinalIgnoreCase) || Path.IsPathRooted(signature))
+            return signature.Trim();
 
         return null;
     }

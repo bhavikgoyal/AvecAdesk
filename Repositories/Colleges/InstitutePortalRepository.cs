@@ -96,6 +96,7 @@ public class InstitutePortalRepository : IInstitutePortalRepository
             Intake = ReadString(reader, "Intake"),
             FeesYearly = ReadString(reader, "FeesYearly"),
             EnglishReq = ReadString(reader, "EnglishReq"),
+            ProgramLogo = ReadStringSafe(reader, "ProgramLogo"),
             Logo = ReadString(reader, "Logo"),
             Country = ReadString(reader, "Country"),
             City = ReadString(reader, "City"),
@@ -106,5 +107,18 @@ public class InstitutePortalRepository : IInstitutePortalRepository
     {
         var ordinal = reader.GetOrdinal(column);
         return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
+    }
+
+    private static string? ReadStringSafe(SqlDataReader reader, string column)
+    {
+        try
+        {
+            var ordinal = reader.GetOrdinal(column);
+            return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
+        }
+        catch (IndexOutOfRangeException)
+        {
+            return null;
+        }
     }
 }
