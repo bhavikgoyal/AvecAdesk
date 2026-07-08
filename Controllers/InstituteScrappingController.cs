@@ -1,6 +1,7 @@
 using AvecADeskApi.Interfaces;
 using AvecADeskApi.LOG;
 using AvecADeskApi.Model.InstituteScrapping;
+using AvecADeskApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -25,12 +26,35 @@ public class InstituteScrappingController : ControllerBase
         _logHelper = logHelper;
     }
 
-    [HttpGet]
-    public async Task<IActionResult> GetAll()
+    [HttpGet("export")]
+    public async Task<IActionResult> ExportExcel([FromQuery] string? instituteName)
     {
         try
         {
-            return Ok(await _repository.GetAllAsync());
+            var rows = await _repository.GetAllAsync(instituteName);
+            if (rows.Count == 0)
+                return NotFound("No institute scrapping records found for export.");
+
+            var fileBytes = InstituteScrappingExcelExporter.BuildWorkbook(rows);
+            var fileName = $"institute-scrap-list-{DateTime.UtcNow:yyyy-MM-dd}.xlsx";
+            return File(
+                fileBytes,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                fileName);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(ExportExcel), ex);
+            return StatusCode(500, "An error occurred while exporting institute scrapping records.");
+        }
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetAll([FromQuery] string? instituteName)
+    {
+        try
+        {
+            return Ok(await _repository.GetAllAsync(instituteName));
         }
         catch (Exception ex)
         {

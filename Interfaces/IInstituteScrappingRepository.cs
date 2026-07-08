@@ -4,7 +4,7 @@ namespace AvecADeskApi.Interfaces;
 
 public interface IInstituteScrappingRepository
 {
-    Task<List<InstituteScrappingResponse>> GetAllAsync();
+    Task<List<InstituteScrappingResponse>> GetAllAsync(string? instituteName = null);
     Task<InstituteScrappingResponse?> GetByIdAsync(int scrappingId);
     Task<int> CreateAsync(InstituteScrappingUpsertRequest request);
     Task<List<InstituteScrappingResponse>> CreateManyAsync(IEnumerable<InstituteScrappingUpsertRequest> requests);
