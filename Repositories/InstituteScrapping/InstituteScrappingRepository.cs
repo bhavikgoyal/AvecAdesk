@@ -18,11 +18,19 @@ public class InstituteScrappingRepository : IInstituteScrappingRepository
         _logHelper = logHelper;
     }
 
-    public async Task<List<InstituteScrappingResponse>> GetAllAsync()
+    public async Task<List<InstituteScrappingResponse>> GetAllAsync(string? instituteName = null)
     {
         try
         {
-            return await _db.ExecuteReaderListAsync("sp_GetInstituteScrapping", _ => { }, MapRow);
+            var rows = await _db.ExecuteReaderListAsync("sp_GetInstituteScrapping", _ => { }, MapRow);
+            if (string.IsNullOrWhiteSpace(instituteName))
+                return rows;
+
+            var query = instituteName.Trim();
+            return rows
+                .Where(row => !string.IsNullOrWhiteSpace(row.InstituteName)
+                    && row.InstituteName.Contains(query, StringComparison.OrdinalIgnoreCase))
+                .ToList();
         }
         catch (Exception ex)
         {
