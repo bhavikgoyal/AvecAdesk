@@ -384,8 +384,12 @@ public class StudentApplicationRepository : IStudentApplicationRepository
     {
         return new StudentApplicationDetailsModel
         {
-            Id = reader.GetGuid(reader.GetOrdinal("Id")),
-            ApplicationId = reader.GetGuid(reader.GetOrdinal("ApplicationId")),
+            Id = reader.IsDBNull(reader.GetOrdinal("Id"))
+                ? (Guid?)null
+                : reader.GetGuid(reader.GetOrdinal("Id")),
+            ApplicationId = reader.IsDBNull(reader.GetOrdinal("ApplicationId"))
+                ? (Guid?)null
+                : reader.GetGuid(reader.GetOrdinal("ApplicationId")),
             FirstName = reader["FirstName"]?.ToString(),
             LastName = reader["LastName"]?.ToString(),
             Email = reader["Email"]?.ToString(),
@@ -396,9 +400,13 @@ public class StudentApplicationRepository : IStudentApplicationRepository
             EmergencyContactName = reader["EmergencyContactName"]?.ToString(),
             EmergencyContactPhone = reader["EmergencyContactPhone"]?.ToString(),
             EmergencyContactRelation = reader["EmergencyContactRelation"]?.ToString(),
-            AppliedVisaBefore = reader.GetBoolean(reader.GetOrdinal("AppliedVisaBefore")),
+            AppliedVisaBefore = reader.IsDBNull(reader.GetOrdinal("AppliedVisaBefore"))
+                ? (bool?)null
+                : reader.GetBoolean(reader.GetOrdinal("AppliedVisaBefore")),
             PreviousVisaType = reader["PreviousVisaType"]?.ToString(),
-            RefusedVisa = reader.GetBoolean(reader.GetOrdinal("RefusedVisa")),
+            RefusedVisa = reader.IsDBNull(reader.GetOrdinal("RefusedVisa"))
+                ? (bool?)null
+                : reader.GetBoolean(reader.GetOrdinal("RefusedVisa")),
             RefusedCountry = reader["RefusedCountry"]?.ToString(),
             RefusedVisaType = reader["RefusedVisaType"]?.ToString(),
             EnglishTestName = reader["EnglishTestName"]?.ToString(),
