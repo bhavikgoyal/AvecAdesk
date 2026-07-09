@@ -520,35 +520,52 @@ public class InstituteWebsiteFetcher : IInstituteWebsiteFetcher
         var origin = $"{baseUri.Scheme}://{baseUri.Host}";
         var scored = new List<(int Score, string Url)>();
 
-        foreach (var (_, html) in pages)
+        foreach (var (pageUrl, html) in pages)
         {
             if (string.IsNullOrWhiteSpace(html))
                 continue;
 
+            if (!IsSameSiteHost(pageUrl, homepage))
+                continue;
+
+            var pageOrigin = Uri.TryCreate(pageUrl, UriKind.Absolute, out var pageUri)
+                ? $"{pageUri.Scheme}://{pageUri.Host}"
+                : origin;
+            var onHomepage = IsHomepageUrl(pageUrl, homepage);
+
             foreach (Match match in Regex.Matches(html, @"<img\b[^>]*>", RegexOptions.IgnoreCase))
             {
                 var tag = match.Value;
-                var src = ReadAttribute(tag, "src");
-                if (string.IsNullOrWhiteSpace(src))
-                    continue;
-
-                var absolute = ToAbsoluteUrl(src, origin);
+                var absolute = ResolveImgSrc(tag, pageOrigin);
                 if (string.IsNullOrWhiteSpace(absolute))
                     continue;
 
-                var score = ScoreLogoCandidate(tag, absolute);
+                var score = ScoreLogoCandidate(tag, absolute, onHomepage);
                 if (score > 0)
                     scored.Add((score, absolute));
             }
+
+            if (!onHomepage)
+                continue;
 
             foreach (Match match in Regex.Matches(
                 html,
                 @"<meta[^>]+(?:property=[""']og:image[""']|name=[""']twitter:image[""'])[^>]+content=[""'](?<url>[^""']+)[""']|<meta[^>]+content=[""'](?<url>[^""']+)[""'][^>]+(?:property=[""']og:image[""']|name=[""']twitter:image[""'])",
                 RegexOptions.IgnoreCase))
             {
-                var absolute = ToAbsoluteUrl(match.Groups["url"].Value, origin);
+                var absolute = ToAbsoluteUrl(match.Groups["url"].Value, pageOrigin);
+                if (!string.IsNullOrWhiteSpace(absolute) && !IsLikelyNonBrandLogo(string.Empty, string.Empty, absolute))
+                    scored.Add((25, absolute));
+            }
+
+            foreach (Match match in Regex.Matches(
+                html,
+                @"<link[^>]+rel=[""']mask-icon[""'][^>]+href=[""'](?<url>[^""']+)[""']|<link[^>]+href=[""'](?<url>[^""']+)[""'][^>]+rel=[""']mask-icon[""']",
+                RegexOptions.IgnoreCase))
+            {
+                var absolute = ToAbsoluteUrl(match.Groups["url"].Value, pageOrigin);
                 if (!string.IsNullOrWhiteSpace(absolute))
-                    scored.Add((20, absolute));
+                    scored.Add((180, absolute));
             }
 
             foreach (Match match in Regex.Matches(
@@ -556,9 +573,19 @@ public class InstituteWebsiteFetcher : IInstituteWebsiteFetcher
                 @"<link[^>]+rel=[""'](?:apple-touch-icon|icon|shortcut icon)[""'][^>]+href=[""'](?<url>[^""']+)[""']|<link[^>]+href=[""'](?<url>[^""']+)[""'][^>]+rel=[""'](?:apple-touch-icon|icon|shortcut icon)[""']",
                 RegexOptions.IgnoreCase))
             {
-                var absolute = ToAbsoluteUrl(match.Groups["url"].Value, origin);
-                if (!string.IsNullOrWhiteSpace(absolute))
-                    scored.Add((absolute.EndsWith(".ico", StringComparison.OrdinalIgnoreCase) ? 5 : 10, absolute));
+                var absolute = ToAbsoluteUrl(match.Groups["url"].Value, pageOrigin);
+                if (string.IsNullOrWhiteSpace(absolute))
+                    continue;
+
+                var iconScore = absolute.EndsWith(".ico", StringComparison.OrdinalIgnoreCase) ? 15 : 40;
+                if (absolute.Contains("monogram", StringComparison.OrdinalIgnoreCase)
+                    || absolute.Contains("crest", StringComparison.OrdinalIgnoreCase)
+                    || absolute.Contains("emblem", StringComparison.OrdinalIgnoreCase))
+                {
+                    iconScore += 40;
+                }
+
+                scored.Add((iconScore, absolute));
             }
         }
 
@@ -569,7 +596,92 @@ public class InstituteWebsiteFetcher : IInstituteWebsiteFetcher
             .FirstOrDefault();
     }
 
-    private static int ScoreLogoCandidate(string imgTag, string absoluteUrl)
+    private static string? ResolveImgSrc(string imgTag, string origin)
+    {
+        var src = ReadAttribute(imgTag, "src");
+        var lazySrc = ReadAttribute(imgTag, "data-lazy-src")
+            ?? ReadAttribute(imgTag, "data-src")
+            ?? ReadAttribute(imgTag, "data-original");
+
+        if (IsPlaceholderImageSrc(src) && !string.IsNullOrWhiteSpace(lazySrc))
+            src = lazySrc;
+
+        if (IsPlaceholderImageSrc(src))
+            return null;
+
+        return ToAbsoluteUrl(src!, origin);
+    }
+
+    private static bool IsPlaceholderImageSrc(string? src)
+    {
+        if (string.IsNullOrWhiteSpace(src))
+            return true;
+
+        var value = src.Trim();
+        return value.StartsWith("data:image", StringComparison.OrdinalIgnoreCase)
+            || value == "#";
+    }
+
+    private static bool IsHomepageUrl(string pageUrl, string homepage)
+    {
+        if (!Uri.TryCreate(pageUrl, UriKind.Absolute, out var pageUri)
+            || !Uri.TryCreate(homepage, UriKind.Absolute, out var homeUri))
+        {
+            return false;
+        }
+
+        return string.Equals(NormalizeHost(pageUri.Host), NormalizeHost(homeUri.Host), StringComparison.OrdinalIgnoreCase)
+            && (string.IsNullOrEmpty(pageUri.AbsolutePath) || pageUri.AbsolutePath == "/");
+    }
+
+    private static bool IsSameSiteHost(string pageUrl, string homepage)
+    {
+        if (!Uri.TryCreate(pageUrl, UriKind.Absolute, out var pageUri)
+            || !Uri.TryCreate(homepage, UriKind.Absolute, out var homeUri))
+        {
+            return false;
+        }
+
+        return string.Equals(NormalizeHost(pageUri.Host), NormalizeHost(homeUri.Host), StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string NormalizeHost(string host)
+    {
+        return host.StartsWith("www.", StringComparison.OrdinalIgnoreCase) ? host[4..] : host;
+    }
+
+    private static bool IsLikelyNonBrandLogo(string alt, string cls, string url)
+    {
+        var combined = $"{alt} {cls} {url}".ToLowerInvariant();
+        string[] blockedTokens =
+        [
+            "teqsa",
+            "accreditation",
+            "accredited-by",
+            "accredited_by",
+            "partner-logo",
+            "member-logo",
+            "ihea",
+            "aipm",
+            "wallet-hub",
+            "wallet_hub",
+            "endorsed",
+            "award-",
+            "badge",
+            "/seal",
+            "sponsor",
+            "ranking",
+        ];
+
+        return blockedTokens.Any(token => combined.Contains(token, StringComparison.Ordinal));
+    }
+
+    private static bool ContainsLogoToken(string value)
+    {
+        return Regex.IsMatch(value, @"(?:^|[\s_\-])logo(?:$|[\s_\-])", RegexOptions.IgnoreCase);
+    }
+
+    private static int ScoreLogoCandidate(string imgTag, string absoluteUrl, bool onHomepage)
     {
         var tag = imgTag.ToLowerInvariant();
         var url = absoluteUrl.ToLowerInvariant();
@@ -579,18 +691,28 @@ public class InstituteWebsiteFetcher : IInstituteWebsiteFetcher
         var cls = ReadAttribute(imgTag, "class")?.ToLowerInvariant() ?? string.Empty;
         var id = ReadAttribute(imgTag, "id")?.ToLowerInvariant() ?? string.Empty;
 
-        if (alt is "logo" or "site logo" or "institute logo" or "university logo")
-            score += 120;
-        else if (alt.Contains("logo"))
-            score += 90;
+        if (IsLikelyNonBrandLogo(alt, cls, url))
+            return 0;
 
-        if (cls.Contains("logo") || cls.Contains("top-nav") || cls.Contains("nav__img") || cls.Contains("site-logo") || cls.Contains("brand"))
+        if (onHomepage)
+            score += 100;
+
+        if (Regex.IsMatch(cls, @"\b(header-logo|site-logo|brand-logo|logo-img|nav-logo|navbar-logo)\b", RegexOptions.IgnoreCase))
+            score += 150;
+        else if (Regex.IsMatch(cls, @"header.*logo|logo.*header", RegexOptions.IgnoreCase))
+            score += 120;
+        else if (ContainsLogoToken(cls) || cls.Contains("top-nav") || cls.Contains("nav__img") || cls.Contains("site-logo") || cls.Contains("brand"))
             score += 80;
 
-        if (id.Contains("logo") || id.Contains("brand"))
+        if (alt is "logo" or "site logo" or "institute logo" or "university logo")
+            score += 120;
+        else if (ContainsLogoToken(alt) || alt.Contains("college", StringComparison.Ordinal) || alt.Contains("university", StringComparison.Ordinal))
             score += 70;
 
-        if (url.Contains("logo") || url.Contains("crest") || url.Contains("brand") || url.Contains("emblem"))
+        if (ContainsLogoToken(id) || id.Contains("brand"))
+            score += 70;
+
+        if (ContainsLogoToken(url) || url.Contains("crest") || url.Contains("brand") || url.Contains("emblem") || url.Contains("monogram"))
             score += 60;
 
         if (url.EndsWith(".svg") || url.EndsWith(".png") || url.EndsWith(".webp"))
@@ -600,11 +722,13 @@ public class InstituteWebsiteFetcher : IInstituteWebsiteFetcher
             score -= 30;
 
         if (tag.Contains("header") || cls.Contains("header"))
-            score += 10;
+            score += 25;
 
-        // Skip tiny tracking pixels and unrelated images.
         if (url.Contains("pixel") || url.Contains("analytics") || url.Contains("banner") || url.Contains("hero"))
             score -= 40;
+
+        if (!onHomepage)
+            score -= 50;
 
         return score;
     }
