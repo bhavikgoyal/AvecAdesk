@@ -18,8 +18,8 @@
     }
     public class StudentApplicationDetailsModel
     {
-        public Guid Id { get; set; }
-        public Guid ApplicationId { get; set; }
+        public Guid? Id { get; set; }
+        public Guid? ApplicationId { get; set; }
 
         public string? FirstName { get; set; }
         public string? LastName { get; set; }
@@ -35,10 +35,10 @@
         public string? EmergencyContactPhone { get; set; }
         public string? EmergencyContactRelation { get; set; }
 
-        public bool AppliedVisaBefore { get; set; }
+        public bool? AppliedVisaBefore { get; set; }
         public string? PreviousVisaType { get; set; }
 
-        public bool RefusedVisa { get; set; }
+        public bool? RefusedVisa { get; set; }
         public string? RefusedCountry { get; set; }
         public string? RefusedVisaType { get; set; }
 
