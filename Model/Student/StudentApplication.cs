@@ -3,6 +3,10 @@
     public class StudentApplicationResponse
     {
         public Guid Id { get; set; }
+        public Guid? StudentId { get; set; }
+        public int? CourseId { get; set; }
+        public string? InstituteName { get; set; }
+        public string? ProgramName { get; set; }
         public string CountryApplyingFor { get; set; }
         public string Status { get; set; }
         public DateTime CreatedAt { get; set; }
@@ -14,6 +18,9 @@
 
     public class StudentApplicationCreateRequest
     {
+        public int? CourseId { get; set; }
+        public string? InstituteName { get; set; }
+        public string? ProgramName { get; set; }
         public string CountryApplyingFor { get; set; }
     }
     public class StudentApplicationDetailsModel

@@ -287,5 +287,28 @@ namespace AvecADeskApi.Repositories
 
             return result == 1;
         }
+        public async Task<StudentLoginDTO?> StudentloginAsync(string email, string password)
+        {
+            using var conn = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand("Sp_StudentApplicationDetailsLogin", conn);
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@Email", email);
+            cmd.Parameters.AddWithValue("@Password", password);
+
+            await conn.OpenAsync();
+            using var reader = await cmd.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+            {
+                return new StudentLoginDTO
+                {
+                    Id = reader.GetGuid(reader.GetOrdinal("Id")),
+                    FirstName = reader["FirstName"]?.ToString() ?? "",
+                    LastName = reader["LastName"]?.ToString() ?? "",
+                    Email = reader["Email"]?.ToString() ?? "",
+                    Password = reader["Password"]?.ToString() ?? ""
+                };
+            }
+            return null;
+        }
     }
 }

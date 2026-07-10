@@ -1,7 +1,9 @@
 ﻿using AvecADeskApi.Helper;
 using AvecADeskApi.Interfaces;
 using AvecADeskApi.Model.Student;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace AvecADeskApi.Controllers;
@@ -14,7 +16,7 @@ public class StudentApplicationController : ControllerBase
     private readonly JwtTokenGenerator _tokenGenerator;
     private readonly IWebHostEnvironment _env;
 
-    public StudentApplicationController(IStudentApplicationRepository repo,JwtTokenGenerator tokenGenerator,IWebHostEnvironment env)
+    public StudentApplicationController(IStudentApplicationRepository repo, JwtTokenGenerator tokenGenerator, IWebHostEnvironment env)
     {
         _repo = repo;
         _tokenGenerator = tokenGenerator;
@@ -46,10 +48,17 @@ public class StudentApplicationController : ControllerBase
     }
 
     // POST: api/StudentApplication
+    [Authorize]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] StudentApplicationCreateRequest request)
     {
-        var applicationId = await _repo.CreateApplicationAsync(request);
+        var studentIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(studentIdClaim) || !Guid.TryParse(studentIdClaim, out var studentId))
+        {
+            return Unauthorized(new { Message = "Invalid or missing student token." });
+        }
+
+        var applicationId = await _repo.CreateApplicationAsync(studentId, request);
         return Ok(new { ApplicationId = applicationId });
     }
 
@@ -74,7 +83,6 @@ public class StudentApplicationController : ControllerBase
         });
     }
 
-
     // POST: api/StudentApplication/{id}/documents
     [HttpPost("{id}/documents")]
     public async Task<IActionResult> UploadDocument(Guid id, [FromForm] ApplicationDocumentRequest request)
@@ -82,7 +90,7 @@ public class StudentApplicationController : ControllerBase
         if (request.File == null || request.File.Length == 0)
             return BadRequest(new { Message = "File is required" });
 
-       
+
         var webRoot = _env.WebRootPath ?? Path.Combine(_env.ContentRootPath, "wwwroot");
         var uploadsFolder = Path.Combine(webRoot, "uploads", id.ToString());
         Directory.CreateDirectory(uploadsFolder);
@@ -124,4 +132,6 @@ public class StudentApplicationController : ControllerBase
         if (!result) return NotFound();
         return Ok(new { Message = "Application submitted successfully" });
     }
+
+
 }
