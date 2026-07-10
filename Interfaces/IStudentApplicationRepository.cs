@@ -6,7 +6,8 @@ namespace AvecADeskApi.Interfaces
     {
         Task<List<StudentApplicationDetailsModel>> GetStudentApplicationsAsync(string? search, int pagenumber, int pageSize);
         Task<StudentApplicationResponse?> GetApplicationByIdAsync(Guid applicationId);
-        Task<Guid> CreateApplicationAsync(StudentApplicationCreateRequest request);
+        Task<Guid> CreateApplicationAsync(Guid studentId, StudentApplicationCreateRequest request);
+        //Task<Guid> CreateApplicationAsync(StudentApplicationCreateRequest request);
         //Task<bool> SaveApplicationDetailAsync(Guid applicationId, ApplicationDetailRequest request);
         Task<ApplicationDetailResponse?> SaveApplicationDetailAsync(Guid applicationId,ApplicationDetailRequest request);
         Task<ApplicationDocumentResponse> UploadDocumentAsync(Guid applicationId, ApplicationDocumentRequest request, string fileUrl);
