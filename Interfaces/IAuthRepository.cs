@@ -19,5 +19,6 @@ namespace AvecADeskApi.Interfaces
 
         Task<RegisterStudentResult> RegisterStudentAsync(StudentRegisterRequest request);
         Task<bool> VerifyEmailAsync(VerifyEmailRequest request);
+        Task<StudentLoginDTO?> StudentloginAsync(string email, string password);
     }
 }

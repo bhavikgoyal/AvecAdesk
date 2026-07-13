@@ -38,12 +38,12 @@ namespace AvecADeskApi.Helper
         }
 
 
-        public string StudentGenerateToken(Guid userId, string userName)
+        public string StudentGenerateToken(Guid StudentId, string StudentName)
         {
             var claims = new[]
             {
-                new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
-                new Claim(ClaimTypes.Name, userName)
+                new Claim(ClaimTypes.NameIdentifier, StudentId.ToString()),
+                new Claim(ClaimTypes.Name, StudentName)
                 };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));

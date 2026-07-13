@@ -264,5 +264,37 @@ namespace AvecADeskApi.Controllers
                 });
             }
         }
+        
+        [AllowAnonymous]
+        [HttpPost("Studentlogin")]
+        public async Task<IActionResult> Studentlogin([FromBody] LoginRequestDTO request)
+        {
+            try
+            {
+                if (request == null)
+                    return BadRequest("Request body is required.");
+
+                var Student = await _repo.StudentloginAsync(request.Email, request.Password);
+
+                if (Student == null)
+                    return Unauthorized("Invalid credentials.");
+
+                var token = _tokenGenerator.StudentGenerateToken(
+                    Student.Id,
+                    $"{Student.FirstName} {Student.LastName}"
+                );
+
+                return Ok(new
+                {
+                    Token = token,
+                    Student = Student
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred during login for email: {Email}", request?.Email);
+                return StatusCode(500, "An error occurred while processing your login request.");
+            }
+        }
     }
 }

@@ -72,7 +72,7 @@ public class StudentApplicationRepository : IStudentApplicationRepository
         }
     }
 
-    public async Task<Guid> CreateApplicationAsync(StudentApplicationCreateRequest request)
+    public async Task<Guid> CreateApplicationAsync(Guid studentId, StudentApplicationCreateRequest request)
     {
         try
         {
@@ -83,6 +83,10 @@ public class StudentApplicationRepository : IStudentApplicationRepository
 
             await _db.ExecuteNonQueryAsync("sp_CreateStudentApplication", cmd =>
             {
+                cmd.Parameters.AddWithValue("@StudentId", studentId);
+                cmd.Parameters.AddWithValue("@CourseId", (object?)request.CourseId ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@InstituteName", (object?)request.InstituteName ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@ProgramName", (object?)request.ProgramName ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@CountryApplyingFor", request.CountryApplyingFor);
                 cmd.Parameters.Add(applicationIdParam);
             });
@@ -96,51 +100,7 @@ public class StudentApplicationRepository : IStudentApplicationRepository
         }
     }
 
-    //public async Task<bool> SaveApplicationDetailAsync(Guid applicationId, ApplicationDetailRequest request)
-    //{
-    //    try
-    //    {
-    //        var rowsAffectedParam = new SqlParameter("@RowsAffected", SqlDbType.Int)
-    //        {
-    //            Direction = ParameterDirection.Output
-    //        };
-
-    //        await _db.ExecuteNonQueryAsync("sp_SaveApplicationDetail", cmd =>
-    //        {
-    //            cmd.Parameters.AddWithValue("@ApplicationId", applicationId);
-    //            cmd.Parameters.AddWithValue("@FirstName", (object?)request.FirstName ?? DBNull.Value);
-    //            cmd.Parameters.AddWithValue("@LastName", (object?)request.LastName ?? DBNull.Value);
-    //            cmd.Parameters.AddWithValue("@Email", (object?)request.Email ?? DBNull.Value);
-    //            cmd.Parameters.AddWithValue("@Phone", (object?)request.Phone ?? DBNull.Value);
-    //            cmd.Parameters.AddWithValue("@DateOfBirth", (object?)request.DateOfBirth ?? DBNull.Value);
-    //            cmd.Parameters.AddWithValue("@Nationality", (object?)request.Nationality ?? DBNull.Value);
-    //            cmd.Parameters.AddWithValue("@PassportNumber", (object?)request.PassportNumber ?? DBNull.Value);
-    //            cmd.Parameters.AddWithValue("@EmergencyContactName", (object?)request.EmergencyContactName ?? DBNull.Value);
-    //            cmd.Parameters.AddWithValue("@EmergencyContactPhone", (object?)request.EmergencyContactPhone ?? DBNull.Value);
-    //            cmd.Parameters.AddWithValue("@EmergencyContactRelation", (object?)request.EmergencyContactRelation ?? DBNull.Value);
-    //            cmd.Parameters.AddWithValue("@AppliedVisaBefore", request.AppliedVisaBefore);
-    //            cmd.Parameters.AddWithValue("@PreviousVisaType", request.AppliedVisaBefore ? (object?)request.PreviousVisaType ?? DBNull.Value : DBNull.Value);
-    //            cmd.Parameters.AddWithValue("@RefusedVisa", request.RefusedVisa);
-    //            cmd.Parameters.AddWithValue("@RefusedCountry", request.RefusedVisa ? (object?)request.RefusedCountry ?? DBNull.Value : DBNull.Value);
-    //            cmd.Parameters.AddWithValue("@RefusedVisaType", request.RefusedVisa ? (object?)request.RefusedVisaType ?? DBNull.Value : DBNull.Value);
-    //            cmd.Parameters.AddWithValue("@EnglishTestName", (object?)request.EnglishTestName ?? DBNull.Value);
-    //            cmd.Parameters.AddWithValue("@EnglishTestScore", (object?)request.EnglishTestScore ?? DBNull.Value);
-    //            cmd.Parameters.AddWithValue("@EnglishTestDate", (object?)request.EnglishTestDate ?? DBNull.Value);
-    //            cmd.Parameters.AddWithValue("@HighestQualification", (object?)request.HighestQualification ?? DBNull.Value);
-    //            cmd.Parameters.Add(rowsAffectedParam);
-    //        });
-
-    //        return (int)rowsAffectedParam.Value > 0;
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        _logHelper.LogError($"{nameof(StudentApplicationRepository)}.{nameof(SaveApplicationDetailAsync)}", ex);
-    //        throw;
-    //    }
-    //}
-
-
-    public async Task<ApplicationDetailResponse?> SaveApplicationDetailAsync(Guid applicationId,ApplicationDetailRequest request)
+    public async Task<ApplicationDetailResponse?> SaveApplicationDetailAsync(Guid id, ApplicationDetailRequest request)
     {
         try
         {
@@ -148,30 +108,30 @@ public class StudentApplicationRepository : IStudentApplicationRepository
             {
                 Direction = ParameterDirection.Output
             };
-            return await _db.ExecuteReaderSingleAsync<ApplicationDetailResponse>("sp_SaveApplicationDetail",cmd =>
-                {
-                    cmd.Parameters.AddWithValue("@ApplicationId", applicationId);
-                    cmd.Parameters.AddWithValue("@FirstName", (object?)request.FirstName ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@LastName", (object?)request.LastName ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@Email", (object?)request.Email ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@Phone", (object?)request.Phone ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@DateOfBirth", (object?)request.DateOfBirth ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@Nationality", (object?)request.Nationality ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@PassportNumber", (object?)request.PassportNumber ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@EmergencyContactName", (object?)request.EmergencyContactName ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@EmergencyContactPhone", (object?)request.EmergencyContactPhone ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@EmergencyContactRelation", (object?)request.EmergencyContactRelation ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@AppliedVisaBefore", request.AppliedVisaBefore);
-                    cmd.Parameters.AddWithValue("@PreviousVisaType",request.AppliedVisaBefore ? (object?)request.PreviousVisaType ?? DBNull.Value : DBNull.Value);
-                    cmd.Parameters.AddWithValue("@RefusedVisa", request.RefusedVisa);
-                    cmd.Parameters.AddWithValue("@RefusedCountry", request.RefusedVisa ? (object?)request.RefusedCountry ?? DBNull.Value : DBNull.Value);
-                    cmd.Parameters.AddWithValue("@RefusedVisaType", request.RefusedVisa ? (object?)request.RefusedVisaType ?? DBNull.Value : DBNull.Value);
-                    cmd.Parameters.AddWithValue("@EnglishTestName", (object?)request.EnglishTestName ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@EnglishTestScore", (object?)request.EnglishTestScore ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@EnglishTestDate", (object?)request.EnglishTestDate ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@HighestQualification", (object?)request.HighestQualification ?? DBNull.Value);
-                    cmd.Parameters.Add(rowsAffectedParam);
-                },
+            return await _db.ExecuteReaderSingleAsync<ApplicationDetailResponse>("sp_SaveApplicationDetail", cmd =>
+            {
+                cmd.Parameters.AddWithValue("@ApplicationId", id);
+                cmd.Parameters.AddWithValue("@FirstName", (object?)request.FirstName ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@LastName", (object?)request.LastName ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@Email", (object?)request.Email ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@Phone", (object?)request.Phone ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@DateOfBirth", (object?)request.DateOfBirth ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@Nationality", (object?)request.Nationality ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@PassportNumber", (object?)request.PassportNumber ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@EmergencyContactName", (object?)request.EmergencyContactName ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@EmergencyContactPhone", (object?)request.EmergencyContactPhone ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@EmergencyContactRelation", (object?)request.EmergencyContactRelation ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@AppliedVisaBefore", request.AppliedVisaBefore);
+                cmd.Parameters.AddWithValue("@PreviousVisaType", request.AppliedVisaBefore ? (object?)request.PreviousVisaType ?? DBNull.Value : DBNull.Value);
+                cmd.Parameters.AddWithValue("@RefusedVisa", request.RefusedVisa);
+                cmd.Parameters.AddWithValue("@RefusedCountry", request.RefusedVisa ? (object?)request.RefusedCountry ?? DBNull.Value : DBNull.Value);
+                cmd.Parameters.AddWithValue("@RefusedVisaType", request.RefusedVisa ? (object?)request.RefusedVisaType ?? DBNull.Value : DBNull.Value);
+                cmd.Parameters.AddWithValue("@EnglishTestName", (object?)request.EnglishTestName ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@EnglishTestScore", (object?)request.EnglishTestScore ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@EnglishTestDate", (object?)request.EnglishTestDate ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@HighestQualification", (object?)request.HighestQualification ?? DBNull.Value);
+                cmd.Parameters.Add(rowsAffectedParam);
+            },
                 reader => new ApplicationDetailResponse
                 {
                     Id = reader.GetGuid(reader.GetOrdinal("Id")),
@@ -311,6 +271,10 @@ public class StudentApplicationRepository : IStudentApplicationRepository
         return new StudentApplicationResponse
         {
             Id = reader.GetGuid(reader.GetOrdinal("Id")),
+            StudentId = reader["StudentId"] == DBNull.Value ? null : reader.GetGuid(reader.GetOrdinal("StudentId")),
+            CourseId = reader["CourseId"] == DBNull.Value ? null : reader.GetInt32(reader.GetOrdinal("CourseId")),
+            InstituteName = reader["InstituteName"] as string,
+            ProgramName = reader["ProgramName"] as string,
             CountryApplyingFor = reader.GetString(reader.GetOrdinal("CountryApplyingFor")),
             Status = reader.GetString(reader.GetOrdinal("Status")),
             CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
