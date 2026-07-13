@@ -74,6 +74,39 @@ public class InstituteScrappingRepository : IInstituteScrappingRepository
         }
     }
 
+    public async Task<InstituteScrappingManualCreateResult> ManualCreateAsync(InstituteScrappingUpsertRequest request, int? vendorId = null)
+    {
+        try
+        {
+            var scrappingIdParam = new SqlParameter("@ScrappingId", SqlDbType.Int) { Direction = ParameterDirection.Output };
+            var courseIdParam = new SqlParameter("@CourseId", SqlDbType.Int) { Direction = ParameterDirection.Output };
+            var instituteIdParam = new SqlParameter("@InstituteId", SqlDbType.Int) { Direction = ParameterDirection.Output };
+
+            await _db.ExecuteNonQueryAsync("sp_ManualCreateInstituteScrapping", cmd =>
+            {
+                AddUpsertParameters(cmd, request);
+                cmd.Parameters.AddWithValue("@VendorId", (object?)vendorId ?? DBNull.Value);
+                cmd.Parameters.Add(scrappingIdParam);
+                cmd.Parameters.Add(courseIdParam);
+                cmd.Parameters.Add(instituteIdParam);
+            });
+
+            var scrappingId = (int)scrappingIdParam.Value;
+            return new InstituteScrappingManualCreateResult
+            {
+                ScrappingId = scrappingId,
+                CourseId = (int)courseIdParam.Value,
+                InstituteId = (int)instituteIdParam.Value,
+                Record = await GetByIdAsync(scrappingId),
+            };
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(InstituteScrappingRepository)}.{nameof(ManualCreateAsync)}", ex);
+            throw;
+        }
+    }
+
     public async Task<List<InstituteScrappingResponse>> CreateManyAsync(IEnumerable<InstituteScrappingUpsertRequest> requests)
     {
         var records = new List<InstituteScrappingResponse>();
@@ -179,8 +212,22 @@ public class InstituteScrappingRepository : IInstituteScrappingRepository
             ProgramDescription = ReadString(reader, "ProgramDescription"),
             ProgramLogo = ReadString(reader, "ProgramLogo"),
             AddmissionRequirements = ReadString(reader, "AddmissionRequirements"),
+            IsScrap = ReadBoolean(reader, "IsScrap"),
             CreatedAt = ReadDateTime(reader, "CreatedAt"),
         };
+    }
+
+    private static bool? ReadBoolean(SqlDataReader reader, string column)
+    {
+        try
+        {
+            var ordinal = reader.GetOrdinal(column);
+            return reader.IsDBNull(ordinal) ? null : reader.GetBoolean(ordinal);
+        }
+        catch (IndexOutOfRangeException)
+        {
+            return null;
+        }
     }
 
     private static string? ReadString(SqlDataReader reader, string column)

@@ -4,6 +4,7 @@ using AvecADeskApi.Model.InstituteScrapping;
 using AvecADeskApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 
 namespace AvecADeskApi.Controllers;
 
@@ -110,6 +111,30 @@ public class InstituteScrappingController : ControllerBase
         }
     }
 
+    [HttpPost("manual")]
+    public async Task<IActionResult> ManualCreate([FromBody] InstituteScrappingUpsertRequest request)
+    {
+        try
+        {
+            if (request == null)
+                return BadRequest("Request body is required.");
+
+            if (string.IsNullOrWhiteSpace(request.InstituteName))
+                return BadRequest("Institute name is required.");
+
+            if (string.IsNullOrWhiteSpace(request.ProgramName))
+                return BadRequest("Program name is required.");
+
+            var result = await _repository.ManualCreateAsync(request);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(ManualCreate), ex);
+            return StatusCode(500, ex.Message);
+        }
+    }
+
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] InstituteScrappingUpsertRequest request)
     {
@@ -151,6 +176,10 @@ public class InstituteScrappingController : ControllerBase
                 return NotFound("Institute scrapping record not found.");
 
             return NoContent();
+        }
+        catch (SqlException ex) when (ex.Number is >= 50001 and <= 50099)
+        {
+            return BadRequest(ex.Message);
         }
         catch (Exception ex)
         {
