@@ -17,7 +17,7 @@ public class StudentApplicationRepository : IStudentApplicationRepository
         _db = db;
         _logHelper = logHelper;
     }
-    public async Task<List<StudentApplicationDetailsModel>> GetStudentApplicationsAsync(string? search, int pagenumber, int pageSize)
+    public async Task<List<StudentApplicationDetailsModel>> GetStudentApplicationsAsync(string? search, int pagenumber, int pageSize, int? vendorId = null)
     {
         try
         {
@@ -28,6 +28,7 @@ public class StudentApplicationRepository : IStudentApplicationRepository
                     cmd.Parameters.AddWithValue("@Search", search ?? string.Empty);
                     cmd.Parameters.AddWithValue("@PageNumber", pagenumber);
                     cmd.Parameters.AddWithValue("@PageSize", pageSize);
+                    cmd.Parameters.AddWithValue("@VendorId", (object?)vendorId ?? DBNull.Value);
                 },
                 MapStudentApplicationDetail);
         }
@@ -130,6 +131,7 @@ public class StudentApplicationRepository : IStudentApplicationRepository
                 cmd.Parameters.AddWithValue("@EnglishTestScore", (object?)request.EnglishTestScore ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@EnglishTestDate", (object?)request.EnglishTestDate ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@HighestQualification", (object?)request.HighestQualification ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@VendorId", request.VendorId is > 0 ? request.VendorId.Value : DBNull.Value);
                 cmd.Parameters.Add(rowsAffectedParam);
             },
                 reader => new ApplicationDetailResponse
@@ -146,6 +148,18 @@ public class StudentApplicationRepository : IStudentApplicationRepository
             throw;
         }
     }
+
+    public async Task<int?> GetVendorIdByUserIdAsync(int userId)
+    {
+        if (userId <= 0) return null;
+
+        var result = await _db.ExecuteScalarAsync(
+            "sp_GetVendorIdByUserId",
+            cmd => cmd.Parameters.AddWithValue("@UserId", userId));
+
+        return result == null || result == DBNull.Value ? null : Convert.ToInt32(result);
+    }
+
     public async Task<ApplicationDocumentResponse> UploadDocumentAsync(Guid applicationId, ApplicationDocumentRequest request, string fileUrl)
     {
         try
@@ -377,10 +391,29 @@ public class StudentApplicationRepository : IStudentApplicationRepository
             EnglishTestScore = reader["EnglishTestScore"]?.ToString(),
             EnglishTestDate = reader.IsDBNull(reader.GetOrdinal("EnglishTestDate")) ? null : reader.GetDateTime(reader.GetOrdinal("EnglishTestDate")),
             HighestQualification = reader["HighestQualification"]?.ToString(),
+            CreatedAt = reader.IsDBNull(reader.GetOrdinal("CreatedAt")) ? default : reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
             UpdatedAt = reader.IsDBNull(reader.GetOrdinal("UpdatedAt")) ? null : reader.GetDateTime(reader.GetOrdinal("UpdatedAt")),
+            VendorId = reader.IsDBNull(reader.GetOrdinal("VendorId")) ? null : reader.GetInt32(reader.GetOrdinal("VendorId")),
+            Status = HasColumn(reader, "Status") ? reader["Status"]?.ToString() : null,
+            InstituteName = HasColumn(reader, "InstituteName") ? reader["InstituteName"]?.ToString() : null,
+            ProgramName = HasColumn(reader, "ProgramName") ? reader["ProgramName"]?.ToString() : null,
+            CountryApplyingFor = HasColumn(reader, "CountryApplyingFor") ? reader["CountryApplyingFor"]?.ToString() : null,
+            SubmittedAt = HasColumn(reader, "SubmittedAt") && !reader.IsDBNull(reader.GetOrdinal("SubmittedAt"))
+                ? reader.GetDateTime(reader.GetOrdinal("SubmittedAt"))
+                : null,
             TotalRecords = reader["TotalRecords"] == DBNull.Value
                 ? 0
                 : Convert.ToInt32(reader["TotalRecords"])
         };
+    }
+
+    private static bool HasColumn(SqlDataReader reader, string columnName)
+    {
+        for (var i = 0; i < reader.FieldCount; i++)
+        {
+            if (string.Equals(reader.GetName(i), columnName, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+        return false;
     }
 }

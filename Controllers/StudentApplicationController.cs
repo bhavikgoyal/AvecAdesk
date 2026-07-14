@@ -23,11 +23,87 @@ public class StudentApplicationController : ControllerBase
         _env = env;
     }
 
-    // GET: api/GetStudentApplication
+    // GET: api/StudentApplication/GetStudentApplicationList
     [HttpGet("GetStudentApplicationList")]
-    public async Task<IActionResult> GetStudentApplications([FromQuery] string? search, [FromQuery] int pagenumber, [FromQuery] int pageSize)
+    public async Task<IActionResult> GetStudentApplications(
+        [FromQuery] string? search,
+        [FromQuery] int pagenumber = 1,
+        [FromQuery] int pageSize = 50,
+        [FromQuery] int? vendorId = null)
     {
-        var result = await _repo.GetStudentApplicationsAsync(search, pagenumber, pageSize);
+        if (vendorId is null or <= 0)
+        {
+            var vendorIdClaim = User.FindFirst("vendorId")?.Value ?? User.FindFirst("VendorId")?.Value;
+            if (int.TryParse(vendorIdClaim, out var claimVendorId) && claimVendorId > 0)
+            {
+                vendorId = claimVendorId;
+            }
+            else
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (int.TryParse(userIdClaim, out var userId) && userId > 0)
+                {
+                    vendorId = await _repo.GetVendorIdByUserIdAsync(userId);
+                }
+            }
+        }
+
+        // Never return unfiltered list for vendor portal history.
+        if (vendorId is null or <= 0)
+        {
+            return Ok(new
+            {
+                Data = Array.Empty<StudentApplicationDetailsModel>(),
+                TotalRecords = 0,
+                PageNumber = pagenumber,
+                PageSize = pageSize,
+                Message = "VendorId is required."
+            });
+        }
+
+        var result = await _repo.GetStudentApplicationsAsync(search, pagenumber, pageSize, vendorId);
+        int totalRecords = result.Count > 0 ? result[0].TotalRecords : 0;
+        return Ok(new
+        {
+            Data = result,
+            TotalRecords = totalRecords,
+            PageNumber = pagenumber,
+            PageSize = pageSize
+        });
+    }
+
+    // GET: api/StudentApplication/my-vendor-id
+    [HttpGet("my-vendor-id")]
+    public async Task<IActionResult> GetMyVendorId()
+    {
+        // Prefer VendorId claim from login token (correct vendor when UserId is shared)
+        var vendorIdClaim = User.FindFirst("vendorId")?.Value ?? User.FindFirst("VendorId")?.Value;
+        if (int.TryParse(vendorIdClaim, out var claimVendorId) && claimVendorId > 0)
+            return Ok(new { VendorId = claimVendorId });
+
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var userId) || userId <= 0)
+            return Unauthorized(new { Message = "Vendor token required." });
+
+        var vendorId = await _repo.GetVendorIdByUserIdAsync(userId);
+        if (vendorId is null or <= 0)
+            return NotFound(new { Message = "Vendor not found for this user." });
+
+        return Ok(new { VendorId = vendorId });
+    }
+
+    // GET: api/StudentApplication/vendor/{vendorId}/history
+    [HttpGet("vendor/{vendorId:int}/history")]
+    public async Task<IActionResult> GetVendorApplicationHistory(
+        int vendorId,
+        [FromQuery] string? search,
+        [FromQuery] int pagenumber = 1,
+        [FromQuery] int pageSize = 100)
+    {
+        if (vendorId <= 0)
+            return BadRequest(new { Message = "Valid VendorId is required." });
+
+        var result = await _repo.GetStudentApplicationsAsync(search, pagenumber, pageSize, vendorId);
         int totalRecords = result.Count > 0 ? result[0].TotalRecords : 0;
         return Ok(new
         {
@@ -66,6 +142,23 @@ public class StudentApplicationController : ControllerBase
     [HttpPut("{id}/details")]
     public async Task<IActionResult> SaveDetails(Guid id, [FromBody] ApplicationDetailRequest request)
     {
+        if (request.VendorId is null or <= 0)
+        {
+            var vendorIdClaim = User.FindFirst("vendorId")?.Value ?? User.FindFirst("VendorId")?.Value;
+            if (int.TryParse(vendorIdClaim, out var claimVendorId) && claimVendorId > 0)
+            {
+                request.VendorId = claimVendorId;
+            }
+            else
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (int.TryParse(userIdClaim, out var userId) && userId > 0)
+                {
+                    request.VendorId = await _repo.GetVendorIdByUserIdAsync(userId);
+                }
+            }
+        }
+
         var result = await _repo.SaveApplicationDetailAsync(id, request);
 
         if (result == null)

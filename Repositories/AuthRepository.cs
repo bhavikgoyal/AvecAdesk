@@ -128,20 +128,22 @@ namespace AvecADeskApi.Repositories
             cmd.Parameters.AddWithValue("@Code", vendorCode);
 
             await conn.OpenAsync();
-            using var reader = await cmd.ExecuteReaderAsync();
-            if (await reader.ReadAsync())
+            UserLoginResult? result = null;
+            using (var reader = await cmd.ExecuteReaderAsync())
             {
-                return new UserLoginResult
+                if (await reader.ReadAsync())
                 {
-                    UserId = (int)reader["UserId"],
-                    UserName = reader["UserName"].ToString() ?? "",
-                    
-                    Email = reader["Email"] != DBNull.Value ? reader["Email"].ToString() : null,
-                    UserRoleId = reader["UserRoleId"] != DBNull.Value ? (int)reader["UserRoleId"] : 0,
-                    IsActive = true 
-                };
+                    result = MapReaderToUserLoginResult(reader);
+                    result.IsActive = true;
+                }
             }
-            return null;
+
+            // VendorId must come from the login-matched vendor row (code/phone),
+            // NOT from UserId lookup (multiple vendors can share one UserId).
+            if (result != null && result.VendorId is null or <= 0)
+                result.VendorId = await GetVendorIdByUserIdAsync(result.UserId);
+
+            return result;
         }
         public async Task<UserLoginResult?> ValidateVendorByPhoneAsync(string phone)
         {
@@ -151,19 +153,19 @@ namespace AvecADeskApi.Repositories
             cmd.Parameters.AddWithValue("@Phone", phone);
 
             await conn.OpenAsync();
-            using var reader = await cmd.ExecuteReaderAsync();
-
-            if (await reader.ReadAsync())
+            UserLoginResult? result = null;
+            using (var reader = await cmd.ExecuteReaderAsync())
             {
-                return new UserLoginResult
+                if (await reader.ReadAsync())
                 {
-                    UserId = (int)reader["UserId"],
-                    UserName = reader["UserName"].ToString() ?? "",
-                    Email = reader["Email"] != DBNull.Value ? reader["Email"].ToString() : null,
-                    UserRoleId = reader["UserRoleId"] != DBNull.Value ? (int)reader["UserRoleId"] : 0
-                };
+                    result = MapReaderToUserLoginResult(reader);
+                }
             }
-            return null;
+
+            if (result != null && result.VendorId is null or <= 0)
+                result.VendorId = await GetVendorIdByUserIdAsync(result.UserId);
+
+            return result;
         }
         
         public async Task<string?> SendOtpAsync(string phone)
@@ -215,23 +217,54 @@ namespace AvecADeskApi.Repositories
             cmd.Parameters.AddWithValue("@OtpCode", otp);
 
             await conn.OpenAsync();
-            using var reader = await cmd.ExecuteReaderAsync();
-
-            if (await reader.ReadAsync() && reader["UserId"] != DBNull.Value)
+            UserLoginResult? user = null;
+            using (var reader = await cmd.ExecuteReaderAsync())
             {
-                return MapReaderToUserLoginResult(reader);
+                if (await reader.ReadAsync() && reader["UserId"] != DBNull.Value)
+                    user = MapReaderToUserLoginResult(reader);
             }
-            return null;
+
+            if (user != null && user.VendorId is null or <= 0)
+                user.VendorId = await GetVendorIdByUserIdAsync(user.UserId);
+
+            return user;
         }
         private UserLoginResult MapReaderToUserLoginResult(SqlDataReader reader)
         {
+            int? vendorId = null;
+            for (var i = 0; i < reader.FieldCount; i++)
+            {
+                if (string.Equals(reader.GetName(i), "VendorId", StringComparison.OrdinalIgnoreCase)
+                    && reader["VendorId"] != DBNull.Value)
+                {
+                    vendorId = Convert.ToInt32(reader["VendorId"]);
+                    break;
+                }
+            }
+
             return new UserLoginResult
             {
                 UserId = Convert.ToInt32(reader["UserId"]),
                 UserName = reader["UserName"]?.ToString() ?? "",
                 Email = reader["Email"] != DBNull.Value ? reader["Email"].ToString() : null,
-                UserRoleId = reader["UserRoleId"] != DBNull.Value ? Convert.ToInt32(reader["UserRoleId"]) : 0
+                UserRoleId = reader["UserRoleId"] != DBNull.Value ? Convert.ToInt32(reader["UserRoleId"]) : 0,
+                VendorId = vendorId
             };
+        }
+
+        private async Task<int?> GetVendorIdByUserIdAsync(int userId)
+        {
+            if (userId <= 0) return null;
+
+            await using var conn = new SqlConnection(_connectionString);
+            await using var cmd = new SqlCommand("sp_GetVendorIdByUserId", conn)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+            cmd.Parameters.AddWithValue("@UserId", userId);
+            await conn.OpenAsync();
+            var result = await cmd.ExecuteScalarAsync();
+            return result == null || result == DBNull.Value ? null : Convert.ToInt32(result);
         }
 
         public async Task<RegisterStudentResult> RegisterStudentAsync(StudentRegisterRequest request)
