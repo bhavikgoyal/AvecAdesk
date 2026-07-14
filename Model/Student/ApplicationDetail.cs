@@ -50,5 +50,6 @@
         public string? EnglishTestScore { get; set; }
         public DateTime? EnglishTestDate { get; set; }
         public string? HighestQualification { get; set; }
+        public int? VendorId { get; set; }
     }
 }

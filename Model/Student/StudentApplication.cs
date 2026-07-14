@@ -57,6 +57,12 @@
 
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+        public int? VendorId { get; set; }
+        public string? Status { get; set; }
+        public string? InstituteName { get; set; }
+        public string? ProgramName { get; set; }
+        public string? CountryApplyingFor { get; set; }
+        public DateTime? SubmittedAt { get; set; }
         public int TotalRecords { get; set; }
     }
 }

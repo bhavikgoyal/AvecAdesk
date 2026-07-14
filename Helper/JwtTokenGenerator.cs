@@ -14,13 +14,19 @@ namespace AvecADeskApi.Helper
             _config = config;
         }
 
-        public string GenerateToken(int userId, string userName)
+        public string GenerateToken(int userId, string userName, int? vendorId = null)
         {
-            var claims = new[]
+            var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
                 new Claim(ClaimTypes.Name, userName)
             };
+
+            if (vendorId is > 0)
+            {
+                claims.Add(new Claim("vendorId", vendorId.Value.ToString()));
+                claims.Add(new Claim("VendorId", vendorId.Value.ToString()));
+            }
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -29,7 +35,6 @@ namespace AvecADeskApi.Helper
                 issuer: _config["Jwt:Issuer"],
                 audience: _config["Jwt:Audience"],
                 claims: claims,
-                //expires: DateTime.Now.AddDays(7), 
                 expires: DateTime.UtcNow.AddDays(7),
                 signingCredentials: creds
             );
