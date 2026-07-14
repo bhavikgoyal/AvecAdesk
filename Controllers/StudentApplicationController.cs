@@ -98,7 +98,7 @@ public class StudentApplicationController : ControllerBase
         int vendorId,
         [FromQuery] string? search,
         [FromQuery] int pagenumber = 1,
-        [FromQuery] int pageSize = 100)
+        [FromQuery] int pageSize = 50)
     {
         if (vendorId <= 0)
             return BadRequest(new { Message = "Valid VendorId is required." });
