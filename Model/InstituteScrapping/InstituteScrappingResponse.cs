@@ -28,3 +28,9 @@ public class InstituteScrappingResponse
     public bool? IsScrap { get; set; }
     public DateTime? CreatedAt { get; set; }
 }
+public class InstituteNameResponse
+{
+    public int ScrappingId { get; set; }
+
+    public string? InstituteName { get; set; }
+}

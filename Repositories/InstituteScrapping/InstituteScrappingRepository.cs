@@ -38,7 +38,23 @@ public class InstituteScrappingRepository : IInstituteScrappingRepository
             throw;
         }
     }
-
+    public async Task<List<InstituteNameResponse>> GetUniqueInstituteNamesAsync()
+    {
+        try
+        {
+            return await _db.ExecuteReaderListAsync(
+                "sp_GetUniqueInstituteNames", _ => { }, reader => new InstituteNameResponse
+                {
+                    ScrappingId = reader.GetInt32( reader.GetOrdinal("ScrappingId")),
+                    InstituteName = ReadString(reader, "InstituteName")
+                });
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError( $"{nameof(InstituteScrappingRepository)}.{nameof(GetUniqueInstituteNamesAsync)}", ex);
+             throw;
+        }
+    }
     public async Task<InstituteScrappingResponse?> GetByIdAsync(int scrappingId)
     {
         try
