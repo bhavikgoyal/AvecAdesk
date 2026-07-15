@@ -1,6 +1,7 @@
 using AvecADeskApi.Interfaces;
 using AvecADeskApi.LOG;
 using AvecADeskApi.Model.InstituteScrapping;
+using AvecADeskApi.Repositories.InstituteScrapping;
 using AvecADeskApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -63,7 +64,20 @@ public class InstituteScrappingController : ControllerBase
             return StatusCode(500, "An error occurred while fetching institute scrapping records.");
         }
     }
-
+    [HttpGet("institutenames")]
+    public async Task<IActionResult> GetUniqueInstituteNames()
+    {
+        try
+        {
+            var institutes = await _repository.GetUniqueInstituteNamesAsync();
+            return Ok(institutes);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, new
+                {message = "Error while fetching institute names.",  error = ex.Message});
+        }
+    }
     [HttpGet("{scrappingId:int}")]
     public async Task<IActionResult> GetById(int scrappingId)
     {

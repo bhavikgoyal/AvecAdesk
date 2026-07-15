@@ -62,6 +62,27 @@ public class CoursesController : ControllerBase
         }
     }
 
+    [HttpGet("GetCourses")]
+    public async Task<IActionResult> GetCourses()
+    {
+        try
+        {
+            var courses = await _courseRepository.GetCoursesAsync();
+            if (courses == null)
+                return NotFound("Course not found");
+            return Ok(courses);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                new
+                {
+                    message = ex.Message
+                }
+            );
+        }
+    }
+
     [Authorize]
     [HttpPost]
     public async Task<IActionResult> CreateCourse([FromBody] CourseCreateRequest request)
@@ -75,8 +96,11 @@ public class CoursesController : ControllerBase
                 return BadRequest("Course name is required");
 
             var courseId = await _courseRepository.CreateCourseAsync(request);
-            var created = await _courseRepository.GetCourseByIdAsync(courseId);
-            return Ok(created);
+            return Ok(new
+            {
+                CourseId = courseId,
+                Message = "Course created successfully."
+            });
         }
         catch (Exception ex)
         {
