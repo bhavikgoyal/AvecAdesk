@@ -75,7 +75,7 @@ namespace AvecADeskApi.Controllers
                 if (result == null)
                     return NotFound("Vendor not found.");
 
-                var token = _tokenGenerator.GenerateToken(result.UserId, result.UserName);
+                var token = _tokenGenerator.GenerateToken(result.UserId, result.UserName, result.VendorId);
 
                 return Ok(new
                 {
@@ -129,7 +129,7 @@ namespace AvecADeskApi.Controllers
                 if (user == null)
                     return Unauthorized("Invalid or expired OTP.");
 
-                var token = _tokenGenerator.GenerateToken(user.UserId, user.UserName);
+                var token = _tokenGenerator.GenerateToken(user.UserId, user.UserName, user.VendorId);
 
                 return Ok(new
                 {
