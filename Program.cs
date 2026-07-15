@@ -32,6 +32,7 @@ using AvecADeskApi.Repositories.UserActivity;
 using AvecADeskApi.Repositories.UserPassword;
 using AvecADeskApi.Repositories.UserRoles;
 using AvecADeskApi.Repositories.Vendors;
+using AvecADeskApi.Repositories.VendorStudent;
 using AvecADeskApi.Repository;
 using AvecADeskApi.Repository;
 using AvecADeskApi.Services;
@@ -124,7 +125,6 @@ builder.Services.AddScoped<IInstitutePortalRepository, InstitutePortalRepository
 builder.Services.AddScoped<IInstituteWebsiteFetcher, InstituteWebsiteFetcher>();
 builder.Services.AddScoped<IInstituteScrappingService, InstituteScrappingService>();
 builder.Services.AddScoped<IReceivablesRepository, ReceivablesRepository>();
-builder.Services.AddScoped<IStudentApplicationRepository, StudentApplicationRepository>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 builder.Services.AddHttpClient("InstituteScraper", client =>
@@ -159,6 +159,7 @@ builder.Services.AddScoped<IEmployeeWorkHoursRepository, EmployeeWorkHoursReposi
 builder.Services.AddScoped<IUserActivityRepository, UserActivityRepository>();
 builder.Services.AddScoped<IViewActivityHistoryRepository, ViewActivityHistoryRepository>();
 builder.Services.AddScoped<IUserRepository, UserPasswordRepository>();
+builder.Services.AddScoped<IVendorStudentRepository, VendorStudentRepository>();
 builder.Services.AddScoped<JwtTokenGenerator>();
 
 
