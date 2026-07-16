@@ -206,6 +206,24 @@ namespace AvecADeskApi.Controllers
       }
     }
 
+    [HttpGet("{studentId:int}")]
+    public async Task<IActionResult> GetById(int studentId)
+    {
+      try
+      {
+        var result = await _repo.GetByIdAsync(studentId);
+        if (result == null)
+          return NotFound(new { Message = "Application not found." });
+
+        return Ok(result);
+      }
+      catch (Exception ex)
+      {
+        _logHelper.LogError($"{nameof(VendorStudentController)}.{nameof(GetById)}", ex);
+        return StatusCode(500, new { message = "Error while fetching application details.", detail = ex.Message });
+      }
+    }
+
     [HttpGet("vendor/{vendorId:int}/history")]
     public async Task<IActionResult> GetHistory(
         int vendorId,
