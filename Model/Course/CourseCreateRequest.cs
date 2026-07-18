@@ -18,7 +18,7 @@ public class CourseCreateRequest
     public string? ScholarshipsDetails { get; set; }
     public string? ProgramDescription { get; set; }
     public string? AddmissionRequirements { get; set; }
-    public string? ProgramLogo { get; set; }
+    public IFormFile? ProgramLogo { get; set; }
     public bool IsApproved { get; set; }
     public bool IsActive { get; set; }
     public bool IsAIFetched { get; set; }

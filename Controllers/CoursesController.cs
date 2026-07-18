@@ -1,3 +1,4 @@
+using AvecADeskApi.Helper;
 using AvecADeskApi.Interfaces;
 using AvecADeskApi.LOG;
 using AvecADeskApi.Model.Course;
@@ -14,12 +15,14 @@ public class CoursesController : ControllerBase
     private readonly ICourseRepository _courseRepository;
     private readonly LogHelper _logHelper;
     private readonly IConfiguration _configuration;
+    private readonly FileUploadHelper _fileUploadHelper;
 
-    public CoursesController(ICourseRepository courseRepository, LogHelper logHelper, IConfiguration configuration)
+    public CoursesController(ICourseRepository courseRepository, LogHelper logHelper, IConfiguration configuration, FileUploadHelper fileUploadHelper)
     {
         _courseRepository = courseRepository;
         _logHelper = logHelper;
         _configuration = configuration;
+        _fileUploadHelper = fileUploadHelper;
     }
 
     [HttpGet]
@@ -85,7 +88,7 @@ public class CoursesController : ControllerBase
 
     [Authorize]
     [HttpPost]
-    public async Task<IActionResult> CreateCourse([FromBody] CourseCreateRequest request)
+    public async Task<IActionResult> CreateCourse([FromForm] CourseCreateRequest request)
     {
         try
         {
@@ -94,8 +97,8 @@ public class CoursesController : ControllerBase
 
             if (string.IsNullOrWhiteSpace(request.CourseName))
                 return BadRequest("Course name is required");
-
-            var courseId = await _courseRepository.CreateCourseAsync(request);
+            var programLogoPath = await _fileUploadHelper.SaveFileAsync( request.ProgramLogo, "CourseLogo");
+            var courseId = await _courseRepository.CreateCourseAsync(request, programLogoPath);
             return Ok(new
             {
                 CourseId = courseId,
@@ -111,14 +114,21 @@ public class CoursesController : ControllerBase
 
     [Authorize]
     [HttpPut("{courseId:int}")]
-    public async Task<IActionResult> UpdateCourse(int courseId, [FromBody] CourseUpdateRequest request)
+    public async Task<IActionResult> UpdateCourse(int courseId, [FromForm] CourseUpdateRequest request)
     {
         try
         {
             if (string.IsNullOrWhiteSpace(request.CourseName))
                 return BadRequest("Course name is required");
+            string? programLogoPath = null;
 
-            var updated = await _courseRepository.UpdateCourseAsync(courseId, request);
+            if (request.ProgramLogo != null)
+            {
+                programLogoPath = await _fileUploadHelper.SaveFileAsync(
+                    request.ProgramLogo,
+                    "CourseLogo");
+            }
+            var updated = await _courseRepository.UpdateCourseAsync(courseId, request, programLogoPath);
             if (!updated)
                 return NotFound("Course not found");
 
