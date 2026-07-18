@@ -74,7 +74,7 @@ public class CourseRepository : ICourseRepository
             {
                 cmd.Parameters.AddWithValue("@InstituteId", request.InstituteId);
                 cmd.Parameters.AddWithValue("@CourseName", request.CourseName);
-                cmd.Parameters.AddWithValue("@Category", (object?)request.Category ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@Category", (object?)request.CourseCategory  ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@Description", (object?)request.Description ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@Fees", (object?)request.Fees ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@Duration", (object?)request.Duration ?? DBNull.Value);
@@ -117,7 +117,7 @@ public class CourseRepository : ICourseRepository
             {
                 cmd.Parameters.AddWithValue("@CourseId", courseId);
                 cmd.Parameters.AddWithValue("@CourseName", request.CourseName);
-                cmd.Parameters.AddWithValue("@Category", (object?)request.Category ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@Category", request.CourseCategory ?? (object)DBNull.Value);
                 cmd.Parameters.AddWithValue("@Description", (object?)request.Description ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@Fees", (object?)request.Fees ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@Duration", (object?)request.Duration ?? DBNull.Value);
