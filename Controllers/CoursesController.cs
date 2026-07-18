@@ -92,6 +92,7 @@ public class CoursesController : ControllerBase
     {
         try
         {
+            Console.WriteLine(request.CourseCategory);
             if (request.InstituteId <= 0)
                 return BadRequest("Valid institute ID is required");
 
