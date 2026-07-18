@@ -14,5 +14,6 @@ namespace AvecADeskApi.Interfaces
     Task UpdateDeclarationAsync(int studentId, UpdateVendorStudentDeclarationRequest request);
     Task SubmitAsync(int studentId);
     Task<List<VendorStudentHistoryItem>> GetHistoryAsync(int vendorId, string? search, int pageNumber, int pageSize);
+    Task<VendorStudentDetailResponse?> GetByIdAsync(int studentId);
   }
 }

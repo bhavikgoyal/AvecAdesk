@@ -257,12 +257,15 @@ namespace AvecADeskApi.Repositories.VendorStudent
             reader => new VendorStudentHistoryItem
             {
               StudentID = reader.GetInt32(reader.GetOrdinal("StudentID")),
-              FirstName = reader.IsDBNull(reader.GetOrdinal("FirstName")) ? null : reader.GetString(reader.GetOrdinal("FirstName")),
-              LastName = reader.IsDBNull(reader.GetOrdinal("LastName")) ? null : reader.GetString(reader.GetOrdinal("LastName")),
-              Email = reader.IsDBNull(reader.GetOrdinal("Email")) ? null : reader.GetString(reader.GetOrdinal("Email")),
-              CountryToApply = reader.IsDBNull(reader.GetOrdinal("CountryToApply")) ? null : reader.GetString(reader.GetOrdinal("CountryToApply")),
-              ApplicationStatus = reader.IsDBNull(reader.GetOrdinal("ApplicationStatus")) ? null : reader.GetString(reader.GetOrdinal("ApplicationStatus")),
-              SubmittedDate = reader.IsDBNull(reader.GetOrdinal("SubmittedDate")) ? null : reader.GetDateTime(reader.GetOrdinal("SubmittedDate")),
+              FirstName = GetNullableString(reader, "FirstName"),
+              LastName = GetNullableString(reader, "LastName"),
+              FullName = GetNullableString(reader, "FullName"),
+              Email = GetNullableString(reader, "Email"),
+              MobileNumber = GetNullableString(reader, "MobileNumber"),
+              CountryToApply = GetNullableString(reader, "CountryToApply"),
+              CourseName = GetNullableString(reader, "CourseName"),
+              ApplicationStatus = GetNullableString(reader, "ApplicationStatus"),
+              SubmittedDate = GetNullableDateTime(reader, "SubmittedDate"),
               TotalRecords = reader.GetInt32(reader.GetOrdinal("TotalRecords"))
             });
       }
@@ -271,6 +274,156 @@ namespace AvecADeskApi.Repositories.VendorStudent
         _logHelper.LogError($"{nameof(VendorStudentRepository)}.{nameof(GetHistoryAsync)}", ex);
         throw;
       }
+    }
+
+    public async Task<VendorStudentDetailResponse?> GetByIdAsync(int studentId)
+    {
+      try
+      {
+        var student = await _db.ExecuteReaderSingleAsync(
+            "dbo.SP_GetVendorStudentById",
+            cmd => cmd.Parameters.AddWithValue("@StudentID", studentId),
+            MapVendorStudentDetail);
+
+        if (student == null)
+          return null;
+
+        student.EducationHistory = await _db.ExecuteReaderListAsync(
+            "dbo.SP_GetStudentEducationByStudentId",
+            cmd => cmd.Parameters.AddWithValue("@StudentID", studentId),
+            MapEducationItem);
+
+        student.Documents = await _db.ExecuteReaderListAsync(
+            "dbo.SP_GetStudentDocumentsByStudentId",
+            cmd => cmd.Parameters.AddWithValue("@StudentID", studentId),
+            MapDocumentItem);
+
+        return student;
+      }
+      catch (Exception ex)
+      {
+        _logHelper.LogError($"{nameof(VendorStudentRepository)}.{nameof(GetByIdAsync)}", ex);
+        throw;
+      }
+    }
+
+    private static string? GetNullableString(SqlDataReader reader, string column)
+    {
+      var ordinal = reader.GetOrdinal(column);
+      return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
+    }
+
+    private static DateTime? GetNullableDateTime(SqlDataReader reader, string column)
+    {
+      var ordinal = reader.GetOrdinal(column);
+      return reader.IsDBNull(ordinal) ? null : reader.GetDateTime(ordinal);
+    }
+
+    private static bool? GetNullableBool(SqlDataReader reader, string column)
+    {
+      var ordinal = reader.GetOrdinal(column);
+      return reader.IsDBNull(ordinal) ? null : reader.GetBoolean(ordinal);
+    }
+
+    private static int? GetNullableInt(SqlDataReader reader, string column)
+    {
+      var ordinal = reader.GetOrdinal(column);
+      return reader.IsDBNull(ordinal) ? null : reader.GetInt32(ordinal);
+    }
+
+    private static VendorStudentDetailResponse MapVendorStudentDetail(SqlDataReader reader)
+    {
+      return new VendorStudentDetailResponse
+      {
+        StudentID = reader.GetInt32(reader.GetOrdinal("StudentID")),
+        VendorID = GetNullableInt(reader, "VendorID"),
+        InstituteID = GetNullableInt(reader, "InstituteID"),
+        CourseID = GetNullableInt(reader, "CourseID"),
+        CourseName = GetNullableString(reader, "CourseName"),
+        CountryToApply = GetNullableString(reader, "CountryToApply"),
+        FirstName = GetNullableString(reader, "FirstName"),
+        LastName = GetNullableString(reader, "LastName"),
+        Email = GetNullableString(reader, "Email"),
+        MobileNumber = GetNullableString(reader, "MobileNumber"),
+        Title = GetNullableString(reader, "Title"),
+        FamilyName = GetNullableString(reader, "FamilyName"),
+        GivenNames = GetNullableString(reader, "GivenNames"),
+        PreviousName = GetNullableString(reader, "PreviousName"),
+        DateOfBirth = GetNullableDateTime(reader, "DateOfBirth"),
+        Gender = GetNullableString(reader, "Gender"),
+        CountryOfBirth = GetNullableString(reader, "CountryOfBirth"),
+        Citizenship = GetNullableString(reader, "Citizenship"),
+        PassportNumber = GetNullableString(reader, "PassportNumber"),
+        PassportExpiryDate = GetNullableDateTime(reader, "PassportExpiryDate"),
+        PassportCountryOfIssue = GetNullableString(reader, "PassportCountryOfIssue"),
+        PassportFilePath = GetNullableString(reader, "PassportFilePath"),
+        CurrentAddress = GetNullableString(reader, "CurrentAddress"),
+        CurrentSuburb = GetNullableString(reader, "CurrentSuburb"),
+        CurrentState = GetNullableString(reader, "CurrentState"),
+        CurrentCountry = GetNullableString(reader, "CurrentCountry"),
+        CurrentPostcode = GetNullableString(reader, "CurrentPostcode"),
+        EmergencyContactName = GetNullableString(reader, "EmergencyContactName"),
+        EmergencyContactRelationship = GetNullableString(reader, "EmergencyContactRelationship"),
+        EmergencyContactPhone = GetNullableString(reader, "EmergencyContactPhone"),
+        EmergencyContactEmail = GetNullableString(reader, "EmergencyContactEmail"),
+        AgentAgencyName = GetNullableString(reader, "AgentAgencyName"),
+        AgentContactPerson = GetNullableString(reader, "AgentContactPerson"),
+        AgentEmail = GetNullableString(reader, "AgentEmail"),
+        AgentTelephone = GetNullableString(reader, "AgentTelephone"),
+        VisaAppliedBefore = GetNullableBool(reader, "VisaAppliedBefore"),
+        VisaAppliedType = GetNullableString(reader, "VisaAppliedType"),
+        VisaRefused = GetNullableBool(reader, "VisaRefused"),
+        RefusedVisaCountry = GetNullableString(reader, "RefusedVisaCountry"),
+        RefusedVisaType = GetNullableString(reader, "RefusedVisaType"),
+        EnglishTestType = GetNullableString(reader, "EnglishTestType"),
+        EnglishOverallScore = GetNullableString(reader, "EnglishOverallScore"),
+        EnglishTestDate = GetNullableDateTime(reader, "EnglishTestDate"),
+        EnglishEvidenceFilePath = GetNullableString(reader, "EnglishEvidenceFilePath"),
+        ChkCompletedAllSections = GetNullableBool(reader, "ChkCompletedAllSections"),
+        ChkAgentCertifiedTranscripts = GetNullableBool(reader, "ChkAgentCertifiedTranscripts"),
+        ChkAgentCertifiedPassport = GetNullableBool(reader, "ChkAgentCertifiedPassport"),
+        ChkEnglishProficiencyEvidence = GetNullableBool(reader, "ChkEnglishProficiencyEvidence"),
+        ChkGSAssessmentFormSubmitted = GetNullableBool(reader, "ChkGSAssessmentFormSubmitted"),
+        ChkReadSignedDeclaration = GetNullableBool(reader, "ChkReadSignedDeclaration"),
+        DeclarationName = GetNullableString(reader, "DeclarationName"),
+        ApplicantSignaturePath = GetNullableString(reader, "ApplicantSignaturePath"),
+        ApplicantSignatureDate = GetNullableDateTime(reader, "ApplicantSignatureDate"),
+        ParentGuardianName = GetNullableString(reader, "ParentGuardianName"),
+        ParentSignaturePath = GetNullableString(reader, "ParentSignaturePath"),
+        ParentSignatureDate = GetNullableDateTime(reader, "ParentSignatureDate"),
+        SubmittedDate = GetNullableDateTime(reader, "SubmittedDate"),
+        ApplicationStatus = GetNullableString(reader, "ApplicationStatus")
+      };
+    }
+
+    private static StudentEducationItem MapEducationItem(SqlDataReader reader)
+    {
+      return new StudentEducationItem
+      {
+        RecordID = reader.GetInt32(reader.GetOrdinal("RecordID")),
+        StudentID = reader.GetInt32(reader.GetOrdinal("StudentID")),
+        HighestQualification = GetNullableString(reader, "HighestQualification"),
+        StudiedHighSchoolAustralia = GetNullableBool(reader, "StudiedHighSchoolAustralia"),
+        HasSecondaryPostSecondaryQual = GetNullableBool(reader, "HasSecondaryPostSecondaryQual"),
+        RecordType = GetNullableString(reader, "RecordType"),
+        InstitutionSchool = GetNullableString(reader, "InstitutionSchool"),
+        Course = GetNullableString(reader, "Course"),
+        LocationDetail = GetNullableString(reader, "LocationDetail"),
+        YearCommencedCompleted = GetNullableString(reader, "YearCommencedCompleted")
+      };
+    }
+
+    private static StudentDocumentItem MapDocumentItem(SqlDataReader reader)
+    {
+      return new StudentDocumentItem
+      {
+        DocumentID = reader.GetInt32(reader.GetOrdinal("DocumentID")),
+        StudentID = reader.GetInt32(reader.GetOrdinal("StudentID")),
+        DocumentCategory = GetNullableString(reader, "DocumentCategory"),
+        DocumentType = GetNullableString(reader, "DocumentType"),
+        FilePath = GetNullableString(reader, "FilePath"),
+        UploadedDate = GetNullableDateTime(reader, "UploadedDate")
+      };
     }
   }
 }

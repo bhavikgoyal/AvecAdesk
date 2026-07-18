@@ -156,6 +156,7 @@ builder.Services.AddScoped<ICardStatusRepository, CardStatusRepository>();
 builder.Services.AddScoped<IMembersRepository, MembersRepository>();
 builder.Services.AddScoped<IUserRoleRepository, UserRoleRepository>();
 builder.Services.AddScoped<IChecklistRepository, ChecklistRepository>();
+builder.Services.AddScoped<ILabelRepository, AvecADeskApi.Repositories.Label.LabelRepository>();
 builder.Services.AddScoped<IEmployeeWorkHoursRepository, EmployeeWorkHoursRepositories>();
 builder.Services.AddScoped<IUserActivityRepository, UserActivityRepository>();
 builder.Services.AddScoped<IViewActivityHistoryRepository, ViewActivityHistoryRepository>();
