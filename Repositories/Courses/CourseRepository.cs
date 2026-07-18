@@ -61,7 +61,7 @@ public class CourseRepository : ICourseRepository
             throw;
         }
     }
-    public async Task<int> CreateCourseAsync(CourseCreateRequest request)
+    public async Task<int> CreateCourseAsync(CourseCreateRequest request, string? programLogoPath)
     {
         try
         {
@@ -88,7 +88,7 @@ public class CourseRepository : ICourseRepository
                 cmd.Parameters.AddWithValue("@ScholarshipsDetails", (object?)request.ScholarshipsDetails ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@ProgramDescription", (object?)request.ProgramDescription ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@AddmissionRequirements", (object?)request.AddmissionRequirements ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("@ProgramLogo", (object?)request.ProgramLogo ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@ProgramLogo",(object?)programLogoPath ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@IsApproved", request.IsApproved);
                 cmd.Parameters.AddWithValue("@IsActive", request.IsActive);
                 cmd.Parameters.AddWithValue("@IsAIFetched", request.IsAIFetched);
@@ -104,7 +104,7 @@ public class CourseRepository : ICourseRepository
         }
     }
 
-    public async Task<bool> UpdateCourseAsync(int courseId, CourseUpdateRequest request)
+    public async Task<bool> UpdateCourseAsync(int courseId, CourseUpdateRequest request, string? programLogoPath)
     {
         try
         {
@@ -131,7 +131,7 @@ public class CourseRepository : ICourseRepository
                 cmd.Parameters.AddWithValue("@ScholarshipsDetails", (object?)request.ScholarshipsDetails ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@ProgramDescription", (object?)request.ProgramDescription ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@AddmissionRequirements", (object?)request.AddmissionRequirements ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("@ProgramLogo", (object?)request.ProgramLogo ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@ProgramLogo", (object?)programLogoPath ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@IsApproved", request.IsApproved);
                 cmd.Parameters.AddWithValue("@IsActive", request.IsActive);
                
@@ -196,51 +196,24 @@ public class CourseRepository : ICourseRepository
         {
             CourseId = reader.GetInt32(reader.GetOrdinal("CourseId")),
             InstituteId = reader.GetInt32(reader.GetOrdinal("InstituteId")),
-            InstituteName = reader.IsDBNull(reader.GetOrdinal("InstituteName"))
-                ? string.Empty : reader.GetString(reader.GetOrdinal("InstituteName")),
-            CourseName = reader.IsDBNull(reader.GetOrdinal("CourseName"))
-                ? string.Empty : reader.GetString(reader.GetOrdinal("CourseName")),
-            Category = reader.IsDBNull(reader.GetOrdinal("Category"))
-                ? null : reader.GetString(reader.GetOrdinal("Category")),
-            Description = reader.IsDBNull(reader.GetOrdinal("Description"))
-                ? null : reader.GetString(reader.GetOrdinal("Description")),
-            Fees = reader.IsDBNull(reader.GetOrdinal("Fees"))
-                ? null : reader.GetDecimal(reader.GetOrdinal("Fees")),
-            Duration = reader.IsDBNull(reader.GetOrdinal("Duration"))
-                ? null : reader.GetString(reader.GetOrdinal("Duration")),
-            Eligibility = reader.IsDBNull(reader.GetOrdinal("Eligibility"))
-                ? null : reader.GetString(reader.GetOrdinal("Eligibility")),
-            IsAIFetched = reader.IsDBNull(reader.GetOrdinal("IsAIFetched"))
-                ? false : reader.GetBoolean(reader.GetOrdinal("IsAIFetched")),
-            IsApproved = reader.IsDBNull(reader.GetOrdinal("IsApproved"))
-                ? false : reader.GetBoolean(reader.GetOrdinal("IsApproved")),
-            IsActive = reader.IsDBNull(reader.GetOrdinal("IsActive"))
-                ? false : reader.GetBoolean(reader.GetOrdinal("IsActive")),
+            CourseName = reader.GetString(reader.GetOrdinal("CourseName")),
+            Category = reader.IsDBNull(reader.GetOrdinal("Category")) ? null : reader.GetString(reader.GetOrdinal("Category")),
+            Description = reader.IsDBNull(reader.GetOrdinal("Description")) ? null : reader.GetString(reader.GetOrdinal("Description")),
+            Fees = reader.IsDBNull(reader.GetOrdinal("Fees")) ? null : reader.GetDecimal(reader.GetOrdinal("Fees")),
+            Duration = reader.IsDBNull(reader.GetOrdinal("Duration")) ? null : reader.GetString(reader.GetOrdinal("Duration")),
+            Eligibility = reader.IsDBNull(reader.GetOrdinal("Eligibility")) ? null : reader.GetString(reader.GetOrdinal("Eligibility")),
+            IsAIFetched = reader.GetBoolean(reader.GetOrdinal("IsAIFetched")),
+            IsApproved = reader.GetBoolean(reader.GetOrdinal("IsApproved")),
+            IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
             CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
-            Campus = reader.IsDBNull(reader.GetOrdinal("Campus"))
-                ? null : reader.GetString(reader.GetOrdinal("Campus")),
-            Level = reader.IsDBNull(reader.GetOrdinal("Level"))
-                ? null : reader.GetString(reader.GetOrdinal("Level")),
-            ProgramLink = reader.IsDBNull(reader.GetOrdinal("ProgramLink"))
-                ? null : reader.GetString(reader.GetOrdinal("ProgramLink")),
-            CricosCode = reader.IsDBNull(reader.GetOrdinal("CricosCode"))
-                ? null : reader.GetString(reader.GetOrdinal("CricosCode")),
-            Intake = reader.IsDBNull(reader.GetOrdinal("Intake"))
-                ? null : reader.GetString(reader.GetOrdinal("Intake")),
-            EnglishReq = reader.IsDBNull(reader.GetOrdinal("EnglishReq"))
-                ? null : reader.GetString(reader.GetOrdinal("EnglishReq")),
-            ScholarshipsDetails = reader.IsDBNull(reader.GetOrdinal("ScholarshipsDetails"))
-                ? null : reader.GetString(reader.GetOrdinal("ScholarshipsDetails")),
-            ProgramDescription = reader.IsDBNull(reader.GetOrdinal("ProgramDescription"))
-                ? null : reader.GetString(reader.GetOrdinal("ProgramDescription")),
-            AddmissionRequirements = reader.IsDBNull(reader.GetOrdinal("AddmissionRequirements"))
-                ? null : reader.GetString(reader.GetOrdinal("AddmissionRequirements")),
-            ProgramLogo = reader.IsDBNull(reader.GetOrdinal("ProgramLogo"))
-                ? null : reader.GetString(reader.GetOrdinal("ProgramLogo")),
             RateType = reader.IsDBNull(reader.GetOrdinal("RateType"))
-                ? string.Empty : reader.GetString(reader.GetOrdinal("RateType")),
+            ? string.Empty
+            : reader.GetString(reader.GetOrdinal("RateType")),
+
             CommissionRate = reader.IsDBNull(reader.GetOrdinal("CommissionRate"))
-                ? 0 : reader.GetDecimal(reader.GetOrdinal("CommissionRate"))
+            ? 0
+            : reader.GetDecimal(reader.GetOrdinal("CommissionRate"))
+
         };
     }
     private static CourseResponse MapCourseData(SqlDataReader reader)
