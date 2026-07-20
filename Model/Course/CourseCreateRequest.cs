@@ -4,7 +4,7 @@ public class CourseCreateRequest
 {
     public int InstituteId { get; set; }
     public string CourseName { get; set; } = string.Empty;
-    public string? Category { get; set; }
+    public string? CourseCategory { get; set; }
     public string? Description { get; set; }
     public decimal? Fees { get; set; }
     public string? Duration { get; set; }
@@ -18,7 +18,7 @@ public class CourseCreateRequest
     public string? ScholarshipsDetails { get; set; }
     public string? ProgramDescription { get; set; }
     public string? AddmissionRequirements { get; set; }
-    public string? ProgramLogo { get; set; }
+    public IFormFile? ProgramLogo { get; set; }
     public bool IsApproved { get; set; }
     public bool IsActive { get; set; }
     public bool IsAIFetched { get; set; }

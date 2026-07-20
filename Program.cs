@@ -107,6 +107,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<SqlDbHelper>();
 builder.Services.AddSingleton<LogHelper>();
+builder.Services.AddScoped<FileUploadHelper>();
 builder.Services.AddScoped<IVendorRepository, VendorRepository>();
 builder.Services.AddScoped<IEmailSender, EmailSender>();
 builder.Services.AddScoped<VendorRegistrationEmailService>();
