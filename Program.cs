@@ -104,6 +104,17 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod();
     });
 });
+
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("VendorPortal", policy =>
+//    {
+//        policy.WithOrigins(
+//                "https://demovavec.apphub.co.in")
+//            .AllowAnyHeader()
+//            .AllowAnyMethod();
+//    });
+//});
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<SqlDbHelper>();
 builder.Services.AddSingleton<LogHelper>();
