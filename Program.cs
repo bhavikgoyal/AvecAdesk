@@ -110,6 +110,17 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod();
     });
 });
+
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("VendorPortal", policy =>
+//    {
+//        policy.WithOrigins(
+//                "https://demovavec.apphub.co.in")
+//            .AllowAnyHeader()
+//            .AllowAnyMethod();
+//    });
+//});
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<SqlDbHelper>();
 builder.Services.AddSingleton<LogHelper>();
@@ -168,12 +179,16 @@ builder.Services.AddScoped<JwtTokenGenerator>();
 var app = builder.Build();
 
 
-if (app.Environment.IsDevelopment())
+//if (app.Environment.IsDevelopment())
+//{
+//    app.UseSwagger();
+//    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "AvecADesk API v1"));
+//}
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "AvecADesk API v1"));
-}
-
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "AvecADesk API v1");
+});
 if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
