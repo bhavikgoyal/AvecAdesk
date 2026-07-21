@@ -43,7 +43,7 @@ namespace AvecADeskApi.Helper
         }
 
 
-        public string StudentGenerateToken(Guid StudentId, string StudentName)
+        public string StudentGenerateToken(int StudentId, string StudentName)
         {
             var claims = new[]
             {

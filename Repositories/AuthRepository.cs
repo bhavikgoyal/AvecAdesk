@@ -334,11 +334,12 @@ namespace AvecADeskApi.Repositories
             {
                 return new StudentLoginDTO
                 {
-                    Id = reader.GetGuid(reader.GetOrdinal("Id")),
+                    Id = reader.GetInt32(reader.GetOrdinal("Id")),
                     FirstName = reader["FirstName"]?.ToString() ?? "",
                     LastName = reader["LastName"]?.ToString() ?? "",
                     Email = reader["Email"]?.ToString() ?? "",
-                    Password = reader["Password"]?.ToString() ?? ""
+                    Password = reader["Password"]?.ToString() ?? "",
+                    MobileNumber = reader["MobileNumber"]?.ToString() ?? ""
                 };
             }
             return null;
