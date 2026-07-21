@@ -12,14 +12,6 @@ namespace AvecADeskApi.Services
         ("Website URL", r => r.WebsiteURL),
         ("Campus", r => r.Campus),
         ("State", r => r.State),
-        ("Program name", r => r.ProgramName),
-        ("Level", r => r.Level),
-        ("Program link", r => r.ProgramLink),
-        ("CRICOS code", r => r.CricosCode),
-        ("Duration", r => r.Duration),
-        ("Intake", r => r.Intake),
-        ("Fees yearly", r => r.FeesYearly),
-        ("English requirement", r => r.EnglishReq),
         ("Name", r => r.Name),
         ("Logo URL", r => r.Logo),
         ("Country", r => r.Country),
@@ -27,9 +19,6 @@ namespace AvecADeskApi.Services
         ("Description", r => r.Description),
         ("Country ranking", r => r.CountryRanking),
         ("Scholarships details", r => r.ScholarshipsDetails),
-        ("Program description", r => r.ProgramDescription),
-        ("Program logo", r => r.ProgramLogo),
-        ("Admission requirements", r => r.AddmissionRequirements),
         ("Created at", r => r.CreatedAt?.ToString("yyyy-MM-dd HH:mm:ss")),
     ];
 
@@ -38,12 +27,12 @@ namespace AvecADeskApi.Services
       using var workbook = new XLWorkbook();
       var worksheet = workbook.Worksheets.Add("Institute Scrap");
 
-      worksheet.Cell(1, 1).Value = "S No";
+      worksheet.Cell(1, 1).Value = "Sr No";
       for (var columnIndex = 0; columnIndex < Columns.Length; columnIndex++)
       {
         worksheet.Cell(1, columnIndex + 2).Value = Columns[columnIndex].Header;
       }
-
+        
       var headerRow = worksheet.Range(1, 1, 1, Columns.Length + 1);
       headerRow.Style.Font.Bold = true;
       headerRow.Style.Fill.BackgroundColor = XLColor.FromHtml("#F3F4F6");
