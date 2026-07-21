@@ -5,7 +5,7 @@
     public int? VendorID { get; set; }
     public int? InstituteID { get; set; }
     public int? CourseID { get; set; }
-
+    public int? SourceStudentID { get; set; }
     // Basic Details
     public string? CountryToApply { get; set; }
     public string? FirstName { get; set; }

@@ -31,8 +31,8 @@ namespace AvecADeskApi.Repositories.VendorStudent
 
         await _db.ExecuteNonQueryAsync("dbo.SP_CreateVendorStudent", cmd =>
         {
-          cmd.Parameters.AddWithValue("@VendorID", request.VendorID);
-          cmd.Parameters.AddWithValue("@InstituteID", (object?)request.InstituteID ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@VendorID", (object?)request.VendorID ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@InstituteID", (object?)request.InstituteID ?? DBNull.Value);
           cmd.Parameters.AddWithValue("@CourseID", (object?)request.CourseID ?? DBNull.Value);
           cmd.Parameters.AddWithValue("@CountryToApply", (object?)request.CountryToApply ?? DBNull.Value);
           cmd.Parameters.AddWithValue("@FirstName", (object?)request.FirstName ?? DBNull.Value);
@@ -59,8 +59,9 @@ namespace AvecADeskApi.Repositories.VendorStudent
           cmd.Parameters.AddWithValue("@EmergencyContactName", (object?)request.EmergencyContactName ?? DBNull.Value);
           cmd.Parameters.AddWithValue("@EmergencyContactRelationship", (object?)request.EmergencyContactRelationship ?? DBNull.Value);
           cmd.Parameters.AddWithValue("@EmergencyContactPhone", (object?)request.EmergencyContactPhone ?? DBNull.Value);
-          cmd.Parameters.AddWithValue("@EmergencyContactEmail", (object?)request.EmergencyContactEmail ?? DBNull.Value);
-          cmd.Parameters.Add(newStudentIdParam);
+            cmd.Parameters.AddWithValue("@EmergencyContactEmail", (object?)request.EmergencyContactEmail ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@SourceStudentID", (object?)request.SourceStudentID ?? DBNull.Value);
+            cmd.Parameters.Add(newStudentIdParam);
         });
 
         return Convert.ToInt32(newStudentIdParam.Value);
