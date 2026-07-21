@@ -93,15 +93,17 @@ public class InstituteScrappingService : IInstituteScrappingService
             AddmissionRequirements = program.AddmissionRequirements,
         }).ToList();
 
+        // SP creates 1 INSTITUTEScrapping row + N Courses rows (InstituteId = ScrappingId).
         var records = await _repository.CreateManyAsync(upsertRequests);
+        var coursesInserted = upsertRequests.Count;
 
         return new InstituteScrappingRunResponse
         {
-            RecordsInserted = records.Count,
+            RecordsInserted = coursesInserted,
             UsedAiFallback = false,
             Message = usedBrowser
-                ? $"Programs extracted from live website using browser fetch and saved successfully ({records.Count} rows)."
-                : $"Programs extracted from live website content and saved successfully ({records.Count} rows).",
+                ? $"Institute saved and {coursesInserted} course(s) scraped using browser fetch."
+                : $"Institute saved and {coursesInserted} course(s) scraped from the website.",
             Records = records,
         };
     }

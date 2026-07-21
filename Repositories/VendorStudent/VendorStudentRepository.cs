@@ -254,26 +254,37 @@ namespace AvecADeskApi.Repositories.VendorStudent
               cmd.Parameters.AddWithValue("@PageNumber", pageNumber);
               cmd.Parameters.AddWithValue("@PageSize", pageSize);
             },
-            reader => new VendorStudentHistoryItem
-            {
-              StudentID = reader.GetInt32(reader.GetOrdinal("StudentID")),
-              FirstName = GetNullableString(reader, "FirstName"),
-              LastName = GetNullableString(reader, "LastName"),
-              FullName = GetNullableString(reader, "FullName"),
-              Email = GetNullableString(reader, "Email"),
-              MobileNumber = GetNullableString(reader, "MobileNumber"),
-              CountryToApply = GetNullableString(reader, "CountryToApply"),
-              CourseName = GetNullableString(reader, "CourseName"),
-              ApplicationStatus = GetNullableString(reader, "ApplicationStatus"),
-              SubmittedDate = GetNullableDateTime(reader, "SubmittedDate"),
-              TotalRecords = reader.GetInt32(reader.GetOrdinal("TotalRecords"))
-            });
+            MapHistoryItem);
       }
       catch (Exception ex)
       {
         _logHelper.LogError($"{nameof(VendorStudentRepository)}.{nameof(GetHistoryAsync)}", ex);
         throw;
       }
+    }
+
+    private static VendorStudentHistoryItem MapHistoryItem(SqlDataReader reader)
+    {
+      var firstName = GetNullableString(reader, "FirstName");
+      var lastName = GetNullableString(reader, "LastName");
+      var fullName = GetNullableString(reader, "FullName");
+      if (string.IsNullOrWhiteSpace(fullName))
+        fullName = string.Join(" ", new[] { firstName, lastName }.Where(x => !string.IsNullOrWhiteSpace(x)));
+
+      return new VendorStudentHistoryItem
+      {
+        StudentID = reader.GetInt32(reader.GetOrdinal("StudentID")),
+        FirstName = firstName,
+        LastName = lastName,
+        FullName = fullName,
+        Email = GetNullableString(reader, "Email"),
+        MobileNumber = GetNullableString(reader, "MobileNumber"),
+        CountryToApply = GetNullableString(reader, "CountryToApply"),
+        CourseName = GetNullableString(reader, "CourseName"),
+        ApplicationStatus = GetNullableString(reader, "ApplicationStatus"),
+        SubmittedDate = GetNullableDateTime(reader, "SubmittedDate"),
+        TotalRecords = GetNullableInt(reader, "TotalRecords") ?? 0
+      };
     }
 
     public async Task<VendorStudentDetailResponse?> GetByIdAsync(int studentId)
@@ -307,26 +318,40 @@ namespace AvecADeskApi.Repositories.VendorStudent
       }
     }
 
+    private static bool HasColumn(SqlDataReader reader, string column)
+    {
+      for (var i = 0; i < reader.FieldCount; i++)
+      {
+        if (string.Equals(reader.GetName(i), column, StringComparison.OrdinalIgnoreCase))
+          return true;
+      }
+      return false;
+    }
+
     private static string? GetNullableString(SqlDataReader reader, string column)
     {
+      if (!HasColumn(reader, column)) return null;
       var ordinal = reader.GetOrdinal(column);
       return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
     }
 
     private static DateTime? GetNullableDateTime(SqlDataReader reader, string column)
     {
+      if (!HasColumn(reader, column)) return null;
       var ordinal = reader.GetOrdinal(column);
       return reader.IsDBNull(ordinal) ? null : reader.GetDateTime(ordinal);
     }
 
     private static bool? GetNullableBool(SqlDataReader reader, string column)
     {
+      if (!HasColumn(reader, column)) return null;
       var ordinal = reader.GetOrdinal(column);
       return reader.IsDBNull(ordinal) ? null : reader.GetBoolean(ordinal);
     }
 
     private static int? GetNullableInt(SqlDataReader reader, string column)
     {
+      if (!HasColumn(reader, column)) return null;
       var ordinal = reader.GetOrdinal(column);
       return reader.IsDBNull(ordinal) ? null : reader.GetInt32(ordinal);
     }
