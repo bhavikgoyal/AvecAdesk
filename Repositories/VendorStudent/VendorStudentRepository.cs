@@ -317,6 +317,42 @@ namespace AvecADeskApi.Repositories.VendorStudent
         throw;
       }
     }
+        public async Task<List<VendorStudentHistoryItem>> GetStudentApplicationListAsync(string? search, int pageNumber, int pageSize)
+        {
+            try
+            {
+                return await _db.ExecuteReaderListAsync(
+                "dbo.SP_GetStudentApplicationList",
+                cmd =>
+                {
+                    cmd.Parameters.AddWithValue("@Search", (object?)search ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@PageNumber", pageNumber);
+                    cmd.Parameters.AddWithValue("@PageSize", pageSize);
+                },
+                reader => new VendorStudentHistoryItem
+                {
+                    StudentID = reader.GetInt32(reader.GetOrdinal("StudentID")),
+                    FirstName = reader.IsDBNull(reader.GetOrdinal("FirstName")) ? null : reader.GetString(reader.GetOrdinal("FirstName")),
+                    LastName = reader.IsDBNull(reader.GetOrdinal("LastName")) ? null : reader.GetString(reader.GetOrdinal("LastName")),
+                    Email = reader.IsDBNull(reader.GetOrdinal("Email")) ? null : reader.GetString(reader.GetOrdinal("Email")),
+                    CountryToApply = reader.IsDBNull(reader.GetOrdinal("CountryToApply")) ? null : reader.GetString(reader.GetOrdinal("CountryToApply")),
+                    Phone = reader.IsDBNull(reader.GetOrdinal("MobileNumber")) ? null : reader.GetString(reader.GetOrdinal("MobileNumber")),
+                    EnglishTest = reader.IsDBNull(reader.GetOrdinal("EnglishTestType")) ? null : reader.GetString(reader.GetOrdinal("EnglishTestType")),
+                    TestScore = reader.IsDBNull(reader.GetOrdinal("TestScore")) ? null : reader.GetString(reader.GetOrdinal("TestScore")),
+                    HighestQualification = null,
+                    //HighestQualification = reader.IsDBNull(reader.GetOrdinal("HighestQualification")) ? null : reader.GetString(reader.GetOrdinal("HighestQualification")),
+                    ApplicationStatus = reader.IsDBNull(reader.GetOrdinal("ApplicationStatus")) ? null : reader.GetString(reader.GetOrdinal("ApplicationStatus")),
+                    SubmittedDate = reader.IsDBNull(reader.GetOrdinal("SubmittedDate")) ? null : reader.GetDateTime(reader.GetOrdinal("SubmittedDate")),
+                    TotalRecords = reader.GetInt32(reader.GetOrdinal("TotalRecords"))
+                });
+            }
+            catch (Exception ex)
+            {
+                _logHelper.LogError($"{nameof(VendorStudentRepository)}.{nameof(GetStudentApplicationListAsync)}", ex);
+                throw;
+            }
+        }
+
 
     private static bool HasColumn(SqlDataReader reader, string column)
     {
