@@ -256,17 +256,19 @@ namespace AvecADeskApi.Repositories.VendorStudent
             },
             reader => new VendorStudentHistoryItem
             {
-              StudentID = reader.GetInt32(reader.GetOrdinal("StudentID")),
-              FirstName = GetNullableString(reader, "FirstName"),
-              LastName = GetNullableString(reader, "LastName"),
-              FullName = GetNullableString(reader, "FullName"),
-              Email = GetNullableString(reader, "Email"),
-              MobileNumber = GetNullableString(reader, "MobileNumber"),
-              CountryToApply = GetNullableString(reader, "CountryToApply"),
-              CourseName = GetNullableString(reader, "CourseName"),
-              ApplicationStatus = GetNullableString(reader, "ApplicationStatus"),
-              SubmittedDate = GetNullableDateTime(reader, "SubmittedDate"),
-              TotalRecords = reader.GetInt32(reader.GetOrdinal("TotalRecords"))
+                StudentID = reader.GetInt32(reader.GetOrdinal("StudentID")),
+                FirstName = reader.IsDBNull(reader.GetOrdinal("FirstName")) ? null : reader.GetString(reader.GetOrdinal("FirstName")),
+                LastName = reader.IsDBNull(reader.GetOrdinal("LastName")) ? null : reader.GetString(reader.GetOrdinal("LastName")),
+                Email = reader.IsDBNull(reader.GetOrdinal("Email")) ? null : reader.GetString(reader.GetOrdinal("Email")),
+                Phone = reader.IsDBNull(reader.GetOrdinal("Phone")) ? null : reader.GetString(reader.GetOrdinal("Phone")),
+                CountryToApply = reader.IsDBNull(reader.GetOrdinal("CountryToApply")) ? null : reader.GetString(reader.GetOrdinal("CountryToApply")),
+                EnglishTest = reader.IsDBNull(reader.GetOrdinal("EnglishTest")) ? null : reader.GetString(reader.GetOrdinal("EnglishTest")),
+                TestScore = reader.IsDBNull(reader.GetOrdinal("TestScore")) ? null : reader.GetString(reader.GetOrdinal("TestScore")),
+                HighestQualification = reader.IsDBNull(reader.GetOrdinal("HighestQualification")) ? null : reader.GetString(reader.GetOrdinal("HighestQualification")),
+                ApplicationStatus = reader.IsDBNull(reader.GetOrdinal("ApplicationStatus")) ? null : reader.GetString(reader.GetOrdinal("ApplicationStatus")),
+                SubmittedDate = reader.IsDBNull(reader.GetOrdinal("SubmittedDate")) ? null : reader.GetDateTime(reader.GetOrdinal("SubmittedDate")),
+                TotalRecords = reader.GetInt32(reader.GetOrdinal("TotalRecords"))
+           
             });
       }
       catch (Exception ex)
@@ -306,8 +308,43 @@ namespace AvecADeskApi.Repositories.VendorStudent
         throw;
       }
     }
+        public async Task<List<VendorStudentHistoryItem>> GetStudentApplicationListAsync(string? search, int pageNumber, int pageSize)
+        {
+            try
+            {
+                return await _db.ExecuteReaderListAsync(
+                "dbo.SP_GetStudentApplicationList",
+                cmd =>
+                {
+                    cmd.Parameters.AddWithValue("@Search", (object?)search ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@PageNumber", pageNumber);
+                    cmd.Parameters.AddWithValue("@PageSize", pageSize);
+                },
+                reader => new VendorStudentHistoryItem
+                {
+                    StudentID = reader.GetInt32(reader.GetOrdinal("StudentID")),
+                    FirstName = reader.IsDBNull(reader.GetOrdinal("FirstName")) ? null : reader.GetString(reader.GetOrdinal("FirstName")),
+                    LastName = reader.IsDBNull(reader.GetOrdinal("LastName")) ? null : reader.GetString(reader.GetOrdinal("LastName")),
+                    Email = reader.IsDBNull(reader.GetOrdinal("Email")) ? null : reader.GetString(reader.GetOrdinal("Email")),
+                    CountryToApply = reader.IsDBNull(reader.GetOrdinal("CountryToApply")) ? null : reader.GetString(reader.GetOrdinal("CountryToApply")),
+                    Phone = reader.IsDBNull(reader.GetOrdinal("MobileNumber")) ? null : reader.GetString(reader.GetOrdinal("MobileNumber")),
+                    EnglishTest = reader.IsDBNull(reader.GetOrdinal("EnglishTestType")) ? null : reader.GetString(reader.GetOrdinal("EnglishTestType")),
+                    TestScore = reader.IsDBNull(reader.GetOrdinal("TestScore")) ? null : reader.GetString(reader.GetOrdinal("TestScore")),
+                    HighestQualification = null,
+                    //HighestQualification = reader.IsDBNull(reader.GetOrdinal("HighestQualification")) ? null : reader.GetString(reader.GetOrdinal("HighestQualification")),
+                    ApplicationStatus = reader.IsDBNull(reader.GetOrdinal("ApplicationStatus")) ? null : reader.GetString(reader.GetOrdinal("ApplicationStatus")),
+                    SubmittedDate = reader.IsDBNull(reader.GetOrdinal("SubmittedDate")) ? null : reader.GetDateTime(reader.GetOrdinal("SubmittedDate")),
+                    TotalRecords = reader.GetInt32(reader.GetOrdinal("TotalRecords"))
+                });
+            }
+            catch (Exception ex)
+            {
+                _logHelper.LogError($"{nameof(VendorStudentRepository)}.{nameof(GetStudentApplicationListAsync)}", ex);
+                throw;
+            }
+        }
 
-    private static string? GetNullableString(SqlDataReader reader, string column)
+        private static string? GetNullableString(SqlDataReader reader, string column)
     {
       var ordinal = reader.GetOrdinal(column);
       return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
