@@ -196,6 +196,8 @@ public class CourseRepository : ICourseRepository
         {
             CourseId = reader.GetInt32(reader.GetOrdinal("CourseId")),
             InstituteId = reader.GetInt32(reader.GetOrdinal("InstituteId")),
+            InstituteName = HasColumn(reader, "InstituteName") && !reader.IsDBNull(reader.GetOrdinal("InstituteName"))
+                ? reader.GetString(reader.GetOrdinal("InstituteName")) : string.Empty,
             CourseName = reader.GetString(reader.GetOrdinal("CourseName")),
             Category = reader.IsDBNull(reader.GetOrdinal("Category")) ? null : reader.GetString(reader.GetOrdinal("Category")),
             Description = reader.IsDBNull(reader.GetOrdinal("Description")) ? null : reader.GetString(reader.GetOrdinal("Description")),
@@ -206,15 +208,37 @@ public class CourseRepository : ICourseRepository
             IsApproved = reader.GetBoolean(reader.GetOrdinal("IsApproved")),
             IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
             CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
-            RateType = reader.IsDBNull(reader.GetOrdinal("RateType"))
-            ? string.Empty
-            : reader.GetString(reader.GetOrdinal("RateType")),
-
-            CommissionRate = reader.IsDBNull(reader.GetOrdinal("CommissionRate"))
-            ? 0
-            : reader.GetDecimal(reader.GetOrdinal("CommissionRate"))
-
+            Campus = HasColumn(reader, "Campus") && !reader.IsDBNull(reader.GetOrdinal("Campus"))
+                ? reader.GetString(reader.GetOrdinal("Campus")) : null,
+            Level = HasColumn(reader, "Level") && !reader.IsDBNull(reader.GetOrdinal("Level"))
+                ? reader.GetString(reader.GetOrdinal("Level")) : null,
+            ProgramLink = HasColumn(reader, "ProgramLink") && !reader.IsDBNull(reader.GetOrdinal("ProgramLink"))
+                ? reader.GetString(reader.GetOrdinal("ProgramLink")) : null,
+            CricosCode = HasColumn(reader, "CricosCode") && !reader.IsDBNull(reader.GetOrdinal("CricosCode"))
+                ? reader.GetString(reader.GetOrdinal("CricosCode")) : null,
+            Intake = HasColumn(reader, "Intake") && !reader.IsDBNull(reader.GetOrdinal("Intake"))
+                ? reader.GetString(reader.GetOrdinal("Intake")) : null,
+            EnglishReq = HasColumn(reader, "EnglishReq") && !reader.IsDBNull(reader.GetOrdinal("EnglishReq"))
+                ? reader.GetString(reader.GetOrdinal("EnglishReq")) : null,
+            ProgramDescription = HasColumn(reader, "ProgramDescription") && !reader.IsDBNull(reader.GetOrdinal("ProgramDescription"))
+                ? reader.GetString(reader.GetOrdinal("ProgramDescription")) : null,
+            ProgramLogo = HasColumn(reader, "ProgramLogo") && !reader.IsDBNull(reader.GetOrdinal("ProgramLogo"))
+                ? reader.GetString(reader.GetOrdinal("ProgramLogo")) : null,
+            RateType = HasColumn(reader, "RateType") && !reader.IsDBNull(reader.GetOrdinal("RateType"))
+                ? reader.GetString(reader.GetOrdinal("RateType")) : string.Empty,
+            CommissionRate = HasColumn(reader, "CommissionRate") && !reader.IsDBNull(reader.GetOrdinal("CommissionRate"))
+                ? reader.GetDecimal(reader.GetOrdinal("CommissionRate")) : 0
         };
+    }
+
+    private static bool HasColumn(SqlDataReader reader, string column)
+    {
+        for (var i = 0; i < reader.FieldCount; i++)
+        {
+            if (string.Equals(reader.GetName(i), column, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+        return false;
     }
     private static CourseResponse MapCourseData(SqlDataReader reader)
     {

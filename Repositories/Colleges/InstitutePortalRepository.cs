@@ -2,18 +2,25 @@ using AvecADeskApi.Helpers;
 using AvecADeskApi.Interfaces;
 using AvecADeskApi.LOG;
 using AvecADeskApi.Model.College;
+using AvecADeskApi.Model.Course;
 using Microsoft.Data.SqlClient;
+using System.Globalization;
 
 namespace AvecADeskApi.Repositories.Colleges;
 
 public class InstitutePortalRepository : IInstitutePortalRepository
 {
     private readonly SqlDbHelper _db;
+    private readonly ICourseRepository _courseRepository;
     private readonly LogHelper _logHelper;
 
-    public InstitutePortalRepository(SqlDbHelper db, LogHelper logHelper)
+    public InstitutePortalRepository(
+        SqlDbHelper db,
+        ICourseRepository courseRepository,
+        LogHelper logHelper)
     {
         _db = db;
+        _courseRepository = courseRepository;
         _logHelper = logHelper;
     }
 
@@ -39,17 +46,22 @@ public class InstitutePortalRepository : IInstitutePortalRepository
             if (profile == null)
                 return null;
 
-            var courses = await _db.ExecuteReaderListAsync(
-                "sp_GetInstitutePortalCourses",
-                cmd =>
-                {
-                    cmd.Parameters.AddWithValue("@InstituteName", trimmedName);
-                    cmd.Parameters.AddWithValue("@Query", string.IsNullOrWhiteSpace(query) ? DBNull.Value : query.Trim());
-                    cmd.Parameters.AddWithValue("@Level", string.IsNullOrWhiteSpace(level) ? DBNull.Value : level.Trim());
-                    cmd.Parameters.AddWithValue("@Intake", string.IsNullOrWhiteSpace(intake) ? DBNull.Value : intake.Trim());
-                    cmd.Parameters.AddWithValue("@Campus", string.IsNullOrWhiteSpace(campus) ? DBNull.Value : campus.Trim());
-                },
-                MapCourse);
+            // INSTITUTEScrapping.ScrappingId == Courses.InstituteId
+            // Example: Notre Dame ScrappingId=2 → all Courses where InstituteId=2
+            var instituteId = await ResolveInstituteIdAsync(trimmedName);
+            var courses = new List<InstitutePortalCourseResponse>();
+
+            if (instituteId is > 0)
+            {
+                // Load from Courses table by InstituteId (all programs for this institute)
+                var allCourses = await _courseRepository.GetCoursesAsync();
+                courses = allCourses
+                    .Where(c => c.InstituteId == instituteId.Value && c.IsActive)
+                    .Where(c => MatchesCourseListFilters(c, query, level, intake, campus))
+                    .Select(c => MapFromCourseList(c, trimmedName, profile))
+                    .OrderBy(c => c.ProgramName)
+                    .ToList();
+            }
 
             return new InstitutePortalResponse
             {
@@ -62,6 +74,82 @@ public class InstitutePortalRepository : IInstitutePortalRepository
             _logHelper.LogError($"{nameof(InstitutePortalRepository)}.{nameof(GetPortalByInstituteNameAsync)}", ex);
             throw;
         }
+    }
+
+    private async Task<int?> ResolveInstituteIdAsync(string instituteName)
+    {
+        var scrapRows = await _db.ExecuteReaderListAsync(
+            "sp_GetInstituteScrapping",
+            _ => { },
+            reader => new InstituteIdHolder
+            {
+                Id = reader.GetInt32(reader.GetOrdinal("ScrappingId")),
+                Name = ReadString(reader, "InstituteName"),
+            });
+
+        var match = scrapRows.FirstOrDefault(r =>
+            string.Equals(r.Name?.Trim(), instituteName, StringComparison.OrdinalIgnoreCase));
+
+        return match?.Id > 0 ? match.Id : null;
+    }
+
+    private static bool MatchesCourseListFilters(
+        CourseListResponse course,
+        string? query,
+        string? level,
+        string? intake,
+        string? campus)
+    {
+        if (!string.IsNullOrWhiteSpace(query))
+        {
+            var q = query.Trim();
+            var haystack = $"{course.CourseName} {course.Level} {course.Campus} {course.CourseCategory}";
+            if (haystack.IndexOf(q, StringComparison.OrdinalIgnoreCase) < 0)
+                return false;
+        }
+
+        if (!string.IsNullOrWhiteSpace(level)
+            && !string.Equals(course.Level?.Trim(), level.Trim(), StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        if (!string.IsNullOrWhiteSpace(intake)
+            && (course.Intake?.IndexOf(intake.Trim(), StringComparison.OrdinalIgnoreCase) ?? -1) < 0)
+            return false;
+
+        if (!string.IsNullOrWhiteSpace(campus)
+            && (course.Campus?.IndexOf(campus.Trim(), StringComparison.OrdinalIgnoreCase) ?? -1) < 0)
+            return false;
+
+        return true;
+    }
+
+    private static InstitutePortalCourseResponse MapFromCourseList(
+        CourseListResponse course,
+        string instituteName,
+        InstitutePortalProfileResponse profile)
+    {
+        return new InstitutePortalCourseResponse
+        {
+            CourseId = course.CourseId,
+            InstituteId = course.InstituteId,
+            ScrappingId = course.CourseId,
+            InstituteName = string.IsNullOrWhiteSpace(course.InstituteName) ? instituteName : course.InstituteName,
+            Campus = course.Campus,
+            State = null,
+            ProgramName = course.CourseName,
+            Level = course.Level,
+            ProgramLink = course.ProgramLink,
+            CricosCode = null,
+            Duration = course.Duration,
+            Intake = course.Intake,
+            FeesYearly = course.Fees?.ToString("0.##", CultureInfo.InvariantCulture),
+            EnglishReq = null,
+            ProgramLogo = course.ProgramLogo,
+            Logo = profile.Logo,
+            Country = profile.Country,
+            City = profile.City,
+            Description = null,
+        };
     }
 
     private static InstitutePortalProfileResponse MapProfile(SqlDataReader reader)
@@ -80,36 +168,7 @@ public class InstitutePortalRepository : IInstitutePortalRepository
         };
     }
 
-    private static InstitutePortalCourseResponse MapCourse(SqlDataReader reader)
-    {
-        return new InstitutePortalCourseResponse
-        {
-            ScrappingId = reader.GetInt32(reader.GetOrdinal("ScrappingId")),
-            InstituteName = ReadString(reader, "InstituteName") ?? string.Empty,
-            Campus = ReadString(reader, "Campus"),
-            State = ReadString(reader, "State"),
-            ProgramName = ReadString(reader, "ProgramName"),
-            Level = ReadString(reader, "Level"),
-            ProgramLink = ReadString(reader, "ProgramLink"),
-            CricosCode = ReadString(reader, "CricosCode"),
-            Duration = ReadString(reader, "Duration"),
-            Intake = ReadString(reader, "Intake"),
-            FeesYearly = ReadString(reader, "FeesYearly"),
-            EnglishReq = ReadString(reader, "EnglishReq"),
-            ProgramLogo = ReadStringSafe(reader, "ProgramLogo"),
-            Logo = ReadString(reader, "Logo"),
-            Country = ReadString(reader, "Country"),
-            City = ReadString(reader, "City"),
-        };
-    }
-
     private static string? ReadString(SqlDataReader reader, string column)
-    {
-        var ordinal = reader.GetOrdinal(column);
-        return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
-    }
-
-    private static string? ReadStringSafe(SqlDataReader reader, string column)
     {
         try
         {
@@ -120,5 +179,11 @@ public class InstitutePortalRepository : IInstitutePortalRepository
         {
             return null;
         }
+    }
+
+    private sealed class InstituteIdHolder
+    {
+        public int Id { get; set; }
+        public string? Name { get; set; }
     }
 }
