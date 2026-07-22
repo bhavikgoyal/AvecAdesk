@@ -167,6 +167,7 @@ builder.Services.AddScoped<IUserActivityRepository, UserActivityRepository>();
 builder.Services.AddScoped<IViewActivityHistoryRepository, ViewActivityHistoryRepository>();
 builder.Services.AddScoped<IUserRepository, UserPasswordRepository>();
 builder.Services.AddScoped<IVendorStudentRepository, VendorStudentRepository>();
+builder.Services.AddScoped<ICardMemberRepository, CardMemberRepository>();
 builder.Services.AddScoped<JwtTokenGenerator>();
 
 
