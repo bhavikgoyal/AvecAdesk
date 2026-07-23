@@ -31,6 +31,35 @@ public class ReceivablesRepository : IReceivablesRepository
         }
     }
 
+    public async Task<MonthRevenueDashboardResponse> GetMonthRevenueDashboardAsync()
+    {
+        try
+        {
+            var result = await _db.ExecuteReaderSingleAsync("sp_GetMonthRevenueDashboard",
+                _ => { }, MapMonthRevenueDashboard);
+            return result ?? new MonthRevenueDashboardResponse();
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(ReceivablesRepository)}.{nameof(GetMonthRevenueDashboardAsync)}", ex);
+            throw;
+        }
+    }
+
+    public async Task<List<StudentPaymentInstallmentResponse>> GetStudentPaymentInstallmentsAsync()
+    {
+        try
+        {
+            return await _db.ExecuteReaderListAsync("sp_GetStudentPaymentInstallment",
+                _ => { }, MapStudentPaymentInstallment);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(ReceivablesRepository)}.{nameof(GetStudentPaymentInstallmentsAsync)}", ex);
+            throw;
+        }
+    }
+
     public async Task<List<OverdueReceivableResponse>> GetOverdueAsync(ReceivablesFilter filter)
     {
         try
@@ -140,5 +169,28 @@ public class ReceivablesRepository : IReceivablesRepository
         OverdueCount = r.GetInt32(r.GetOrdinal("OverdueCount")),
         TotalReceived = r.GetDecimal(r.GetOrdinal("TotalReceived")),
         ReceivedCount = r.GetInt32(r.GetOrdinal("ReceivedCount"))
+    };
+
+    private static MonthRevenueDashboardResponse MapMonthRevenueDashboard(SqlDataReader r) => new()
+    {
+        Revenue = r.GetDecimal(r.GetOrdinal("Revenue")),
+        Collected = r.GetDecimal(r.GetOrdinal("Collected")),
+        Outstanding = r.GetDecimal(r.GetOrdinal("Outstanding")),
+        Forecast = r.GetDecimal(r.GetOrdinal("Forecast"))
+    };
+
+    private static StudentPaymentInstallmentResponse MapStudentPaymentInstallment(SqlDataReader r) => new()
+    {
+        StudentId = r.GetInt32(r.GetOrdinal("StudentId")),
+        FullName = r.GetString(r.GetOrdinal("FullName")),
+        ScheduleId = r.GetInt32(r.GetOrdinal("ScheduleId")),
+        CreatedDate = r.GetDateTime(r.GetOrdinal("CreatedDate")),
+        StudentPaymentInstallmentId = r.GetInt32(r.GetOrdinal("StudentPaymentInstallmentId")),
+        InstallmentNo = r.GetInt32(r.GetOrdinal("InstallmentNo")),
+        DueDate = r.GetDateTime(r.GetOrdinal("DueDate")),
+        FeesAmount = r.GetDecimal(r.GetOrdinal("FeesAmount")),
+        PaidAmount = r.GetDecimal(r.GetOrdinal("PaidAmount")),
+        BalanceAmount = r.GetDecimal(r.GetOrdinal("BalanceAmount")),
+        PaymentStatus = r.GetString(r.GetOrdinal("PaymentStatus"))
     };
 }

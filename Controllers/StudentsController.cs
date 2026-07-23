@@ -25,6 +25,21 @@ public class StudentsController : ControllerBase
     }
 
     [Authorize]
+    [HttpGet("all")]
+    public async Task<IActionResult> GetAllStudents()
+    {
+        try
+        {
+            return Ok(await _studentRepository.GetAllStudentsAsync());
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(GetAllStudents), ex);
+            return StatusCode(500, "An error occurred while fetching all students.");
+        }
+    }
+
+    [Authorize]
     [HttpGet]
     public async Task<IActionResult> GetStudents([FromQuery] string? enrolmentStatus)
     {

@@ -58,6 +58,29 @@ public class ReceivablesSummaryResponse
     public int ReceivedCount { get; set; }
 }
 
+public class MonthRevenueDashboardResponse
+{
+    public decimal Revenue { get; set; }
+    public decimal Collected { get; set; }
+    public decimal Outstanding { get; set; }
+    public decimal Forecast { get; set; }
+}
+
+public class StudentPaymentInstallmentResponse
+{
+    public int StudentId { get; set; }
+    public string FullName { get; set; } = string.Empty;
+    public int ScheduleId { get; set; }
+    public DateTime CreatedDate { get; set; }
+    public int StudentPaymentInstallmentId { get; set; }
+    public int InstallmentNo { get; set; }
+    public DateTime DueDate { get; set; }
+    public decimal FeesAmount { get; set; }
+    public decimal PaidAmount { get; set; }
+    public decimal BalanceAmount { get; set; }
+    public string PaymentStatus { get; set; } = string.Empty;
+}
+
 // Common filter object used by the controller to pass query params down
 public class ReceivablesFilter
 {

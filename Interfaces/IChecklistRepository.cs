@@ -6,6 +6,7 @@ namespace AvecADeskApi.Interfaces
     public interface IChecklistRepository
     {
         Task<List<ChecklistModel>> GetByCardIdAsync(int cardId);
+        Task<List<WeekChecklistItemModel>> GetWeekChecklistItemsAsync();
         Task<int> CreateChecklistAsync(CreateChecklistRequest request);
         Task<bool> DeleteChecklistAsync(int checklistId);
         Task<int> CreateChecklistItemAsync(CreateChecklistItemRequest request);
