@@ -35,6 +35,22 @@ public class StudentRepository : IStudentRepository
         }
     }
 
+    public async Task<List<AllStudentResponse>> GetAllStudentsAsync()
+    {
+        try
+        {
+            return await _db.ExecuteReaderListAsync(
+                "sp_GetAllStudents",
+                _ => { },
+                MapAllStudent);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(StudentRepository)}.{nameof(GetAllStudentsAsync)}", ex);
+            throw;
+        }
+    }
+
     public async Task<StudentResponse?> GetStudentByIdAsync(int studentId)
     {
         try
@@ -147,8 +163,26 @@ public class StudentRepository : IStudentRepository
             AIHFormSubmittedAt = reader.IsDBNull(reader.GetOrdinal("AIHFormSubmittedAt")) ? null : reader.GetDateTime(reader.GetOrdinal("AIHFormSubmittedAt")),
             IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
             CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+          
 
+        };
+    }
 
+    private static AllStudentResponse MapAllStudent(SqlDataReader reader)
+    {
+        return new AllStudentResponse
+        {
+            StudentId = reader.GetInt32(reader.GetOrdinal("StudentId")),
+            ScrappingId = reader.IsDBNull(reader.GetOrdinal("ScrappingId")) ? null : reader.GetInt32(reader.GetOrdinal("ScrappingId")),
+            CourseId = reader.IsDBNull(reader.GetOrdinal("CourseId")) ? null : reader.GetInt32(reader.GetOrdinal("CourseId")),
+            FullName = reader.GetString(reader.GetOrdinal("FullName")),
+            Email = reader.GetString(reader.GetOrdinal("Email")),
+            Phone = reader.GetString(reader.GetOrdinal("Phone")),
+            EnrollmentNumber = reader.IsDBNull(reader.GetOrdinal("EnrollmentNumber")) ? null : reader.GetString(reader.GetOrdinal("EnrollmentNumber")),
+            EnrolmentStatus = reader.GetString(reader.GetOrdinal("EnrolmentStatus")),
+            AIHFormSubmittedAt = reader.IsDBNull(reader.GetOrdinal("AIHFormSubmittedAt")) ? null : reader.GetDateTime(reader.GetOrdinal("AIHFormSubmittedAt")),
+            IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
+            CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt"))
         };
     }
     public async Task<StudentPaymentScheduleDetailResponse?> GetStudentPaymentDetailByIdAsync(int studentId)

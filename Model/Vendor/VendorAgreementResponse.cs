@@ -11,4 +11,5 @@ public class VendorAgreementResponse
     public bool IsActive { get; set; }
     public int? UploadedByUserId { get; set; }
     public DateTime CreatedAt { get; set; }
+    public DateTime? LastLogin { get; set; }
 }

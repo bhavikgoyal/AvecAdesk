@@ -253,7 +253,31 @@ namespace AvecADeskApi.Controllers
         return StatusCode(500, new { message = "Error while fetching application history.", detail = ex.Message });
       }
     }
-
+[HttpGet("GetStudentApplicationList")]
+        public async Task<IActionResult> GetStudentApplicationList(
+    [FromQuery] string? search,
+    [FromQuery] int pagenumber = 1,
+    [FromQuery] int pageSize = 200)
+        {
+            try
+            {
+                var result = await _repo.GetStudentApplicationListAsync(search, pagenumber, pageSize);
+                var totalRecords = result.Count > 0 ? result[0].TotalRecords : 0;
+ 
+                return Ok(new
+                {
+                    Data = result,
+                    TotalRecords = totalRecords,
+                    PageNumber = pagenumber,
+                    PageSize = pageSize
+                });
+            }
+            catch (Exception ex)
+            {
+                _logHelper.LogError($"{nameof(VendorStudentController)}.{nameof(GetStudentApplicationList)}", ex);
+                return StatusCode(500, new { message = "Error while fetching student applications.", detail = ex.Message });
+            }
+        }
     private async Task<string?> SaveSignatureImageAsync(int studentId, string signature, string prefix)
     {
       if (string.IsNullOrWhiteSpace(signature))
