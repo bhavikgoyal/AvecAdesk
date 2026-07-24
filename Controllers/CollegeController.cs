@@ -38,11 +38,12 @@ public class CollegeController : ControllerBase
         [FromQuery] string? query,
         [FromQuery] string? campus,
         [FromQuery] string? state,
-        [FromQuery] int? topCount)
+        [FromQuery] int? topCount,
+        [FromQuery] bool? topCollegesOnly)
     {
         try
         {
-            var colleges = await _repository.SearchCollegesAsync(query, campus, state, topCount);
+            var colleges = await _repository.SearchCollegesAsync(query, campus, state, topCount, topCollegesOnly);
             return Ok(colleges);
         }
         catch (Exception ex)
