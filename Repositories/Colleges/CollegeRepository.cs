@@ -64,7 +64,8 @@ public class CollegeRepository : ICollegeRepository
         string? query,
         string? campus,
         string? state,
-        int? topCount)
+        int? topCount,
+        bool? topCollegesOnly)
     {
         try
         {
@@ -74,12 +75,24 @@ public class CollegeRepository : ICollegeRepository
                 _ => { },
                 MapScrapInstitute);
 
-            // One card per institute name (keep first ScrappingId = Courses.InstituteId)
+            await ApplyTopCollegedFlagsAsync(institutes);
             var uniqueInstitutes = institutes
                 .Where(i => !string.IsNullOrWhiteSpace(i.InstituteName))
                 .GroupBy(i => i.InstituteName!.Trim(), StringComparer.OrdinalIgnoreCase)
-                .Select(g => g.OrderBy(x => x.ScrappingId).First())
+                .Select(g =>
+                {
+                    var primary = g.OrderBy(x => x.ScrappingId).First();
+                    primary.TopColleged = g.Any(x => x.TopColleged);
+                    return primary;
+                })
                 .ToList();
+
+            if (topCollegesOnly == true)
+            {
+                uniqueInstitutes = uniqueInstitutes
+                    .Where(i => i.TopColleged)
+                    .ToList();
+            }
 
             // 2) All programs from Courses table
             var courses = (await _courseRepository.GetCoursesAsync())
@@ -120,6 +133,7 @@ public class CollegeRepository : ICollegeRepository
                     WebsiteURL = institute.WebsiteURL,
                     ProgramCount = instituteCourses.Count,
                     CampusCount = courseCampuses.Count,
+                    TopColleged = institute.TopColleged,
                     Campuses = courseCampuses,
                     Cities = cities,
                     States = states,
@@ -184,6 +198,35 @@ public class CollegeRepository : ICollegeRepository
         return true;
     }
 
+    private async Task ApplyTopCollegedFlagsAsync(List<ScrapInstitute> institutes)
+    {
+        if (institutes.Count == 0)
+            return;
+
+        try
+        {
+            var flags = await _db.ExecuteReaderListAsync(
+                "sp_GetInstituteTopColleged",
+                _ => { },
+                reader => (
+                    ScrappingId: reader.GetInt32(reader.GetOrdinal("ScrappingId")),
+                    TopColleged: !reader.IsDBNull(reader.GetOrdinal("TopColleged"))
+                        && reader.GetBoolean(reader.GetOrdinal("TopColleged"))
+                ));
+
+            var byId = flags.ToDictionary(f => f.ScrappingId, f => f.TopColleged);
+            foreach (var institute in institutes)
+            {
+                if (byId.TryGetValue(institute.ScrappingId, out var isTop))
+                    institute.TopColleged = isTop;
+            }
+        }
+        catch (Exception ex)
+        {
+            // SP / column issues should not break the whole college list.
+            _logHelper.LogError($"{nameof(CollegeRepository)}.{nameof(ApplyTopCollegedFlagsAsync)}", ex);
+        }
+    }
     private static ScrapInstitute MapScrapInstitute(SqlDataReader reader)
     {
         return new ScrapInstitute
@@ -195,6 +238,7 @@ public class CollegeRepository : ICollegeRepository
             Campus = ReadString(reader, "Campus"),
             State = ReadString(reader, "State"),
             City = ReadString(reader, "City"),
+            TopColleged = ReadBoolean(reader, "TopColleged") ?? false,
         };
     }
 
@@ -222,6 +266,19 @@ public class CollegeRepository : ICollegeRepository
         }
     }
 
+    private static bool? ReadBoolean(SqlDataReader reader, string column)
+    {
+        try
+        {
+            var ordinal = reader.GetOrdinal(column);
+            return reader.IsDBNull(ordinal) ? null : reader.GetBoolean(ordinal);
+        }
+        catch (IndexOutOfRangeException)
+        {
+            return null;
+        }
+    }
+
     private sealed class ScrapInstitute
     {
         public int ScrappingId { get; set; }
@@ -231,5 +288,6 @@ public class CollegeRepository : ICollegeRepository
         public string? Campus { get; set; }
         public string? State { get; set; }
         public string? City { get; set; }
+        public bool TopColleged { get; set; }
     }
 }

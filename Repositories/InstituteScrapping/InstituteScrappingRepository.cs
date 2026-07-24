@@ -230,6 +230,7 @@ public class InstituteScrappingRepository : IInstituteScrappingRepository
             ProgramLogo = ReadString(reader, "ProgramLogo"),
             AddmissionRequirements = ReadString(reader, "AddmissionRequirements"),
             IsScrap = ReadBoolean(reader, "IsScrap"),
+            TopColleged = ReadBoolean(reader, "TopColleged") ?? false,
             CreatedAt = ReadDateTime(reader, "CreatedAt"),
         };
     }
