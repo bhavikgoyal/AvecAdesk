@@ -25,7 +25,7 @@ public class CoursesController : ControllerBase
         _fileUploadHelper = fileUploadHelper;
     }
 
-    [HttpGet]
+    [HttpGet("scrapping")]
     public async Task<IActionResult> GetCourses([FromQuery] int? instituteId)
     {
         try
@@ -47,6 +47,27 @@ public class CoursesController : ControllerBase
         }
     }
 
+    [HttpGet]
+    public async Task<IActionResult> GetCoursesByScrappingId([FromQuery] int? scrappingId)
+    {
+        try
+        {
+
+            var courses = await _courseRepository.GetCoursesByINSTITUTEScrappingAsync(scrappingId);
+            var gstPercentage = _configuration.GetValue<decimal>("GST:Percentage");
+
+            return Ok(new
+            {
+                GstPercentage = gstPercentage,
+                Courses = courses
+            });
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(GetCourses), ex);
+            return StatusCode(500, "An error occurred while fetching courses.");
+        }
+    }
     [HttpGet("{courseId:int}")]
     public async Task<IActionResult> GetCourseById(int courseId)
     {

@@ -37,7 +37,21 @@ public class ScheduleRepository : IScheduleRepository
             throw;
         }
     }
-
+    public async Task<List<StudentPaymentScheduleListResponse>> GetStudentPaymentScheduleListAsync(int? studentId)
+    {
+        try
+        {
+            return await _db.ExecuteReaderListAsync(
+                "sp_GetStudentPaymentScheduleList",
+                cmd => cmd.Parameters.AddWithValue("@StudentId", (object?)studentId ?? DBNull.Value),
+                MapStudentPaymentSchedule);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(ScheduleRepository)}.{nameof(GetStudentPaymentScheduleListAsync)}", ex);
+            throw;
+        }
+    }
     public async Task<PaymentScheduleResponse?> GetPaymentScheduleByIdAsync(int scheduleId)
     {
         try
@@ -58,16 +72,19 @@ public class ScheduleRepository : IScheduleRepository
     {
         try
         {
-            var scheduleIdParam = new SqlParameter("@ScheduleId", SqlDbType.Int) { Direction = ParameterDirection.Output };
+            var scheduleIdParam = new SqlParameter("@ScheduleId", SqlDbType.Int)
+            {
+                Direction = ParameterDirection.Output
+            };
 
             await _db.ExecuteNonQueryAsync("sp_CreatePaymentSchedule", cmd =>
             {
                 cmd.Parameters.AddWithValue("@StudentId", request.StudentId);
-                cmd.Parameters.AddWithValue("@DueDate", request.DueDate);
-                cmd.Parameters.AddWithValue("@AmountDue", request.AmountDue);
-                cmd.Parameters.AddWithValue("@Fees", request.Fees);
-                cmd.Parameters.AddWithValue("@Commission", request.Commission);
-                cmd.Parameters.AddWithValue("@Notes", (object?)request.Notes ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@TotalCourseFee", request.TotalCourseFee);
+                cmd.Parameters.AddWithValue("@NoOfInstallments", request.NoOfInstallments);
+                cmd.Parameters.AddWithValue("@Frequency", request.Frequency);
+                cmd.Parameters.AddWithValue("@FirstDueDate", request.FirstDueDate);
+
                 cmd.Parameters.Add(scheduleIdParam);
             });
 
@@ -79,7 +96,98 @@ public class ScheduleRepository : IScheduleRepository
             throw;
         }
     }
+    public async Task<int> CreateStudentPaymentInstallmentAsync(StudentPaymentInstallmentCreateRequest request)
+    {
+        try
+        {
+            var installmentIdParam = new SqlParameter("@StudentPaymentInstallmentId", SqlDbType.Int)
+            {
+                Direction = ParameterDirection.Output
+            };
 
+            await _db.ExecuteNonQueryAsync("sp_CreateStudentPaymentInstallment", cmd =>
+            {
+                cmd.Parameters.AddWithValue("@ScheduleId", request.ScheduleId);
+                cmd.Parameters.AddWithValue("@InstallmentNo", request.InstallmentNo);
+                cmd.Parameters.AddWithValue("@DueDate", request.DueDate);
+                cmd.Parameters.AddWithValue("@FeesAmount", request.FeesAmount);
+                cmd.Parameters.AddWithValue("@PaidAmount", request.PaidAmount);
+                cmd.Parameters.AddWithValue("@BalanceAmount", request.BalanceAmount);
+                cmd.Parameters.AddWithValue("@PaymentStatus", request.PaymentStatus);
+
+                cmd.Parameters.Add(installmentIdParam);
+            });
+
+            return (int)installmentIdParam.Value;
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(ScheduleRepository)}.{nameof(CreateStudentPaymentInstallmentAsync)}", ex);
+            throw;
+        }
+    }
+    public async Task<int> CreateStudentCommissionAsync(StudentCommissionCreateRequest request)
+    {
+        try
+        {
+            var commissionIdParam = new SqlParameter("@CommissionId", SqlDbType.Int)
+            {
+                Direction = ParameterDirection.Output
+            };
+
+            await _db.ExecuteNonQueryAsync("sp_CreateStudentCommission", cmd =>
+            {
+                cmd.Parameters.AddWithValue("@ScheduleId", request.ScheduleId);
+                cmd.Parameters.AddWithValue("@CommissionPercentage", request.CommissionPercentage);
+                cmd.Parameters.AddWithValue("@GSTPercentage", request.GSTPercentage);
+                cmd.Parameters.AddWithValue("@BonusType", (object?)request.BonusType ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@BonusOption", (object?)request.BonusOption ?? DBNull.Value);
+
+                cmd.Parameters.Add(commissionIdParam);
+            });
+
+            return (int)commissionIdParam.Value;
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(ScheduleRepository)}.{nameof(CreateStudentCommissionAsync)}", ex);
+            throw;
+        }
+    }
+    public async Task<int> CreateStudentCommissionDetailAsync(StudentCommissionDetailCreateRequest request)
+    {
+        try
+        {
+            var commissionDetailIdParam = new SqlParameter("@CommissionDetailId", SqlDbType.Int)
+            {
+                Direction = ParameterDirection.Output
+            };
+
+            await _db.ExecuteNonQueryAsync("sp_CreateStudentCommissionDetail", cmd =>
+            {
+                cmd.Parameters.AddWithValue("@CommissionId", request.CommissionId);
+                cmd.Parameters.AddWithValue("@StudentPaymentInstallmentId", request.StudentPaymentInstallmentId);
+                cmd.Parameters.AddWithValue("@CommissionAmount", request.CommissionAmount);
+                cmd.Parameters.AddWithValue("@GSTAmount", request.GSTAmount);
+                cmd.Parameters.AddWithValue("@BonusAmount", request.BonusAmount);
+                cmd.Parameters.AddWithValue("@InvoiceAmount", request.InvoiceAmount);
+
+                cmd.Parameters.AddWithValue("@InvoiceNo", (object?)request.InvoiceNo ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@ReceivedDate", (object?)request.ReceivedDate ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@CommissionStatus", (object?)request.CommissionStatus ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@Remark", (object?)request.Remark ?? DBNull.Value);
+
+                cmd.Parameters.Add(commissionDetailIdParam);
+            });
+
+            return (int)commissionDetailIdParam.Value;
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(ScheduleRepository)}.{nameof(CreateStudentCommissionDetailAsync)}", ex);
+            throw;
+        }
+    }
     public async Task<bool> UpdatePaymentScheduleAsync(int scheduleId, PaymentScheduleUpdateRequest request)
     {
         try
@@ -226,32 +334,32 @@ public class ScheduleRepository : IScheduleRepository
         }
     }
 
-    public async Task<PaymentScheduleSummaryResponse> GetPaymentSummaryAsync()
-    {
-        try
-        {
-            var schedules = await GetPaymentSchedulesAsync(null);
-            var today = DateTime.Today;
+    //public async Task<PaymentScheduleSummaryResponse> GetPaymentSummaryAsync()
+    //{
+    //    try
+    //    {
+    //        var schedules = await GetPaymentSchedulesAsync(null);
+    //        var today = DateTime.Today;
 
-            static bool IsUnpaid(PaymentScheduleResponse schedule) =>
-                !string.Equals(schedule.Status, "Paid", StringComparison.OrdinalIgnoreCase);
+    //        static bool IsUnpaid(PaymentScheduleResponse schedule) =>
+    //            !string.Equals(schedule.Status, "Paid", StringComparison.OrdinalIgnoreCase);
 
-            return new PaymentScheduleSummaryResponse
-            {
-                CollectedTotal = schedules.Sum(schedule => schedule.AmountPaid),
-                OutstandingTotal = schedules.Sum(schedule => schedule.AmountDue),
-                OverdueTotal = schedules
-                    .Where(schedule => IsUnpaid(schedule) && schedule.DueDate.Date < today)
-                    .Sum(schedule => schedule.AmountDue),
-                OverdueCount = schedules.Count(schedule => IsUnpaid(schedule) && schedule.DueDate.Date < today),
-            };
-        }
-        catch (Exception ex)
-        {
-            _logHelper.LogError($"{nameof(ScheduleRepository)}.{nameof(GetPaymentSummaryAsync)}", ex);
-            throw;
-        }
-    }
+    //        return new PaymentScheduleSummaryResponse
+    //        {
+    //            CollectedTotal = schedules.Sum(schedule => schedule.AmountPaid),
+    //            OutstandingTotal = schedules.Sum(schedule => schedule.AmountDue),
+    //            OverdueTotal = schedules
+    //                .Where(schedule => IsUnpaid(schedule) && schedule.DueDate.Date < today)
+    //                .Sum(schedule => schedule.AmountDue),
+    //            OverdueCount = schedules.Count(schedule => IsUnpaid(schedule) && schedule.DueDate.Date < today),
+    //        };
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        _logHelper.LogError($"{nameof(ScheduleRepository)}.{nameof(GetPaymentSummaryAsync)}", ex);
+    //        throw;
+    //    }
+    //}
 
     private static PaymentScheduleResponse MapSchedule(SqlDataReader reader)
     {
@@ -259,12 +367,79 @@ public class ScheduleRepository : IScheduleRepository
         {
             ScheduleId = reader.GetInt32(reader.GetOrdinal("ScheduleId")),
             StudentId = reader.GetInt32(reader.GetOrdinal("StudentId")),
-            DueDate = reader.GetDateTime(reader.GetOrdinal("DueDate")),
-            AmountDue = reader.GetDecimal(reader.GetOrdinal("AmountDue")),
-            Status = reader.GetString(reader.GetOrdinal("Status")),
-            AmountPaid = reader.GetDecimal(reader.GetOrdinal("AmountPaid")),
-            PaidAt = reader.IsDBNull(reader.GetOrdinal("PaidAt")) ? null : reader.GetDateTime(reader.GetOrdinal("PaidAt")),
-            Notes = reader.IsDBNull(reader.GetOrdinal("Notes")) ? null : reader.GetString(reader.GetOrdinal("Notes"))
+            FirstDueDate = reader.GetDateTime(reader.GetOrdinal("FirstDueDate")),
+            TotalCourseFee = reader.IsDBNull(reader.GetOrdinal("TotalCourseFee"))
+                ? null
+                : reader.GetDecimal(reader.GetOrdinal("TotalCourseFee")),
+            NoOfInstallments = reader.IsDBNull(reader.GetOrdinal("NoOfInstallments"))
+                ? null
+                : reader.GetInt32(reader.GetOrdinal("NoOfInstallments")),
+            Frequency = reader.IsDBNull(reader.GetOrdinal("Frequency"))
+                ? null
+                : reader.GetString(reader.GetOrdinal("Frequency")),
+            CreatedDate = reader.GetDateTime(reader.GetOrdinal("CreatedDate"))
         };
+    }
+    private static StudentPaymentScheduleListResponse MapStudentPaymentSchedule(SqlDataReader reader)
+    {
+        return new StudentPaymentScheduleListResponse
+        {
+            ScheduleId = reader.GetInt32(reader.GetOrdinal("ScheduleId")),
+            StudentId = reader.GetInt32(reader.GetOrdinal("StudentId")),
+            StudentName = reader["StudentName"]?.ToString() ?? "",
+            InstituteName = reader["InstituteName"]?.ToString() ?? "",
+            CourseName = reader["CourseName"]?.ToString() ?? "",
+            TotalCourseFee = reader.GetDecimal(reader.GetOrdinal("TotalCourseFee")),
+            NoOfInstallments = reader.GetInt32(reader.GetOrdinal("NoOfInstallments")),
+            Frequency = reader["Frequency"]?.ToString() ?? "",
+            FirstDueDate = reader.GetDateTime(reader.GetOrdinal("FirstDueDate")),
+            TotalInstallments = reader.GetInt32(reader.GetOrdinal("TotalInstallments")),
+            PaidInstallments = reader.GetInt32(reader.GetOrdinal("PaidInstallments")),
+            PendingInstallments = reader.GetInt32(reader.GetOrdinal("PendingInstallments")),
+            CollectedAmount = reader.GetDecimal(reader.GetOrdinal("CollectedAmount")),
+            BalanceAmount = reader.GetDecimal(reader.GetOrdinal("BalanceAmount")),
+            NextDueDate = reader.IsDBNull(reader.GetOrdinal("NextDueDate"))
+                ? null
+                : reader.GetDateTime(reader.GetOrdinal("NextDueDate")),
+            PaymentStatus = reader["PaymentStatus"]?.ToString() ?? ""
+        };
+    }
+    public async Task<UpdateStudentPaymentScheduleResponse> UpdateStudentPaymentScheduleAsync(UpdateStudentPaymentScheduleRequest request)
+    {
+        try
+        {
+            await using var connection = new SqlConnection(_connectionString);
+            await using var command = new SqlCommand("sp_UpdateStudentPaymentSchedule", connection);
+
+            command.CommandType = CommandType.StoredProcedure;
+
+            command.Parameters.AddWithValue("@StudentId", request.StudentId);
+            command.Parameters.AddWithValue("@NoOfInstallments", request.NoOfInstallments);
+            command.Parameters.AddWithValue("@Frequency", request.Frequency);
+            command.Parameters.AddWithValue("@FirstDueDate", request.FirstDueDate);
+
+            await connection.OpenAsync();
+
+            await using var reader = await command.ExecuteReaderAsync();
+
+            if (await reader.ReadAsync())
+            {
+                return new UpdateStudentPaymentScheduleResponse
+                {
+                    ScheduleId = reader.GetInt32(reader.GetOrdinal("ScheduleId")),
+                    CommissionId = reader.GetInt32(reader.GetOrdinal("CommissionId"))
+                };
+            }
+
+            throw new Exception("Payment schedule update failed.");
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(
+                $"{nameof(ScheduleRepository)}.{nameof(UpdateStudentPaymentScheduleAsync)}",
+                ex);
+
+            throw;
+        }
     }
 }

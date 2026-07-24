@@ -121,4 +121,24 @@ public class StudentsController : ControllerBase
             return StatusCode(500, "An error occurred while updating enrolment status.");
         }
     }
+    [HttpGet("GetStudentPaymentDetail/{studentId}")]
+    public async Task<IActionResult> GetStudentPaymentDetail(int studentId)
+    {
+        try
+        {
+            var result = await _studentRepository.GetStudentPaymentDetailByIdAsync(studentId);
+
+            if (result == null)
+                return NotFound(new { Message = "Student not found." });
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, new
+            {
+                Message = ex.Message
+            });
+        }
+    }
 }
