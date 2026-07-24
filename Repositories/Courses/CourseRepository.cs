@@ -33,7 +33,24 @@ public class CourseRepository : ICourseRepository
             throw;
         }
     }
+    public async Task<List<InstituteScrappingCourseResponse>> GetCoursesByINSTITUTEScrappingAsync(int? scrappingId)
+    {
+        try
+        {
+            return await _db.ExecuteReaderListAsync(
+                "sp_GetCoursesByINSTITUTEScrapping",
+                cmd => cmd.Parameters.AddWithValue("@ScrappingId", (object?)scrappingId ?? DBNull.Value),
+                MapInstituteScrappingCourse);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(
+                $"{nameof(CourseRepository)}.{nameof(GetCoursesByINSTITUTEScrappingAsync)}",
+                ex);
 
+            throw;
+        }
+    }
     public async Task<CourseResponse?> GetCourseByIdAsync(int courseId)
     {
         try
@@ -325,6 +342,34 @@ public class CourseRepository : ICourseRepository
                 ? null
                 : reader.GetString(reader.GetOrdinal("Duration")),
             IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive"))
+        };
+    }
+    private static InstituteScrappingCourseResponse MapInstituteScrappingCourse(SqlDataReader reader)
+    {
+        return new InstituteScrappingCourseResponse
+        {
+            CourseId = reader.GetInt32(reader.GetOrdinal("CourseId")),
+            InstituteId = reader.GetInt32(reader.GetOrdinal("InstituteId")),
+            CourseName = reader.GetString(reader.GetOrdinal("CourseName")),
+            Category = reader.IsDBNull(reader.GetOrdinal("Category"))
+                ? null
+                : reader.GetString(reader.GetOrdinal("Category")),
+            Description = reader.IsDBNull(reader.GetOrdinal("Description"))
+                ? null
+                : reader.GetString(reader.GetOrdinal("Description")),
+            Fees = reader.IsDBNull(reader.GetOrdinal("Fees"))
+                ? null
+                : reader.GetDecimal(reader.GetOrdinal("Fees")),
+            Duration = reader.IsDBNull(reader.GetOrdinal("Duration"))
+                ? null
+                : reader.GetString(reader.GetOrdinal("Duration")),
+            Eligibility = reader.IsDBNull(reader.GetOrdinal("Eligibility"))
+                ? null
+                : reader.GetString(reader.GetOrdinal("Eligibility")),
+            IsAIFetched = reader.GetBoolean(reader.GetOrdinal("IsAIFetched")),
+            IsApproved = reader.GetBoolean(reader.GetOrdinal("IsApproved")),
+            IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
+            CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt"))
         };
     }
 }

@@ -46,7 +46,8 @@ public class InstituteScrappingRepository : IInstituteScrappingRepository
                 "sp_GetUniqueInstituteNames", _ => { }, reader => new InstituteNameResponse
                 {
                     ScrappingId = reader.GetInt32( reader.GetOrdinal("ScrappingId")),
-                    InstituteName = ReadString(reader, "InstituteName")
+                    InstituteName = ReadString(reader, "InstituteName"),
+                    Campus = ReadString(reader, "Campus")
                 });
         }
         catch (Exception ex)
