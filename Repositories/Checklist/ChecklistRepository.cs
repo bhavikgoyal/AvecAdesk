@@ -72,6 +72,31 @@ namespace AvecADeskApi.Repositories.Checklist
             }
         }
 
+        public async Task<List<WeekChecklistItemModel>> GetWeekChecklistItemsAsync()
+        {
+            try
+            {
+                return await _db.ExecuteReaderListAsync(
+                    "dbo.SP_GetWeekChecklistItems",
+                    cmd => { },
+                    reader => new WeekChecklistItemModel
+                    {
+                        ChecklistItemID = reader.GetInt32(reader.GetOrdinal("ChecklistItemID")),
+                        ChecklistID = reader.GetInt32(reader.GetOrdinal("ChecklistID")),
+                        ItemName = reader["ItemName"] as string ?? string.Empty,
+                        IsCompleted = reader["IsCompleted"] is not DBNull && reader.GetBoolean(reader.GetOrdinal("IsCompleted")),
+                        Position = reader["Position"] is DBNull ? null : (int?)reader.GetInt32(reader.GetOrdinal("Position")),
+                        CreatedAt = reader["CreatedAt"] is DBNull ? null : (DateTime?)reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                        TrelloChecklistItemsId = reader["TrelloChecklistItemsId"] is DBNull ? string.Empty : reader["TrelloChecklistItemsId"].ToString() ?? string.Empty
+                    });
+            }
+            catch (Exception ex)
+            {
+                _logHelper.LogError($"{nameof(ChecklistRepository)}.{nameof(GetWeekChecklistItemsAsync)}", ex);
+                throw;
+            }
+        }
+
         public async Task<int> CreateChecklistAsync(CreateChecklistRequest request)
         {
             try

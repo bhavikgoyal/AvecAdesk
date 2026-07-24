@@ -240,7 +240,11 @@ public class VendorRepository : IVendorRepository
             Phone = reader.GetString(reader.GetOrdinal("Phone")),
             Email = reader.GetString(reader.GetOrdinal("Email")),
             Status = reader.GetString(reader.GetOrdinal("Status")),
-            CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt"))
+            CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+            LastLogin = reader.IsDBNull(reader.GetOrdinal("LastLogin"))
+    ? (DateTime?)null
+    : reader.GetDateTime(reader.GetOrdinal("LastLogin"))
+
         };
     }
 
@@ -257,6 +261,7 @@ public class VendorRepository : IVendorRepository
             IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
             UploadedByUserId = reader.IsDBNull(reader.GetOrdinal("UploadedByUserId")) ? null : reader.GetInt32(reader.GetOrdinal("UploadedByUserId")),
             CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt"))
+          
         };
     }
 }

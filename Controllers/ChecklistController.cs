@@ -73,6 +73,21 @@ namespace AvecADeskApi.Controllers
                 }
             }
 
+        [HttpGet("week-items")]
+        public async Task<IActionResult> GetWeekChecklistItems()
+        {
+            try
+            {
+                var result = await _repo.GetWeekChecklistItemsAsync();
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting week checklist items");
+                return StatusCode(500, new { message = "Error retrieving week checklist items" });
+            }
+        }
+
 
         //[HttpPost("item/create")]
         //public async Task<IActionResult> CreateItem([FromBody] CreateChecklistItemRequest request)
