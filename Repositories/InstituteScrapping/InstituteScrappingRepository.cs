@@ -112,7 +112,7 @@ public class InstituteScrappingRepository : IInstituteScrappingRepository
             return new InstituteScrappingManualCreateResult
             {
                 ScrappingId = scrappingId,
-                CourseId = (int)courseIdParam.Value,
+                //CourseId = (int)courseIdParam.Value,
                 InstituteId = (int)instituteIdParam.Value,
                 Record = await GetByIdAsync(scrappingId),
             };
