@@ -5,6 +5,7 @@ using AvecADeskApi.Model.PaymentSchedule;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using System.Data;
+using System.Text.Json;
 
 namespace AvecADeskApi.Repositories.PaymentSchedules;
 
@@ -417,6 +418,9 @@ public class ScheduleRepository : IScheduleRepository
             command.Parameters.AddWithValue("@NoOfInstallments", request.NoOfInstallments);
             command.Parameters.AddWithValue("@Frequency", request.Frequency);
             command.Parameters.AddWithValue("@FirstDueDate", request.FirstDueDate);
+            command.Parameters.AddWithValue("@PaymentList",JsonSerializer.Serialize(request.PaymentList ?? new List<StudentPaymentInstallmentUpdateRequest>()) );
+            command.Parameters.AddWithValue("@CommissionHistory",JsonSerializer.Serialize(request.CommissionHistory ?? new List<StudentCommissionDetailUpdateRequest>()));
+
 
             await connection.OpenAsync();
 
