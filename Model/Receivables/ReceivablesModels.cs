@@ -81,6 +81,20 @@ public class StudentPaymentInstallmentResponse
     public string PaymentStatus { get; set; } = string.Empty;
 }
 
+public class StudentCommissionInstallmentDetailResponse
+{
+    public int StudentPaymentInstallmentId { get; set; }
+    public int InstallmentNo { get; set; }
+    public DateTime DueDate { get; set; }
+    public string PaymentStatus { get; set; } = string.Empty;
+    public DateTime? PaidDate { get; set; }
+    public decimal CommissionAmount { get; set; }
+    public decimal BonusAmount { get; set; }
+    public string? InvoiceNo { get; set; }
+    public string? CommissionStatus { get; set; }
+    public DateTime CreatedOn { get; set; }
+}
+
 // Common filter object used by the controller to pass query params down
 public class ReceivablesFilter
 {
