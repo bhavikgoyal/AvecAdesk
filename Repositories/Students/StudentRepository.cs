@@ -191,17 +191,13 @@ public class StudentRepository : IStudentRepository
         {
             return await _db.ExecuteReaderCustomAsync(
                 "sp_GetStudentPaymentDetailById",
-                cmd =>
-                {
-                    cmd.Parameters.AddWithValue("@StudentId", studentId);
-                },
+                cmd =>{cmd.Parameters.AddWithValue("@StudentId", studentId);},
                 async reader =>
                 {
                     if (!await reader.ReadAsync())
                         return null;
 
                     var response = MapStudentPaymentDetail(reader);
-
                     if (await reader.NextResultAsync())
                     {
                         while (await reader.ReadAsync())
