@@ -1,6 +1,7 @@
 using AvecADeskApi.Interfaces;
 using AvecADeskApi.LOG;
 using AvecADeskApi.Model.Invoice;
+using AvecADeskApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -14,12 +15,64 @@ namespace AvecADeskApi.Controllers;
 public class InvoicesController : ControllerBase
 {
     private readonly IInvoiceRepository _invoiceRepository;
+    private readonly MonthlyInvoiceService _monthlyInvoiceService;
     private readonly LogHelper _logHelper;
 
-    public InvoicesController(IInvoiceRepository invoiceRepository, LogHelper logHelper)
+    public InvoicesController(
+        IInvoiceRepository invoiceRepository,
+        MonthlyInvoiceService monthlyInvoiceService,
+        LogHelper logHelper)
     {
         _invoiceRepository = invoiceRepository;
+        _monthlyInvoiceService = monthlyInvoiceService;
         _logHelper = logHelper;
+    }
+
+    /// <summary>
+    /// Preview all student installments due in the month (any status), filtered by institute + campus.
+    /// Invoice generation still uses Paid rows only.
+    /// </summary>
+    [HttpGet("paid-students")]
+    public async Task<IActionResult> GetPaidStudentsForInvoice(
+        [FromQuery] int? year,
+        [FromQuery] int? month,
+        [FromQuery] int? instituteId,
+        [FromQuery] string? campus)
+    {
+        try
+        {
+            var rows = await _monthlyInvoiceService.GetPaidStudentsAsync(year, month, instituteId, campus);
+            return Ok(rows);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(GetPaidStudentsForInvoice), ex);
+            return StatusCode(500, "An error occurred while fetching students.");
+        }
+    }
+
+    /// <summary>
+    /// Generate monthly tax invoice(s) for students with Paid installments in the given month,
+    /// insert Invoices + InvoiceItem rows, and email admin (bosco1852023@gmail.com by default).
+    /// </summary>
+    [HttpPost("generate-monthly")]
+    public async Task<IActionResult> GenerateMonthlyInvoice([FromBody] MonthlyInvoiceGenerateRequest? request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await _monthlyInvoiceService.GenerateAndSendAsync(
+                request?.Year,
+                request?.Month,
+                request?.InstituteId,
+                request?.Campus,
+                cancellationToken);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(GenerateMonthlyInvoice), ex);
+            return StatusCode(500, "An error occurred while generating the monthly invoice.");
+        }
     }
 
     [HttpGet]
@@ -102,7 +155,16 @@ public class InvoicesController : ControllerBase
             if (invoice == null) return NotFound("Invoice not found");
 
             if (!string.IsNullOrEmpty(invoice.PdfPath) && System.IO.File.Exists(invoice.PdfPath))
-                return File(await System.IO.File.ReadAllBytesAsync(invoice.PdfPath), "application/pdf", Path.GetFileName(invoice.PdfPath));
+            {
+                var bytes = await System.IO.File.ReadAllBytesAsync(invoice.PdfPath);
+                var fileName = Path.GetFileName(invoice.PdfPath);
+                var contentType = fileName.EndsWith(".doc", StringComparison.OrdinalIgnoreCase)
+                    ? "application/msword"
+                    : fileName.EndsWith(".docx", StringComparison.OrdinalIgnoreCase)
+                        ? "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        : "application/pdf";
+                return File(bytes, contentType, fileName);
+            }
 
             var text = $"Invoice: {invoice.InvoiceNumber}\nAmount: {invoice.TotalAmount}\nStatus: {invoice.Status}";
             return File(Encoding.UTF8.GetBytes(text), "text/plain", $"invoice-{invoice.InvoiceNumber}.txt");
