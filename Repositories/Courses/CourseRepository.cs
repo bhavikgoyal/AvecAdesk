@@ -369,7 +369,10 @@ public class CourseRepository : ICourseRepository
             IsAIFetched = reader.GetBoolean(reader.GetOrdinal("IsAIFetched")),
             IsApproved = reader.GetBoolean(reader.GetOrdinal("IsApproved")),
             IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
-            CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt"))
+            CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+            Campus = HasColumn(reader, "Campus") && !reader.IsDBNull(reader.GetOrdinal("Campus"))
+                ? reader.GetString(reader.GetOrdinal("Campus"))
+                : null,
         };
     }
 }
