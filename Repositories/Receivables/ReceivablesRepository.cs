@@ -31,21 +31,6 @@ public class ReceivablesRepository : IReceivablesRepository
         }
     }
 
-    public async Task<MonthRevenueDashboardResponse> GetMonthRevenueDashboardAsync()
-    {
-        try
-        {
-            var result = await _db.ExecuteReaderSingleAsync("sp_GetMonthRevenueDashboard",
-                _ => { }, MapMonthRevenueDashboard);
-            return result ?? new MonthRevenueDashboardResponse();
-        }
-        catch (Exception ex)
-        {
-            _logHelper.LogError($"{nameof(ReceivablesRepository)}.{nameof(GetMonthRevenueDashboardAsync)}", ex);
-            throw;
-        }
-    }
-
     public async Task<List<StudentPaymentInstallmentResponse>> GetStudentPaymentInstallmentsAsync()
     {
         try
@@ -56,6 +41,20 @@ public class ReceivablesRepository : IReceivablesRepository
         catch (Exception ex)
         {
             _logHelper.LogError($"{nameof(ReceivablesRepository)}.{nameof(GetStudentPaymentInstallmentsAsync)}", ex);
+            throw;
+        }
+    }
+
+    public async Task<List<StudentCommissionInstallmentDetailResponse>> GetStudentCommissionInstallmentDetailsAsync()
+    {
+        try
+        {
+            return await _db.ExecuteReaderListAsync("sp_GetStudentCommissionInstallmentDetails",
+                _ => { }, MapStudentCommissionInstallmentDetail);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(ReceivablesRepository)}.{nameof(GetStudentCommissionInstallmentDetailsAsync)}", ex);
             throw;
         }
     }
@@ -171,14 +170,6 @@ public class ReceivablesRepository : IReceivablesRepository
         ReceivedCount = r.GetInt32(r.GetOrdinal("ReceivedCount"))
     };
 
-    private static MonthRevenueDashboardResponse MapMonthRevenueDashboard(SqlDataReader r) => new()
-    {
-        Revenue = r.GetDecimal(r.GetOrdinal("Revenue")),
-        Collected = r.GetDecimal(r.GetOrdinal("Collected")),
-        Outstanding = r.GetDecimal(r.GetOrdinal("Outstanding")),
-        Forecast = r.GetDecimal(r.GetOrdinal("Forecast"))
-    };
-
     private static StudentPaymentInstallmentResponse MapStudentPaymentInstallment(SqlDataReader r) => new()
     {
         StudentId = r.GetInt32(r.GetOrdinal("StudentId")),
@@ -192,5 +183,19 @@ public class ReceivablesRepository : IReceivablesRepository
         PaidAmount = r.GetDecimal(r.GetOrdinal("PaidAmount")),
         BalanceAmount = r.GetDecimal(r.GetOrdinal("BalanceAmount")),
         PaymentStatus = r.GetString(r.GetOrdinal("PaymentStatus"))
+    };
+
+    private static StudentCommissionInstallmentDetailResponse MapStudentCommissionInstallmentDetail(SqlDataReader r) => new()
+    {
+        StudentPaymentInstallmentId = r.GetInt32(r.GetOrdinal("StudentPaymentInstallmentId")),
+        InstallmentNo = r.GetInt32(r.GetOrdinal("InstallmentNo")),
+        DueDate = r.GetDateTime(r.GetOrdinal("DueDate")),
+        PaymentStatus = r.GetString(r.GetOrdinal("PaymentStatus")),
+        PaidDate = r.IsDBNull(r.GetOrdinal("PaidDate")) ? null : r.GetDateTime(r.GetOrdinal("PaidDate")),
+        CommissionAmount = r.GetDecimal(r.GetOrdinal("CommissionAmount")),
+        BonusAmount = r.GetDecimal(r.GetOrdinal("BonusAmount")),
+        InvoiceNo = r.IsDBNull(r.GetOrdinal("InvoiceNo")) ? null : r.GetString(r.GetOrdinal("InvoiceNo")),
+        CommissionStatus = r.IsDBNull(r.GetOrdinal("CommissionStatus")) ? null : r.GetString(r.GetOrdinal("CommissionStatus")),
+        CreatedOn = r.GetDateTime(r.GetOrdinal("CreatedOn"))
     };
 }
