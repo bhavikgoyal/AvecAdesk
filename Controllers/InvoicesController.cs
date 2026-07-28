@@ -154,22 +154,50 @@ public class InvoicesController : ControllerBase
             var invoice = await _invoiceRepository.GetInvoiceByIdAsync(invoiceId);
             if (invoice == null) return NotFound("Invoice not found");
 
-            if (!string.IsNullOrEmpty(invoice.PdfPath) && System.IO.File.Exists(invoice.PdfPath))
+            var lines = await _invoiceRepository.GetInvoiceLineItemsAsync(invoiceId);
+            var sb = new StringBuilder();
+            sb.AppendLine("TAX INVOICE");
+            sb.AppendLine("===========");
+            sb.AppendLine($"Invoice No: {invoice.InvoiceNumber}");
+            sb.AppendLine($"Institute: {invoice.InstituteName}");
+            sb.AppendLine($"Status: {invoice.Status}");
+            sb.AppendLine($"Created At: {invoice.CreatedAt:dd-MM-yyyy HH:mm}");
+            sb.AppendLine($"Total Amount (AUD): {invoice.TotalAmount:0.00}");
+            sb.AppendLine();
+            sb.AppendLine("Line Items");
+            sb.AppendLine("----------");
+
+            if (lines.Count == 0)
             {
-                var bytes = await System.IO.File.ReadAllBytesAsync(invoice.PdfPath);
-                var fileName = Path.GetFileName(invoice.PdfPath);
-                var contentType = fileName.EndsWith(".doc", StringComparison.OrdinalIgnoreCase)
-                    ? "application/msword"
-                    : fileName.EndsWith(".docx", StringComparison.OrdinalIgnoreCase)
-                        ? "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                        : "application/pdf";
-                return File(bytes, contentType, fileName);
+                sb.AppendLine("No line items.");
+            }
+            else
+            {
+                var sr = 1;
+                foreach (var line in lines)
+                {
+                    sb.AppendLine($"{sr}. {line.Description}");
+                    sb.AppendLine($"   Amount (AUD): {line.Amount:0.00}");
+                    sb.AppendLine();
+                    sr++;
+                }
             }
 
-            var text = $"Invoice: {invoice.InvoiceNumber}\nAmount: {invoice.TotalAmount}\nStatus: {invoice.Status}";
-            return File(Encoding.UTF8.GetBytes(text), "text/plain", $"invoice-{invoice.InvoiceNumber}.txt");
+            sb.AppendLine("Bank Details");
+            sb.AppendLine("------------");
+            sb.AppendLine("Account Name: AVEC GLOBAL GROUP PTY LTD");
+            sb.AppendLine("BSB: 063-549");
+            sb.AppendLine("Account Number: 1081 0692");
+            sb.AppendLine("Address: Unit 3, 380 Clayton Road, Clayton, Vic: 3168");
+
+            var fileName = $"{invoice.InvoiceNumber}.txt";
+            return File(Encoding.UTF8.GetBytes(sb.ToString()), "text/plain", fileName);
         }
-        catch (Exception ex) { _logHelper.LogError(nameof(GetInvoicePdf), ex); return StatusCode(500, "An error occurred while downloading invoice PDF."); }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(GetInvoicePdf), ex);
+            return StatusCode(500, "An error occurred while downloading invoice.");
+        }
     }
 
     private int? GetCurrentUserId()

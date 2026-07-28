@@ -231,6 +231,29 @@ public class InvoiceRepository : IInvoiceRepository
         }
     }
 
+    public async Task<List<InvoiceLineItemResponse>> GetInvoiceLineItemsAsync(int invoiceId)
+    {
+        try
+        {
+            return await _db.ExecuteReaderListAsync(
+                "sp_GetInvoiceLineItems",
+                cmd => cmd.Parameters.AddWithValue("@InvoiceId", invoiceId),
+                r => new InvoiceLineItemResponse
+                {
+                    LineItemId = r.GetInt32(r.GetOrdinal("LineItemId")),
+                    InvoiceId = r.GetInt32(r.GetOrdinal("InvoiceId")),
+                    StudentId = r.GetInt32(r.GetOrdinal("StudentId")),
+                    Description = r.IsDBNull(r.GetOrdinal("Description")) ? null : r.GetString(r.GetOrdinal("Description")),
+                    Amount = r.GetDecimal(r.GetOrdinal("Amount"))
+                });
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(InvoiceRepository)}.{nameof(GetInvoiceLineItemsAsync)}", ex);
+            throw;
+        }
+    }
+
     private static InvoiceResponse MapInvoice(SqlDataReader r)
     {
         var instituteNameOrdinal = -1;

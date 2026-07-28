@@ -14,6 +14,7 @@ namespace AvecADeskApi.Model.VendorStudent
         public string? EnglishTest { get; set; }
         public string? TestScore { get; set; }
         public string? HighestQualification { get; set; }
+        public string? VendorName { get; set; }
         public string? ApplicationStatus { get; set; }
         public DateTime? SubmittedDate { get; set; }
         public int TotalRecords { get; set; }

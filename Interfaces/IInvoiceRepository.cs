@@ -27,4 +27,5 @@ public interface IInvoiceRepository
         int instituteId,
         string? campus = null);
     Task UpdateInvoicePdfPathAsync(int invoiceId, string pdfPath);
+    Task<List<InvoiceLineItemResponse>> GetInvoiceLineItemsAsync(int invoiceId);
 }
