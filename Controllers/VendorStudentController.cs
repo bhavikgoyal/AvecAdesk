@@ -257,11 +257,12 @@ namespace AvecADeskApi.Controllers
         public async Task<IActionResult> GetStudentApplicationList(
     [FromQuery] string? search,
     [FromQuery] int pagenumber = 1,
-    [FromQuery] int pageSize = 200)
+    [FromQuery] int pageSize = 200,
+    [FromQuery] int? vendorId = null)
         {
             try
             {
-                var result = await _repo.GetStudentApplicationListAsync(search, pagenumber, pageSize);
+                var result = await _repo.GetStudentApplicationListAsync(search, pagenumber, pageSize, vendorId);
                 var totalRecords = result.Count > 0 ? result[0].TotalRecords : 0;
  
                 return Ok(new
