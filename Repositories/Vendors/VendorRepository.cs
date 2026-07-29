@@ -247,7 +247,13 @@ public class VendorRepository : IVendorRepository
             if (!reader.IsDBNull(lastLoginOrdinal))
                 lastLogin = reader.GetDateTime(lastLoginOrdinal);
         }
-
+        int studentCount = 0;
+        if (HasColumn(reader, "StudentCount"))
+        {
+            var studentCountOrdinal = reader.GetOrdinal("StudentCount");
+            if (!reader.IsDBNull(studentCountOrdinal))
+                studentCount = reader.GetInt32(studentCountOrdinal);
+        }
         return new VendorResponse
         {
             VendorId = reader.GetInt32(vendorIdOrdinal),
@@ -259,7 +265,8 @@ public class VendorRepository : IVendorRepository
             Email = reader.GetString(emailOrdinal),
             Status = reader.GetString(statusOrdinal),
             CreatedAt = reader.GetDateTime(createdAtOrdinal),
-            LastLogin = lastLogin
+            LastLogin = lastLogin,
+            StudentCount = studentCount
         };
     }
 
