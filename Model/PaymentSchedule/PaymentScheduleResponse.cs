@@ -14,6 +14,7 @@ public class StudentPaymentScheduleListResponse
 {
     public int ScheduleId { get; set; }
     public int StudentId { get; set; }
+    public DateTime? StudentCreatedAt { get; set; }
 
     public string StudentName { get; set; } = string.Empty;
     public string InstituteName { get; set; } = string.Empty;
