@@ -387,6 +387,9 @@ public class ScheduleRepository : IScheduleRepository
         {
             ScheduleId = reader.GetInt32(reader.GetOrdinal("ScheduleId")),
             StudentId = reader.GetInt32(reader.GetOrdinal("StudentId")),
+            StudentCreatedAt = reader.IsDBNull(reader.GetOrdinal("StudentCreatedAt"))
+                ? null
+                : reader.GetDateTime(reader.GetOrdinal("StudentCreatedAt")),
             StudentName = reader["StudentName"]?.ToString() ?? "",
             InstituteName = reader["InstituteName"]?.ToString() ?? "",
             CourseName = reader["CourseName"]?.ToString() ?? "",
