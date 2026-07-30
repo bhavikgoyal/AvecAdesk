@@ -260,4 +260,18 @@ public class CommissionsController : ControllerBase
             return StatusCode(500, "Error fetching history.");
         }
     }
+    [HttpGet("institute/{instituteId:int}/history")]
+    public async Task<IActionResult> GetInstituteCommissionHistory(int instituteId, [FromQuery] int? courseId)
+    {
+        try
+        {
+            var history = await _commissionRepository.GetInstituteCommissionHistoryAsync(instituteId, courseId);
+            return Ok(history);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(GetInstituteCommissionHistory), ex);
+            return StatusCode(500, "Error fetching history.");
+        }
+    }
 }

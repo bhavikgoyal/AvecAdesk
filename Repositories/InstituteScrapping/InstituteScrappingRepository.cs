@@ -207,6 +207,7 @@ public class InstituteScrappingRepository : IInstituteScrappingRepository
         return new InstituteScrappingResponse
         {
             ScrappingId = reader.GetInt32(reader.GetOrdinal("ScrappingId")),
+            InstituteId = ReadInt(reader, "InstituteId"),
             InstituteName = ReadString(reader, "InstituteName"),
             WebsiteURL = ReadString(reader, "WebsiteURL"),
             Campus = ReadString(reader, "Campus"),
@@ -267,6 +268,18 @@ public class InstituteScrappingRepository : IInstituteScrappingRepository
         {
             var ordinal = reader.GetOrdinal(column);
             return reader.IsDBNull(ordinal) ? null : reader.GetDateTime(ordinal);
+        }
+        catch (IndexOutOfRangeException)
+        {
+            return null;
+        }
+    }
+    private static int? ReadInt(SqlDataReader reader, string column)
+    {
+        try
+        {
+            var ordinal = reader.GetOrdinal(column);
+            return reader.IsDBNull(ordinal) ? null : reader.GetInt32(ordinal);
         }
         catch (IndexOutOfRangeException)
         {
