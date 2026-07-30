@@ -12,4 +12,5 @@ public class VendorResponse
     public string Status { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     public DateTime? LastLogin { get; set; }
+    public int StudentCount { get; set; }
 }
