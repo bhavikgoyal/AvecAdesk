@@ -55,6 +55,7 @@ public class InstituteRepository : IInstituteRepository
         {
             cmd.Parameters.AddWithValue("@VendorId", request.VendorId);
             cmd.Parameters.AddWithValue("@InstituteName", request.InstituteName);
+            //cmd.Parameters.AddWithValue("@LinkedScrappingId", (object?)request.LinkedScrappingId ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@WebsiteUrl", (object?)request.WebsiteUrl ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@LogoUrl", (object?)request.LogoUrl ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@PrimaryColour", (object?)request.PrimaryColour ?? DBNull.Value);
@@ -83,6 +84,7 @@ public class InstituteRepository : IInstituteRepository
             cmd.Parameters.AddWithValue("@InstituteId", instituteId);
             cmd.Parameters.AddWithValue("@VendorId", request.VendorId);
             cmd.Parameters.AddWithValue("@InstituteName", request.InstituteName);
+            //cmd.Parameters.AddWithValue("@LinkedScrappingId", (object?)request.LinkedScrappingId ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@WebsiteUrl", (object?)request.WebsiteUrl ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@LogoUrl", (object?)request.LogoUrl ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@PrimaryColour", (object?)request.PrimaryColour ?? DBNull.Value);
@@ -139,6 +141,9 @@ public class InstituteRepository : IInstituteRepository
             InstituteId = reader.GetInt32(reader.GetOrdinal("InstituteId")),
             VendorId = reader.GetInt32(reader.GetOrdinal("VendorId")),
             InstituteName = reader.GetString(reader.GetOrdinal("InstituteName")),
+    //        LinkedScrappingId = reader.IsDBNull(reader.GetOrdinal("LinkedScrappingId"))
+    //? null
+    //: reader.GetInt32(reader.GetOrdinal("LinkedScrappingId")),
             WebsiteUrl = reader.IsDBNull(reader.GetOrdinal("WebsiteUrl")) ? null : reader.GetString(reader.GetOrdinal("WebsiteUrl")),
             LogoUrl = reader.IsDBNull(reader.GetOrdinal("LogoUrl")) ? null : reader.GetString(reader.GetOrdinal("LogoUrl")),
             PrimaryColour = reader.IsDBNull(reader.GetOrdinal("PrimaryColour")) ? null : reader.GetString(reader.GetOrdinal("PrimaryColour")),
