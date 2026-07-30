@@ -54,21 +54,6 @@ public class ReceivablesController : ControllerBase
         }
     }
 
-    // GET api/receivables/month-revenue-dashboard
-    [HttpGet("month-revenue-dashboard")]
-    public async Task<IActionResult> GetMonthRevenueDashboard()
-    {
-        try
-        {
-            return Ok(await _receivablesRepository.GetMonthRevenueDashboardAsync());
-        }
-        catch (Exception ex)
-        {
-            _logHelper.LogError(nameof(GetMonthRevenueDashboard), ex);
-            return StatusCode(500, "An error occurred while fetching the month revenue dashboard.");
-        }
-    }
-
     [HttpGet("student-payment-installments")]
     public async Task<IActionResult> GetStudentPaymentInstallments()
     {
@@ -80,6 +65,20 @@ public class ReceivablesController : ControllerBase
         {
             _logHelper.LogError(nameof(GetStudentPaymentInstallments), ex);
             return StatusCode(500, "An error occurred while fetching student payment installments.");
+        }
+    }
+
+    [HttpGet("student-commission-installment-details")]
+    public async Task<IActionResult> GetStudentCommissionInstallmentDetails()
+    {
+        try
+        {
+            return Ok(await _receivablesRepository.GetStudentCommissionInstallmentDetailsAsync());
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(GetStudentCommissionInstallmentDetails), ex);
+            return StatusCode(500, "An error occurred while fetching student commission installment details.");
         }
     }
 

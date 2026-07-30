@@ -1,6 +1,7 @@
 using AvecADeskApi.Interfaces;
 using AvecADeskApi.LOG;
 using AvecADeskApi.Model.Invoice;
+using AvecADeskApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -14,12 +15,64 @@ namespace AvecADeskApi.Controllers;
 public class InvoicesController : ControllerBase
 {
     private readonly IInvoiceRepository _invoiceRepository;
+    private readonly MonthlyInvoiceService _monthlyInvoiceService;
     private readonly LogHelper _logHelper;
 
-    public InvoicesController(IInvoiceRepository invoiceRepository, LogHelper logHelper)
+    public InvoicesController(
+        IInvoiceRepository invoiceRepository,
+        MonthlyInvoiceService monthlyInvoiceService,
+        LogHelper logHelper)
     {
         _invoiceRepository = invoiceRepository;
+        _monthlyInvoiceService = monthlyInvoiceService;
         _logHelper = logHelper;
+    }
+
+    /// <summary>
+    /// Preview all student installments due in the month (any status), filtered by institute + campus.
+    /// Invoice generation still uses Paid rows only.
+    /// </summary>
+    [HttpGet("paid-students")]
+    public async Task<IActionResult> GetPaidStudentsForInvoice(
+        [FromQuery] int? year,
+        [FromQuery] int? month,
+        [FromQuery] int? instituteId,
+        [FromQuery] string? campus)
+    {
+        try
+        {
+            var rows = await _monthlyInvoiceService.GetPaidStudentsAsync(year, month, instituteId, campus);
+            return Ok(rows);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(GetPaidStudentsForInvoice), ex);
+            return StatusCode(500, "An error occurred while fetching students.");
+        }
+    }
+
+    /// <summary>
+    /// Generate monthly tax invoice(s) for students with Paid installments in the given month,
+    /// insert Invoices + InvoiceItem rows, and email admin (bosco1852023@gmail.com by default).
+    /// </summary>
+    [HttpPost("generate-monthly")]
+    public async Task<IActionResult> GenerateMonthlyInvoice([FromBody] MonthlyInvoiceGenerateRequest? request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await _monthlyInvoiceService.GenerateAndSendAsync(
+                request?.Year,
+                request?.Month,
+                request?.InstituteId,
+                request?.Campus,
+                cancellationToken);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(GenerateMonthlyInvoice), ex);
+            return StatusCode(500, "An error occurred while generating the monthly invoice.");
+        }
     }
 
     [HttpGet]
@@ -101,13 +154,50 @@ public class InvoicesController : ControllerBase
             var invoice = await _invoiceRepository.GetInvoiceByIdAsync(invoiceId);
             if (invoice == null) return NotFound("Invoice not found");
 
-            if (!string.IsNullOrEmpty(invoice.PdfPath) && System.IO.File.Exists(invoice.PdfPath))
-                return File(await System.IO.File.ReadAllBytesAsync(invoice.PdfPath), "application/pdf", Path.GetFileName(invoice.PdfPath));
+            var lines = await _invoiceRepository.GetInvoiceLineItemsAsync(invoiceId);
+            var sb = new StringBuilder();
+            sb.AppendLine("TAX INVOICE");
+            sb.AppendLine("===========");
+            sb.AppendLine($"Invoice No: {invoice.InvoiceNumber}");
+            sb.AppendLine($"Institute: {invoice.InstituteName}");
+            sb.AppendLine($"Status: {invoice.Status}");
+            sb.AppendLine($"Created At: {invoice.CreatedAt:dd-MM-yyyy HH:mm}");
+            sb.AppendLine($"Total Amount (AUD): {invoice.TotalAmount:0.00}");
+            sb.AppendLine();
+            sb.AppendLine("Line Items");
+            sb.AppendLine("----------");
 
-            var text = $"Invoice: {invoice.InvoiceNumber}\nAmount: {invoice.TotalAmount}\nStatus: {invoice.Status}";
-            return File(Encoding.UTF8.GetBytes(text), "text/plain", $"invoice-{invoice.InvoiceNumber}.txt");
+            if (lines.Count == 0)
+            {
+                sb.AppendLine("No line items.");
+            }
+            else
+            {
+                var sr = 1;
+                foreach (var line in lines)
+                {
+                    sb.AppendLine($"{sr}. {line.Description}");
+                    sb.AppendLine($"   Amount (AUD): {line.Amount:0.00}");
+                    sb.AppendLine();
+                    sr++;
+                }
+            }
+
+            sb.AppendLine("Bank Details");
+            sb.AppendLine("------------");
+            sb.AppendLine("Account Name: AVEC GLOBAL GROUP PTY LTD");
+            sb.AppendLine("BSB: 063-549");
+            sb.AppendLine("Account Number: 1081 0692");
+            sb.AppendLine("Address: Unit 3, 380 Clayton Road, Clayton, Vic: 3168");
+
+            var fileName = $"{invoice.InvoiceNumber}.txt";
+            return File(Encoding.UTF8.GetBytes(sb.ToString()), "text/plain", fileName);
         }
-        catch (Exception ex) { _logHelper.LogError(nameof(GetInvoicePdf), ex); return StatusCode(500, "An error occurred while downloading invoice PDF."); }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(GetInvoicePdf), ex);
+            return StatusCode(500, "An error occurred while downloading invoice.");
+        }
     }
 
     private int? GetCurrentUserId()

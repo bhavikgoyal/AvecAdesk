@@ -11,4 +11,21 @@ public interface IInvoiceRepository
     Task<InvoiceResponse?> ApproveInvoiceAsync(int invoiceId, int? approvedByUserId);
     Task<bool> RejectInvoiceAsync(int invoiceId, string rejectionReason);
     Task<string?> GetInvoicePdfPathAsync(int invoiceId);
+    Task<List<MonthlyPaidInstallmentRow>> GetPaidInstallmentsForMonthAsync(
+        int year,
+        int month,
+        int? instituteId = null,
+        string? campus = null);
+    Task<List<MonthlyPaidInstallmentRow>> GetInstallmentsForMonthPreviewAsync(
+        int year,
+        int month,
+        int? instituteId = null,
+        string? campus = null);
+    Task<InvoiceResponse?> GenerateMonthlyPaidStudentInvoiceAsync(
+        int year,
+        int month,
+        int instituteId,
+        string? campus = null);
+    Task UpdateInvoicePdfPathAsync(int invoiceId, string pdfPath);
+    Task<List<InvoiceLineItemResponse>> GetInvoiceLineItemsAsync(int invoiceId);
 }

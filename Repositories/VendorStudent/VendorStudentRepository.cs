@@ -318,7 +318,7 @@ namespace AvecADeskApi.Repositories.VendorStudent
         throw;
       }
     }
-        public async Task<List<VendorStudentHistoryItem>> GetStudentApplicationListAsync(string? search, int pageNumber, int pageSize)
+        public async Task<List<VendorStudentHistoryItem>> GetStudentApplicationListAsync(string? search, int pageNumber, int pageSize, int? vendorId = null)
         {
             try
             {
@@ -329,6 +329,7 @@ namespace AvecADeskApi.Repositories.VendorStudent
                     cmd.Parameters.AddWithValue("@Search", (object?)search ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@PageNumber", pageNumber);
                     cmd.Parameters.AddWithValue("@PageSize", pageSize);
+                    cmd.Parameters.AddWithValue("@VendorId", (object?)vendorId ?? DBNull.Value);
                 },
                 reader => new VendorStudentHistoryItem
                 {
@@ -341,7 +342,9 @@ namespace AvecADeskApi.Repositories.VendorStudent
                     EnglishTest = reader.IsDBNull(reader.GetOrdinal("EnglishTestType")) ? null : reader.GetString(reader.GetOrdinal("EnglishTestType")),
                     TestScore = reader.IsDBNull(reader.GetOrdinal("TestScore")) ? null : reader.GetString(reader.GetOrdinal("TestScore")),
                     HighestQualification = null,
-                    //HighestQualification = reader.IsDBNull(reader.GetOrdinal("HighestQualification")) ? null : reader.GetString(reader.GetOrdinal("HighestQualification")),
+                    VendorName = reader.IsDBNull(reader.GetOrdinal("VendorName"))
+                        ? null
+                        : reader.GetString(reader.GetOrdinal("VendorName")),
                     ApplicationStatus = reader.IsDBNull(reader.GetOrdinal("ApplicationStatus")) ? null : reader.GetString(reader.GetOrdinal("ApplicationStatus")),
                     SubmittedDate = reader.IsDBNull(reader.GetOrdinal("SubmittedDate")) ? null : reader.GetDateTime(reader.GetOrdinal("SubmittedDate")),
                     TotalRecords = reader.GetInt32(reader.GetOrdinal("TotalRecords"))

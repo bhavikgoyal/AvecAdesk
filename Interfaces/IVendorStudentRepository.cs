@@ -13,7 +13,7 @@ namespace AvecADeskApi.Interfaces
     Task UpdateChecklistAsync(int studentId, UpdateVendorStudentChecklistRequest request);
     Task UpdateDeclarationAsync(int studentId, UpdateVendorStudentDeclarationRequest request);
         Task SubmitAsync(int studentId);
-        Task<List<VendorStudentHistoryItem>> GetStudentApplicationListAsync(string? search, int pageNumber, int pageSize);
+        Task<List<VendorStudentHistoryItem>> GetStudentApplicationListAsync(string? search, int pageNumber, int pageSize, int? vendorId = null);
         Task<List<VendorStudentHistoryItem>> GetHistoryAsync(int vendorId, string? search, int pageNumber, int pageSize);
     Task<VendorStudentDetailResponse?> GetByIdAsync(int studentId);
   }

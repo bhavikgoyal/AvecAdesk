@@ -230,22 +230,55 @@ public class VendorRepository : IVendorRepository
 
     private static VendorResponse MapVendor(SqlDataReader reader)
     {
+        var vendorIdOrdinal = reader.GetOrdinal("VendorId");
+        var userIdOrdinal = reader.GetOrdinal("UserId");
+        var vendorCodeOrdinal = reader.GetOrdinal("VendorCode");
+        var businessNameOrdinal = reader.GetOrdinal("BusinessName");
+        var contactPersonOrdinal = reader.GetOrdinal("ContactPerson");
+        var phoneOrdinal = reader.GetOrdinal("Phone");
+        var emailOrdinal = reader.GetOrdinal("Email");
+        var statusOrdinal = reader.GetOrdinal("Status");
+        var createdAtOrdinal = reader.GetOrdinal("CreatedAt");
+
+        DateTime? lastLogin = null;
+        if (HasColumn(reader, "LastLogin"))
+        {
+            var lastLoginOrdinal = reader.GetOrdinal("LastLogin");
+            if (!reader.IsDBNull(lastLoginOrdinal))
+                lastLogin = reader.GetDateTime(lastLoginOrdinal);
+        }
+        int studentCount = 0;
+        if (HasColumn(reader, "StudentCount"))
+        {
+            var studentCountOrdinal = reader.GetOrdinal("StudentCount");
+            if (!reader.IsDBNull(studentCountOrdinal))
+                studentCount = reader.GetInt32(studentCountOrdinal);
+        }
         return new VendorResponse
         {
-            VendorId = reader.GetInt32(reader.GetOrdinal("VendorId")),
-            UserId = reader.IsDBNull(reader.GetOrdinal("UserId")) ? null : reader.GetInt32(reader.GetOrdinal("UserId")),
-            VendorCode = reader.IsDBNull(reader.GetOrdinal("VendorCode")) ? null : reader.GetString(reader.GetOrdinal("VendorCode")),
-            BusinessName = reader.GetString(reader.GetOrdinal("BusinessName")),
-            ContactPerson = reader.GetString(reader.GetOrdinal("ContactPerson")),
-            Phone = reader.GetString(reader.GetOrdinal("Phone")),
-            Email = reader.GetString(reader.GetOrdinal("Email")),
-            Status = reader.GetString(reader.GetOrdinal("Status")),
-            CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
-            LastLogin = reader.IsDBNull(reader.GetOrdinal("LastLogin"))
-    ? (DateTime?)null
-    : reader.GetDateTime(reader.GetOrdinal("LastLogin"))
-
+            VendorId = reader.GetInt32(vendorIdOrdinal),
+            UserId = reader.IsDBNull(userIdOrdinal) ? null : reader.GetInt32(userIdOrdinal),
+            VendorCode = reader.IsDBNull(vendorCodeOrdinal) ? null : reader.GetString(vendorCodeOrdinal),
+            BusinessName = reader.GetString(businessNameOrdinal),
+            ContactPerson = reader.GetString(contactPersonOrdinal),
+            Phone = reader.GetString(phoneOrdinal),
+            Email = reader.GetString(emailOrdinal),
+            Status = reader.GetString(statusOrdinal),
+            CreatedAt = reader.GetDateTime(createdAtOrdinal),
+            LastLogin = lastLogin,
+            StudentCount = studentCount
         };
+    }
+
+    private static bool HasColumn(SqlDataReader reader, string column)
+    {
+        for (var i = 0; i < reader.FieldCount; i++)
+        {
+            if (string.Equals(reader.GetName(i), column, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        return false;
     }
 
     private static VendorAgreementResponse MapVendorAgreement(SqlDataReader reader)

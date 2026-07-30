@@ -16,11 +16,31 @@ public class EmailSender : IEmailSender
         _logHelper = logHelper;
     }
 
-    public async Task SendAsync(
+    public Task SendAsync(
         string toEmail,
         string subject,
         string htmlBody,
         CancellationToken cancellationToken = default)
+        => SendInternalAsync(toEmail, subject, htmlBody, null, null, null, cancellationToken);
+
+    public Task SendWithAttachmentAsync(
+        string toEmail,
+        string subject,
+        string htmlBody,
+        byte[] attachmentBytes,
+        string attachmentFileName,
+        string contentType,
+        CancellationToken cancellationToken = default)
+        => SendInternalAsync(toEmail, subject, htmlBody, attachmentBytes, attachmentFileName, contentType, cancellationToken);
+
+    private async Task SendInternalAsync(
+        string toEmail,
+        string subject,
+        string htmlBody,
+        byte[]? attachmentBytes,
+        string? attachmentFileName,
+        string? contentType,
+        CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(toEmail))
             throw new InvalidOperationException("Recipient email is required.");
@@ -45,25 +65,39 @@ public class EmailSender : IEmailSender
         };
         message.To.Add(toEmail.Trim());
 
-        using var client = new SmtpClient(host, port)
-        {
-            EnableSsl = enableSsl,
-            DeliveryMethod = SmtpDeliveryMethod.Network,
-            UseDefaultCredentials = false,
-        };
-
-        if (!string.IsNullOrWhiteSpace(username))
-            client.Credentials = new NetworkCredential(username, password);
-
-        using var registration = cancellationToken.Register(client.SendAsyncCancel);
+        Attachment? attachment = null;
+        MemoryStream? attachmentStream = null;
         try
         {
+            if (attachmentBytes is { Length: > 0 } && !string.IsNullOrWhiteSpace(attachmentFileName))
+            {
+                attachmentStream = new MemoryStream(attachmentBytes);
+                attachment = new Attachment(attachmentStream, attachmentFileName, contentType ?? "application/octet-stream");
+                message.Attachments.Add(attachment);
+            }
+
+            using var client = new SmtpClient(host, port)
+            {
+                EnableSsl = enableSsl,
+                DeliveryMethod = SmtpDeliveryMethod.Network,
+                UseDefaultCredentials = false,
+            };
+
+            if (!string.IsNullOrWhiteSpace(username))
+                client.Credentials = new NetworkCredential(username, password);
+
+            using var registration = cancellationToken.Register(client.SendAsyncCancel);
             await client.SendMailAsync(message, cancellationToken);
         }
         catch (Exception ex)
         {
             _logHelper.LogError(nameof(EmailSender), ex);
             throw;
+        }
+        finally
+        {
+            attachment?.Dispose();
+            attachmentStream?.Dispose();
         }
     }
 }
