@@ -243,6 +243,9 @@ public class InvoiceRepository : IInvoiceRepository
                     LineItemId = r.GetInt32(r.GetOrdinal("LineItemId")),
                     InvoiceId = r.GetInt32(r.GetOrdinal("InvoiceId")),
                     StudentId = r.GetInt32(r.GetOrdinal("StudentId")),
+                    StudentName = HasColumn(r, "StudentName") && !r.IsDBNull(r.GetOrdinal("StudentName"))
+                    ? r.GetString(r.GetOrdinal("StudentName"))
+                    : null,
                     Description = r.IsDBNull(r.GetOrdinal("Description")) ? null : r.GetString(r.GetOrdinal("Description")),
                     Amount = r.GetDecimal(r.GetOrdinal("Amount"))
                 });

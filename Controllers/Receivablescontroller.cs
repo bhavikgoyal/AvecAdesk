@@ -124,4 +124,20 @@ public class ReceivablesController : ControllerBase
             InstituteId = instituteId,
             StudentId = studentId
         };
+
+    // GET api/receivables/received-invoices
+    [HttpGet("received-invoices")]
+    public async Task<IActionResult> GetReceivedInvoices()
+    {
+        try
+        {
+            return Ok(await _receivablesRepository.GetReceivedInvoicesLastMonthAsync());
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(GetReceivedInvoices), ex);
+            return StatusCode(500, "An error occurred while fetching received invoices.");
+        }
+    }
+    
 }
