@@ -1,4 +1,5 @@
-﻿using AvecADeskApi.Model.Receivables;
+﻿using AvecADeskApi.Model.Invoice;
+using AvecADeskApi.Model.Receivables;
 
 namespace AvecADeskApi.Interfaces
 {
@@ -10,5 +11,8 @@ namespace AvecADeskApi.Interfaces
         Task<List<OverdueReceivableResponse>> GetOverdueAsync(ReceivablesFilter filter);
         Task<List<ReceivedPaymentResponse>> GetReceivedAsync(ReceivablesFilter filter);
         Task<ReceivablesSummaryResponse> GetSummaryAsync(ReceivablesFilter filter);
+        Task<List<ReceivedInvoiceResponse>> GetReceivedInvoicesLastMonthAsync();
+       
+
     }
 }

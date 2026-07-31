@@ -1,6 +1,7 @@
 ﻿using AvecADeskApi.Helpers;
 using AvecADeskApi.Interfaces;
 using AvecADeskApi.LOG;
+using AvecADeskApi.Model.Invoice;
 using AvecADeskApi.Model.Receivables;
 using Microsoft.Data.SqlClient;
 
@@ -198,4 +199,28 @@ public class ReceivablesRepository : IReceivablesRepository
         CommissionStatus = r.IsDBNull(r.GetOrdinal("CommissionStatus")) ? null : r.GetString(r.GetOrdinal("CommissionStatus")),
         CreatedOn = r.GetDateTime(r.GetOrdinal("CreatedOn"))
     };
+    public async Task<List<ReceivedInvoiceResponse>> GetReceivedInvoicesLastMonthAsync()
+    {
+        try
+        {
+            return await _db.ExecuteReaderListAsync("sp_GetReceivedInvoicesLastMonth",
+                _ => { }, MapReceivedInvoice);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(ReceivablesRepository)}.{nameof(GetReceivedInvoicesLastMonthAsync)}", ex);
+            throw;
+        }
+    }
+
+    private static ReceivedInvoiceResponse MapReceivedInvoice(SqlDataReader r) => new()
+    {
+        InvoiceId = r.GetInt32(r.GetOrdinal("InvoiceId")),
+        InvoiceNumber = r.GetString(r.GetOrdinal("InvoiceNumber")),
+        InstituteName = r.GetString(r.GetOrdinal("InstituteName")),
+        TotalAmount = r.GetDecimal(r.GetOrdinal("TotalAmount")),
+        Status = r.GetString(r.GetOrdinal("Status")),
+        CreatedAt = r.GetDateTime(r.GetOrdinal("CreatedAt"))
+    };
+
 }

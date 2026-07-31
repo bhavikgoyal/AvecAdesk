@@ -105,7 +105,20 @@ public class InvoicesController : ControllerBase
         }
         catch (Exception ex) { _logHelper.LogError(nameof(GetInvoiceById), ex); return StatusCode(500, "An error occurred while fetching invoice."); }
     }
-
+    [HttpGet("{invoiceId:int}/line-items")]
+    public async Task<IActionResult> GetInvoiceLineItems(int invoiceId)
+    {
+        try
+        {
+            var lineItems = await _invoiceRepository.GetInvoiceLineItemsAsync(invoiceId);
+            return Ok(lineItems);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(GetInvoiceLineItems), ex);
+            return StatusCode(500, "An error occurred while fetching invoice line items.");
+        }
+    }
     [HttpPut("{invoiceId:int}/submit")]
     public async Task<IActionResult> SubmitInvoice(int invoiceId)
     {
