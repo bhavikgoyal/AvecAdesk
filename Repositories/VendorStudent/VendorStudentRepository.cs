@@ -226,15 +226,19 @@ namespace AvecADeskApi.Repositories.VendorStudent
       }
     }
 
-    public async Task SubmitAsync(int studentId)
+    public async Task<int> SubmitAsync(int studentId)
     {
       try
       {
-        await _db.ExecuteNonQueryAsync("dbo.SP_SubmitVendorStudent", cmd =>
-        {
-          cmd.Parameters.AddWithValue("@StudentID", studentId);
-        });
-      }
+         var result = await _db.ExecuteScalarAsync(
+          "dbo.SP_SubmitVendorStudent",
+          cmd =>
+          {
+              cmd.Parameters.AddWithValue("@StudentID", studentId);
+          });
+
+         return Convert.ToInt32(result);
+       }
       catch (Exception ex)
       {
         _logHelper.LogError($"{nameof(VendorStudentRepository)}.{nameof(SubmitAsync)}", ex);

@@ -2,6 +2,8 @@
 using AvecADeskApi.LOG;
 using AvecADeskApi.Model.VendorStudent;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using AvecADeskApi.Hubs;
 
 namespace AvecADeskApi.Controllers
 {
@@ -12,28 +14,27 @@ namespace AvecADeskApi.Controllers
     private readonly IVendorStudentRepository _repo;
     private readonly LogHelper _logHelper;
     private readonly IWebHostEnvironment _env;
+    private readonly IHubContext<NotificationHub> _hubContext;
 
-    public VendorStudentController(
-        IVendorStudentRepository repo,
-        LogHelper logHelper,
-        IWebHostEnvironment env)
+    public VendorStudentController(IVendorStudentRepository repo, LogHelper logHelper,   IWebHostEnvironment env, IHubContext<NotificationHub> hubContext   )
     {
-      _repo = repo;
-      _logHelper = logHelper;
-      _env = env;
+        _repo = repo;
+        _logHelper = logHelper;
+        _env = env;
+        _hubContext = hubContext;
     }
 
     [HttpPost("create")]
     public async Task<IActionResult> CreateStudent([FromBody] SaveVendorStudentRequest request)
     {
-      try
-      {
-        int studentId = await _repo.CreateVendorStudentAsync(request);
-        return Ok(new VendorStudentResponse
-        {
-          StudentID = studentId,
-          Message = "Student application created successfully."
-        });
+            try
+            {
+                int studentId = await _repo.CreateVendorStudentAsync(request);
+                return Ok(new VendorStudentResponse
+                {
+                  StudentID = studentId,
+                  Message = "Student application created successfully."
+                });
       }
       catch (Exception ex)
       {
@@ -194,10 +195,16 @@ namespace AvecADeskApi.Controllers
     [HttpPost("{studentId:int}/submit")]
     public async Task<IActionResult> Submit(int studentId)
     {
-      try
-      {
-        await _repo.SubmitAsync(studentId);
-        return Ok(new { Message = "Application submitted successfully." });
+            try
+            {
+                var vendorId = await _repo.SubmitAsync(studentId);
+                await _hubContext.Clients.All.SendAsync( "VendorStudentCreated",
+                new
+                {
+                    VendorId = vendorId,
+                    StudentId = studentId
+                });  // Notification Signal
+                return Ok(new { Message = "Application submitted successfully." });
       }
       catch (Exception ex)
       {
