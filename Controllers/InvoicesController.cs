@@ -4,6 +4,9 @@ using AvecADeskApi.Model.Invoice;
 using AvecADeskApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using QuestPDF.Helpers;
+using QuestPDF.Fluent;
+using QuestPDF.Infrastructure;
 using System.Security.Claims;
 using System.Text;
 
@@ -159,6 +162,59 @@ public class InvoicesController : ControllerBase
         catch (Exception ex) { _logHelper.LogError(nameof(RejectInvoice), ex); return StatusCode(500, "An error occurred while rejecting invoice."); }
     }
 
+    //[HttpGet("{invoiceId:int}/pdf")]
+    //public async Task<IActionResult> GetInvoicePdf(int invoiceId)
+    //{
+    //    try
+    //    {
+    //        var invoice = await _invoiceRepository.GetInvoiceByIdAsync(invoiceId);
+    //        if (invoice == null) return NotFound("Invoice not found");
+
+    //        var lines = await _invoiceRepository.GetInvoiceLineItemsAsync(invoiceId);
+    //        var sb = new StringBuilder();
+    //        sb.AppendLine("TAX INVOICE");
+    //        sb.AppendLine("===========");
+    //        sb.AppendLine($"Invoice No: {invoice.InvoiceNumber}");
+    //        sb.AppendLine($"Institute: {invoice.InstituteName}");
+    //        sb.AppendLine($"Status: {invoice.Status}");
+    //        sb.AppendLine($"Created At: {invoice.CreatedAt:dd-MM-yyyy HH:mm}");
+    //        sb.AppendLine($"Total Amount (AUD): {invoice.TotalAmount:0.00}");
+    //        sb.AppendLine();
+    //        sb.AppendLine("Line Items");
+    //        sb.AppendLine("----------");
+
+    //        if (lines.Count == 0)
+    //        {
+    //            sb.AppendLine("No line items.");
+    //        }
+    //        else
+    //        {
+    //            var sr = 1;
+    //            foreach (var line in lines)
+    //            {
+    //                sb.AppendLine($"{sr}. {line.Description}");
+    //                sb.AppendLine($"   Amount (AUD): {line.Amount:0.00}");
+    //                sb.AppendLine();
+    //                sr++;
+    //            }
+    //        }
+
+    //        sb.AppendLine("Bank Details");
+    //        sb.AppendLine("------------");
+    //        sb.AppendLine("Account Name: AVEC GLOBAL GROUP PTY LTD");
+    //        sb.AppendLine("BSB: 063-549");
+    //        sb.AppendLine("Account Number: 1081 0692");
+    //        sb.AppendLine("Address: Unit 3, 380 Clayton Road, Clayton, Vic: 3168");
+
+    //        var fileName = $"{invoice.InvoiceNumber}.txt";
+    //        return File(Encoding.UTF8.GetBytes(sb.ToString()), "text/plain", fileName);
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        _logHelper.LogError(nameof(GetInvoicePdf), ex);
+    //        return StatusCode(500, "An error occurred while downloading invoice.");
+    //    }
+    //}
     [HttpGet("{invoiceId:int}/pdf")]
     public async Task<IActionResult> GetInvoicePdf(int invoiceId)
     {
@@ -168,43 +224,82 @@ public class InvoicesController : ControllerBase
             if (invoice == null) return NotFound("Invoice not found");
 
             var lines = await _invoiceRepository.GetInvoiceLineItemsAsync(invoiceId);
-            var sb = new StringBuilder();
-            sb.AppendLine("TAX INVOICE");
-            sb.AppendLine("===========");
-            sb.AppendLine($"Invoice No: {invoice.InvoiceNumber}");
-            sb.AppendLine($"Institute: {invoice.InstituteName}");
-            sb.AppendLine($"Status: {invoice.Status}");
-            sb.AppendLine($"Created At: {invoice.CreatedAt:dd-MM-yyyy HH:mm}");
-            sb.AppendLine($"Total Amount (AUD): {invoice.TotalAmount:0.00}");
-            sb.AppendLine();
-            sb.AppendLine("Line Items");
-            sb.AppendLine("----------");
 
-            if (lines.Count == 0)
+            var document = Document.Create(container =>
             {
-                sb.AppendLine("No line items.");
-            }
-            else
-            {
-                var sr = 1;
-                foreach (var line in lines)
+                container.Page(page =>
                 {
-                    sb.AppendLine($"{sr}. {line.Description}");
-                    sb.AppendLine($"   Amount (AUD): {line.Amount:0.00}");
-                    sb.AppendLine();
-                    sr++;
-                }
-            }
+                    page.Margin(30);
+                    page.Size(PageSizes.A4);
+                    page.DefaultTextStyle(x => x.FontSize(11));
 
-            sb.AppendLine("Bank Details");
-            sb.AppendLine("------------");
-            sb.AppendLine("Account Name: AVEC GLOBAL GROUP PTY LTD");
-            sb.AppendLine("BSB: 063-549");
-            sb.AppendLine("Account Number: 1081 0692");
-            sb.AppendLine("Address: Unit 3, 380 Clayton Road, Clayton, Vic: 3168");
+                    page.Header().Column(col =>
+                    {
+                        col.Item().Text("TAX INVOICE").FontSize(20).Bold();
+                        col.Item().PaddingTop(10).Text($"Invoice No: {invoice.InvoiceNumber}");
+                        col.Item().Text($"Institute: {invoice.InstituteName}");
+                        col.Item().Text($"Status: {invoice.Status}");
+                        col.Item().Text($"Created At: {invoice.CreatedAt:dd-MM-yyyy HH:mm}");
+                        col.Item().Text($"Total Amount (AUD): {invoice.TotalAmount:0.00}").Bold();
+                    });
 
-            var fileName = $"{invoice.InvoiceNumber}.txt";
-            return File(Encoding.UTF8.GetBytes(sb.ToString()), "text/plain", fileName);
+                    page.Content().PaddingTop(15).Column(col =>
+                    {
+                        col.Item().Text("Line Items").Bold().FontSize(13);
+
+                        col.Item().PaddingTop(5).Table(table =>
+                        {
+                            table.ColumnsDefinition(columns =>
+                            {
+                                columns.ConstantColumn(30);
+                                columns.RelativeColumn(3);
+                                columns.RelativeColumn(2);
+                                columns.RelativeColumn(2);
+                            });
+
+                            table.Header(header =>
+                            {
+                                header.Cell().Text("#").Bold();
+                                header.Cell().Text("Student").Bold();
+                                header.Cell().Text("Description").Bold();
+                                header.Cell().Text("Amount (AUD)").Bold();
+                            });
+
+                            var sr = 1;
+                            if (lines.Count == 0)
+                            {
+                                table.Cell().ColumnSpan(4).Text("No line items.");
+                            }
+                            else
+                            {
+                                foreach (var line in lines)
+                                {
+                                    table.Cell().Text(sr.ToString());
+                                    table.Cell().Text(line.StudentName ?? "—");
+                                    table.Cell().Text(line.Description ?? "—");
+                                    table.Cell().Text(line.Amount.ToString("0.00"));
+                                    sr++;
+                                }
+                            }
+                        });
+
+                        col.Item().PaddingTop(20).Text("Bank Details").Bold().FontSize(13);
+                        col.Item().Text("Account Name: AVEC GLOBAL GROUP PTY LTD");
+                        col.Item().Text("BSB: 063-549");
+                        col.Item().Text("Account Number: 1081 0692");
+                        col.Item().Text("Address: Unit 3, 380 Clayton Road, Clayton, Vic: 3168");
+                    });
+
+                    page.Footer().AlignCenter().Text(x =>
+                    {
+                        x.Span("Generated by AiDesk").FontSize(9);
+                    });
+                });
+            });
+
+            var pdfBytes = document.GeneratePdf();
+            var fileName = $"{invoice.InvoiceNumber}.pdf";
+            return File(pdfBytes, "application/pdf", fileName);
         }
         catch (Exception ex)
         {
