@@ -242,7 +242,8 @@ public class CommissionRepository : ICommissionRepository
         return new CommissionRateResponse
         {
             CommissionId = reader.GetInt32(reader.GetOrdinal("CommissionId")),
-            VendorId = reader.GetInt32(reader.GetOrdinal("VendorId")),
+            //VendorId = reader.GetInt32(reader.GetOrdinal("VendorId")),
+            VendorId = reader.IsDBNull(reader.GetOrdinal("VendorId")) ? (int?)null : reader.GetInt32(reader.GetOrdinal("VendorId")),
             InstituteId = reader.IsDBNull(reader.GetOrdinal("InstituteId")) ? null : reader.GetInt32(reader.GetOrdinal("InstituteId")),
             CourseId = reader.IsDBNull(reader.GetOrdinal("CourseId")) ? null : reader.GetInt32(reader.GetOrdinal("CourseId")),
             RateType = reader.GetString(reader.GetOrdinal("RateType")),
@@ -292,6 +293,17 @@ public class CommissionRepository : ICommissionRepository
                     (object?)instituteId ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@CourseId",
                     (object?)courseId ?? DBNull.Value);
+            },
+            MapRate);
+    }
+    public async Task<List<CommissionRateResponse>> GetInstituteCommissionHistoryAsync(int instituteId, int? courseId)
+    {
+        return await _db.ExecuteReaderListAsync(
+            "sp_GetInstituteCommissionHistory",
+            cmd =>
+            {
+                cmd.Parameters.AddWithValue("@InstituteId", instituteId);
+                cmd.Parameters.AddWithValue("@CourseId", (object?)courseId ?? DBNull.Value);
             },
             MapRate);
     }

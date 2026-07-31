@@ -3,6 +3,7 @@ namespace AvecADeskApi.Model.InstituteScrapping;
 public class InstituteScrappingResponse
 {
     public int ScrappingId { get; set; }
+    public int? InstituteId { get; set; }
     public string? InstituteName { get; set; }
     public string? WebsiteURL { get; set; }
     public string? Campus { get; set; }
