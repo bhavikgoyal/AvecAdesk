@@ -1,5 +1,6 @@
 using AvecADeskApi.Helper;
 using AvecADeskApi.Helpers;
+using AvecADeskApi.Hubs;
 using AvecADeskApi.Interfaces;
 using AvecADeskApi.IRepository;
 using AvecADeskApi.LOG;
@@ -31,9 +32,11 @@ using AvecADeskApi.Repositories.VendorStudent;
 using AvecADeskApi.Repository;
 using AvecADeskApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
+using AvecADeskApi.Hubs;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -91,7 +94,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 });
 
 builder.Services.AddAuthorization();
-
+builder.Services.AddSignalR();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("VendorPortal", policy =>
@@ -101,7 +104,8 @@ builder.Services.AddCors(options =>
                 "http://localhost:5174",
                 "http://localhost:5175")
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+           .AllowCredentials();
     });
 });
 
@@ -191,11 +195,17 @@ var wwwroot = Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
 Directory.CreateDirectory(Path.Combine(wwwroot, "uploads"));
 
 app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(builder.Environment.ContentRootPath, "uploads")),
+    RequestPath = "/uploads"
+});
 app.UseCors("VendorPortal");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-
+app.MapHub<NotificationHub>("/notificationHub");
 app.MapGet("/", () => Results.Redirect("/swagger"));
 
 app.Run();

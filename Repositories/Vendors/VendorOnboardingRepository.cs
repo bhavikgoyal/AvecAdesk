@@ -451,7 +451,11 @@ public class VendorOnboardingRepository : IVendorOnboardingRepository
                 var documentType = reader.GetString(reader.GetOrdinal("DocumentType"));
                 var fileName = GetNullableString(reader, "FileName") ?? "Uploaded file";
                 if (DocumentTypeToField.TryGetValue(documentType, out var fieldName))
-                    data.UploadedDocuments[fieldName] = fileName;
+                    data.UploadedDocuments[fieldName] = new VendorDocumentResponse
+                    {
+                        FileName = fileName,
+                        FileUrl = GetNullableString(reader, "FileUrl")
+                    };
             }
         }
 

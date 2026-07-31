@@ -68,10 +68,15 @@ public class VendorOnboardingDataResponse
     public string? SwiftCode { get; set; }
     public string? BankCountry { get; set; }
 
-    public Dictionary<string, string> UploadedDocuments { get; set; } = new();
-
+   // public Dictionary<string, string> UploadedDocuments { get; set; } = new();
+   public Dictionary<string, VendorDocumentResponse> UploadedDocuments { get; set; } = new();
     public List<string> DeclarationItems { get; set; } = new();
     public string? AuthorizedSignatoryName { get; set; }
     public string? Signature { get; set; }
     public DateTime? DeclarationDate { get; set; }
+}
+public class VendorDocumentResponse
+{
+    public string? FileName { get; set; }
+    public string? FileUrl { get; set; }
 }

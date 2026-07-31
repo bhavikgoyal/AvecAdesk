@@ -13,4 +13,5 @@ public class VendorResponse
     public DateTime CreatedAt { get; set; }
     public DateTime? LastLogin { get; set; }
     public int StudentCount { get; set; }
+    public int TodayRegisterStudent { get; set; }
 }

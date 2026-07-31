@@ -379,8 +379,8 @@ public class VendorOnboardingController : ControllerBase
                 return expired;
 
             var existing = await _repository.GetOnboardingAsync(vendorId);
-            var uploadedDocuments = existing?.UploadedDocuments ?? new Dictionary<string, string>();
-
+            // var uploadedDocuments = existing?.UploadedDocuments ?? new Dictionary<string, string>();
+            var uploadedDocuments = existing?.UploadedDocuments ?? new Dictionary<string, VendorDocumentResponse>();
             var savedDocuments = new List<object>();
             var uploadsFolder = Path.Combine(_environment.ContentRootPath, "uploads", "vendor-documents", vendorId.ToString());
             Directory.CreateDirectory(uploadsFolder);
