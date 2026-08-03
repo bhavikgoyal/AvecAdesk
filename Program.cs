@@ -114,9 +114,11 @@ builder.Services.AddCors(options =>
 //    options.AddPolicy("VendorPortal", policy =>
 //    {
 //        policy.WithOrigins(
-//                "https://demovavec.apphub.co.in")
+//                "https://demovavec.apphub.co.in",
+//                "https://demoavec.apphub.co.in")
 //            .AllowAnyHeader()
-//            .AllowAnyMethod();
+//            .AllowAnyMethod()
+//            .AllowCredentials();
 //    });
 //});
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
