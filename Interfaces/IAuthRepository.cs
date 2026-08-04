@@ -10,7 +10,8 @@ namespace AvecADeskApi.Interfaces
         Task<UserLoginResult?> ValidateVendorByCodeAsync(string vendorCode);
         Task<UserLoginResult?> ValidateVendorByPhoneAsync(string phone);
 
-        
+        Task<bool> UserExistsByEmailAsync(string email);
+        Task<bool> UpdatePasswordByEmailAsync(string email, string newPassword);
         Task<string?> SendOtpAsync(string phone);
         Task<UserLoginResult?> VerifyOtpAndGetTokenAsync(string phone, string otp);
 
