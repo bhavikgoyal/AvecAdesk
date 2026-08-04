@@ -344,5 +344,29 @@ namespace AvecADeskApi.Repositories
             }
             return null;
         }
+        public async Task<bool> UserExistsByEmailAsync(string email)
+        {
+            using var conn = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand("sp_CheckUserExistsByEmail", conn);
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@Email", email);
+
+            await conn.OpenAsync();
+            var count = (int)await cmd.ExecuteScalarAsync();
+            return count > 0;
+        }
+
+        public async Task<bool> UpdatePasswordByEmailAsync(string email, string newPassword)
+        {
+            using var conn = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand("sp_UpdateUserPasswordByEmail", conn);
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@Email", email);
+            cmd.Parameters.AddWithValue("@NewPassword", newPassword);
+
+            await conn.OpenAsync();
+            var rowsAffected = (int)await cmd.ExecuteScalarAsync();
+            return rowsAffected > 0;
+        }
     }
 }
