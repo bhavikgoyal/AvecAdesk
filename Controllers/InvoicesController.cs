@@ -84,7 +84,21 @@ public class InvoicesController : ControllerBase
         try { return Ok(await _invoiceRepository.GetInvoicesAsync()); }
         catch (Exception ex) { _logHelper.LogError(nameof(GetInvoices), ex); return StatusCode(500, "An error occurred while fetching invoices."); }
     }
-
+    
+    [HttpGet("next-month-totalinvoice")]
+    public async Task<IActionResult> GetNextMonthInvoiceTotal()
+    {
+        try
+        {
+            var total = await _invoiceRepository.GetNextMonthInvoiceTotalAsync();
+            return Ok(total);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(GetNextMonthInvoiceTotal), ex);
+            return StatusCode(500, "An error occurred while fetching next month invoice total.");
+        }
+    }
     [HttpPost("generate/{uploadId:int}")]
     public async Task<IActionResult> GenerateInvoice(int uploadId)
     {
