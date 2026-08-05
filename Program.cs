@@ -138,6 +138,7 @@ builder.Services.AddScoped<IInstituteWebsiteFetcher, InstituteWebsiteFetcher>();
 builder.Services.AddScoped<IInstituteScrappingService, InstituteScrappingService>();
 builder.Services.AddScoped<IReceivablesRepository, ReceivablesRepository>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddSingleton<IPasswordResetTokenStore, InMemoryPasswordResetTokenStore>();
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 builder.Services.AddHttpClient("InstituteScraper", client =>
 {
@@ -177,6 +178,7 @@ builder.Services.AddScoped<IViewActivityHistoryRepository, ViewActivityHistoryRe
 builder.Services.AddScoped<IUserRepository, UserPasswordRepository>();
 builder.Services.AddScoped<IVendorStudentRepository, VendorStudentRepository>();
 builder.Services.AddScoped<ICardMemberRepository, CardMemberRepository>();
+builder.Services.AddSingleton<IPasswordResetTokenStore, InMemoryPasswordResetTokenStore>();
 builder.Services.AddScoped<JwtTokenGenerator>();
 
 
