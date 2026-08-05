@@ -14,6 +14,7 @@ namespace AvecADeskApi.Controllers;
 public class VendorOnboardingController : ControllerBase
 {
     private readonly IVendorOnboardingRepository _repository;
+    private readonly IAgrrementTemplateRepository _agrrementTemplateRepository;
     private readonly IWebHostEnvironment _environment;
     private readonly LogHelper _logHelper;
 
@@ -33,12 +34,49 @@ public class VendorOnboardingController : ControllerBase
 
     public VendorOnboardingController(
         IVendorOnboardingRepository repository,
+        IAgrrementTemplateRepository agrrementTemplateRepository,
         IWebHostEnvironment environment,
         LogHelper logHelper)
     {
         _repository = repository;
+        _agrrementTemplateRepository = agrrementTemplateRepository;
         _environment = environment;
         _logHelper = logHelper;
+    }
+
+    /// <summary>
+    /// Returns the active Vendor agreement template (BodyHtml) for the declaration step.
+    /// </summary>
+    [HttpGet("declaration-template")]
+    public async Task<IActionResult> GetDeclarationTemplate()
+    {
+        try
+        {
+            var templates = await _agrrementTemplateRepository.GetAgrrementTemplatesAsync();
+            var template = templates
+                .Where(t => t.IsActive)
+                .Where(t => string.Equals(t.AgreementType, "Vendor", StringComparison.OrdinalIgnoreCase)
+                    || (t.TemplateName?.Contains("Vendor", StringComparison.OrdinalIgnoreCase) ?? false))
+                .OrderByDescending(t => t.UpdatedAt ?? t.CreatedAt)
+                .FirstOrDefault()
+                ?? templates.Where(t => t.IsActive).OrderByDescending(t => t.UpdatedAt ?? t.CreatedAt).FirstOrDefault();
+
+            if (template is null)
+                return NotFound("No active declaration template found.");
+
+            return Ok(new
+            {
+                template.TemplateId,
+                template.TemplateName,
+                template.AgreementType,
+                template.BodyHtml,
+                template.IsActive,
+            });
+        }
+        catch (Exception ex)
+        {
+            return HandleOnboardingError(ex, nameof(GetDeclarationTemplate), "An error occurred while fetching the declaration template.");
+        }
     }
 
     [HttpGet("{vendorId:int}")]
