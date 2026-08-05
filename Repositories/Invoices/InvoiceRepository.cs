@@ -30,7 +30,28 @@ public class InvoiceRepository : IInvoiceRepository
             throw;
         }
     }
+    public async Task<decimal> GetNextMonthInvoiceTotalAsync()
+    {
+        try
+        {
+            var result = await _db.ExecuteScalarAsync(
+                "sp_GetNextMonthInvoiceTotal",
+                cmd => { }
+            );
 
+            return result == null || result == DBNull.Value
+                ? 0M
+                : Convert.ToDecimal(result);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(
+                $"{nameof(InvoiceRepository)}.{nameof(GetNextMonthInvoiceTotalAsync)}",
+                ex);
+
+            throw;
+        }
+    }
     public async Task<InvoiceResponse?> GetInvoiceByIdAsync(int invoiceId)
     {
         try

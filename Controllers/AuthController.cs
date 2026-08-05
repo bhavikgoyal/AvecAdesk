@@ -2,6 +2,7 @@
 using AvecADeskApi.Helper;
 using AvecADeskApi.Interfaces;
 using AvecADeskApi.Model.Student;
+using AvecADeskApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,14 +17,18 @@ namespace AvecADeskApi.Controllers
         private readonly JwtTokenGenerator _tokenGenerator;
         private readonly ILogger<AuthController> _logger;
         private readonly IEmailService _emailService;
+        private readonly IPasswordResetTokenStore _tokenStore;
+        private readonly IConfiguration _configuration;
 
-
-        public AuthController(IAuthRepository repo, JwtTokenGenerator tokenGenerator, ILogger<AuthController> logger, IEmailService emailService)
+        public AuthController(IAuthRepository repo, JwtTokenGenerator tokenGenerator, ILogger<AuthController> logger, IEmailService emailService, IPasswordResetTokenStore tokenStore,
+    IConfiguration configuration)
         {
             _repo = repo;
             _tokenGenerator = tokenGenerator;
             _logger = logger;
             _emailService = emailService;
+            _tokenStore = tokenStore;
+            _configuration = configuration;
         }
 
         // POST api/auth/login
@@ -264,7 +269,7 @@ namespace AvecADeskApi.Controllers
                 });
             }
         }
-        
+
         [AllowAnonymous]
         [HttpPost("Studentlogin")]
         public async Task<IActionResult> Studentlogin([FromBody] LoginRequestDTO request)
@@ -294,6 +299,85 @@ namespace AvecADeskApi.Controllers
             {
                 _logger.LogError(ex, "Error occurred during login for email: {Email}", request?.Email);
                 return StatusCode(500, "An error occurred while processing your login request.");
+            }
+        }
+
+        // POST api/auth/forgot-password
+        [AllowAnonymous]
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequestDTO request)
+        {
+            try
+            {
+                if (request == null || string.IsNullOrWhiteSpace(request.Email))
+                    return BadRequest("Email is required.");
+
+                var email = request.Email.Trim();
+                var exists = await _repo.UserExistsByEmailAsync(email);
+
+               
+                if (exists)
+                {
+                    var token = _tokenStore.CreateToken(email);
+                    var frontendBaseUrl = _configuration["Frontend:BaseUrl"] ?? "http://localhost:3000";
+                    var resetLink = $"{frontendBaseUrl}/reset-password?token={Uri.EscapeDataString(token)}";
+
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            await _emailService.SendPasswordResetEmailAsync(email, resetLink);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Failed to send password reset email to {Email}", email);
+                        }
+                    });
+                }
+
+                return Ok(new
+                {
+                    Success = true,
+                    Message = "If an account with that email exists, a reset link has been sent."
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred during forgot-password for email: {Email}", request?.Email);
+                return StatusCode(500, "An error occurred while processing your request.");
+            }
+        }
+
+        // POST api/auth/reset-password
+        [AllowAnonymous]
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequestDTO request)
+        {
+            try
+            {
+                if (request == null || string.IsNullOrWhiteSpace(request.Token) || string.IsNullOrWhiteSpace(request.NewPassword))
+                    return BadRequest("Token and new password are required.");
+
+                if (request.NewPassword != request.ConfirmPassword)
+                    return BadRequest("Passwords do not match.");
+
+                if (request.NewPassword.Length > 50)
+                    return BadRequest("Password must be 50 characters or fewer.");
+
+                var email = _tokenStore.ValidateAndConsumeToken(request.Token);
+                if (email == null)
+                    return BadRequest(new { Success = false, Message = "Invalid or expired reset link." });
+
+                var updated = await _repo.UpdatePasswordByEmailAsync(email, request.NewPassword);
+                if (!updated)
+                    return BadRequest(new { Success = false, Message = "Unable to reset password." });
+
+                return Ok(new { Success = true, Message = "Password has been reset successfully." });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred during password reset.");
+                return StatusCode(500, "An error occurred while resetting your password.");
             }
         }
     }

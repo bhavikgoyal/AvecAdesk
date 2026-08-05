@@ -38,14 +38,18 @@ public class ScheduleRepository : IScheduleRepository
             throw;
         }
     }
-    public async Task<List<StudentPaymentScheduleListResponse>> GetStudentPaymentScheduleListAsync(int? studentId)
+    public async Task<List<StudentPaymentScheduleListResponse>> GetStudentPaymentScheduleListAsync(int? studentId, bool isNextMonth = false)
     {
         try
         {
             return await _db.ExecuteReaderListAsync(
-                "sp_GetStudentPaymentScheduleList",
-                cmd => cmd.Parameters.AddWithValue("@StudentId", (object?)studentId ?? DBNull.Value),
-                MapStudentPaymentSchedule);
+               "sp_GetStudentPaymentScheduleList",
+               cmd =>
+               {
+                   cmd.Parameters.AddWithValue("@StudentId", (object?)studentId ?? DBNull.Value);
+                   cmd.Parameters.AddWithValue("@IsNextMonth", isNextMonth);
+               },
+               MapStudentPaymentSchedule);
         }
         catch (Exception ex)
         {
@@ -387,9 +391,7 @@ public class ScheduleRepository : IScheduleRepository
         {
             ScheduleId = reader.GetInt32(reader.GetOrdinal("ScheduleId")),
             StudentId = reader.GetInt32(reader.GetOrdinal("StudentId")),
-            StudentCreatedAt = reader.IsDBNull(reader.GetOrdinal("StudentCreatedAt"))
-                ? null
-                : reader.GetDateTime(reader.GetOrdinal("StudentCreatedAt")),
+            StudentCreatedAt = reader.IsDBNull(reader.GetOrdinal("StudentCreatedAt"))? null : reader.GetDateTime(reader.GetOrdinal("StudentCreatedAt")),
             StudentName = reader["StudentName"]?.ToString() ?? "",
             InstituteName = reader["InstituteName"]?.ToString() ?? "",
             CourseName = reader["CourseName"]?.ToString() ?? "",
@@ -400,11 +402,10 @@ public class ScheduleRepository : IScheduleRepository
             TotalInstallments = reader.GetInt32(reader.GetOrdinal("TotalInstallments")),
             PaidInstallments = reader.GetInt32(reader.GetOrdinal("PaidInstallments")),
             PendingInstallments = reader.GetInt32(reader.GetOrdinal("PendingInstallments")),
+            InstallmentAmount = reader.IsDBNull(reader.GetOrdinal("InstallmentAmount"))? 0 : reader.GetDecimal(reader.GetOrdinal("InstallmentAmount")),
             CollectedAmount = reader.GetDecimal(reader.GetOrdinal("CollectedAmount")),
             BalanceAmount = reader.GetDecimal(reader.GetOrdinal("BalanceAmount")),
-            NextDueDate = reader.IsDBNull(reader.GetOrdinal("NextDueDate"))
-                ? null
-                : reader.GetDateTime(reader.GetOrdinal("NextDueDate")),
+            NextDueDate = reader.IsDBNull(reader.GetOrdinal("NextDueDate")) ? null: reader.GetDateTime(reader.GetOrdinal("NextDueDate")),
             PaymentStatus = reader["PaymentStatus"]?.ToString() ?? ""
         };
     }

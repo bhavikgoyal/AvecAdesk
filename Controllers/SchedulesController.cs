@@ -217,11 +217,11 @@ public class SchedulesController : ControllerBase
         }
     }
     [HttpGet("GetStudentPaymentScheduleList")]
-    public async Task<IActionResult> GetStudentPaymentScheduleList([FromQuery] int? studentId)
+    public async Task<IActionResult> GetStudentPaymentScheduleList([FromQuery] int? studentId, [FromQuery] bool isNextMonth = false)
     {
         try
         {
-            var schedules = await _scheduleRepository.GetStudentPaymentScheduleListAsync(studentId);
+            var schedules = await _scheduleRepository.GetStudentPaymentScheduleListAsync(studentId, isNextMonth);
             return Ok(schedules);
         }
         catch (Exception ex)

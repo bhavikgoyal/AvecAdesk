@@ -29,7 +29,7 @@ public class StudentPaymentScheduleListResponse
     public int TotalInstallments { get; set; }
     public int PaidInstallments { get; set; }
     public int PendingInstallments { get; set; }
-
+    public decimal InstallmentAmount { get; set; }
     public decimal CollectedAmount { get; set; }
     public decimal BalanceAmount { get; set; }
 
