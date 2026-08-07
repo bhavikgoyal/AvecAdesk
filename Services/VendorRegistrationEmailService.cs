@@ -8,15 +8,17 @@ namespace AvecADeskApi.Services;
 public class VendorRegistrationEmailService
 {
     private readonly IEmailSender _emailSender;
+    private readonly EmailTemplateSenderService _templateSender;
     private readonly IConfiguration _configuration;
     private readonly LogHelper _logHelper;
-
     public VendorRegistrationEmailService(
         IEmailSender emailSender,
+         EmailTemplateSenderService templateSender,
         IConfiguration configuration,
         LogHelper logHelper)
     {
         _emailSender = emailSender;
+        _templateSender = templateSender;
         _configuration = configuration;
         _logHelper = logHelper;
     }
@@ -28,9 +30,23 @@ public class VendorRegistrationEmailService
 
         var frontendBaseUrl = (_configuration["App:FrontendBaseUrl"] ?? "http://localhost:5173").TrimEnd('/');
         var onboardingLink = $"{frontendBaseUrl}/onboarding?vendorId={vendor.VendorId}";
-        var businessName = WebUtility.HtmlEncode(vendor.BusinessName);
-        var contactName = WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(vendor.ContactPerson) ? "Partner" : vendor.ContactPerson);
 
+        var variables = new Dictionary<string, string>
+        {
+            ["businessName"] = vendor.BusinessName ?? "",
+            ["contactPerson"] = string.IsNullOrWhiteSpace(vendor.ContactPerson) ? "Partner" : vendor.ContactPerson,
+            ["vendorCode"] = vendor.VendorCode ?? "",
+            ["onboardingLink"] = onboardingLink,
+        };
+
+        var sentViaTemplate = await _templateSender.TrySendByCategoryAsync(
+            "Vendor Onboarding", vendor.Email, variables, cancellationToken);
+
+        if (sentViaTemplate)
+            return;
+
+        var businessName = WebUtility.HtmlEncode(vendor.BusinessName);
+        var contactName = WebUtility.HtmlEncode(variables["contactPerson"]);
         var subject = "Complete your vendor onboarding — AVEC Global";
         var body = $"""
             <p>Dear {contactName},</p>

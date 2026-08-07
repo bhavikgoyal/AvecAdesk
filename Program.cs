@@ -139,6 +139,8 @@ builder.Services.AddScoped<IInstituteScrappingService, InstituteScrappingService
 builder.Services.AddScoped<IReceivablesRepository, ReceivablesRepository>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddSingleton<IPasswordResetTokenStore, InMemoryPasswordResetTokenStore>();
+builder.Services.AddScoped<EmailTemplateSenderService>();
+builder.Services.AddScoped<StudentRegistrationEmailService>();
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 builder.Services.AddHttpClient("InstituteScraper", client =>
 {

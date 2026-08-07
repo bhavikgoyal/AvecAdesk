@@ -117,4 +117,17 @@ public class EmailTemplateRepository : IEmailTemplateRepository
         BodyHtml = r.GetString(r.GetOrdinal("BodyHtml")),
         Category = r.GetString(r.GetOrdinal("Category"))
     };
+    public async Task<EmailTemplateResponse?> GetEmailTemplateByCategoryAsync(string category)
+    {
+        try
+        {
+            return await _db.ExecuteReaderSingleAsync("sp_GetEmailTemplateByCategory",
+                cmd => cmd.Parameters.AddWithValue("@Category", category), MapTemplate);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(EmailTemplateRepository)}.{nameof(GetEmailTemplateByCategoryAsync)}", ex);
+            throw;
+        }
+    }
 }
