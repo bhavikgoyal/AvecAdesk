@@ -1,6 +1,10 @@
 using AvecADeskApi.Interfaces;
 using AvecADeskApi.LOG;
 using AvecADeskApi.Model.Student;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.StaticFiles;
+using System.IO;
+using System;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -145,6 +149,44 @@ public class StudentsController : ControllerBase
 
             if (result == null)
                 return NotFound(new { Message = "Student not found." });
+            if (result?.StudentPaymentList != null)
+            {
+                var baseUrl = $"{Request.Scheme}://{Request.Host}";
+                foreach (var item in result.StudentPaymentList)
+                {
+                    if (string.IsNullOrWhiteSpace(item.InstallmentImage))
+                        continue;
+                    if (item.InstallmentImage.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                        item.InstallmentImage.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    var path = item.InstallmentImage;
+                    if (!path.StartsWith('/'))
+                        path = '/' + path;
+
+                    item.InstallmentImage = baseUrl + path;
+                }
+            }
+
+            if (result?.CommissionHistory != null)
+            {
+                var baseUrl = $"{Request.Scheme}://{Request.Host}";
+                foreach (var ch in result.CommissionHistory)
+                {
+                    if (string.IsNullOrWhiteSpace(ch.InstallmentImage))
+                        continue;
+
+                    if (ch.InstallmentImage.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                        ch.InstallmentImage.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    var path = ch.InstallmentImage;
+                    if (!path.StartsWith('/'))
+                        path = '/' + path;
+
+                    ch.InstallmentImage = baseUrl + path;
+                }
+            }
 
             return Ok(result);
         }

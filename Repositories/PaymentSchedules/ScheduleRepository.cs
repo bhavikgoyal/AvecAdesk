@@ -6,6 +6,8 @@ using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using System.Data;
 using System.Text.Json;
+using System.IO;
+using Microsoft.AspNetCore.Hosting;
 
 namespace AvecADeskApi.Repositories.PaymentSchedules;
 
@@ -14,13 +16,15 @@ public class ScheduleRepository : IScheduleRepository
     private readonly SqlDbHelper _db;
     private readonly LogHelper _logHelper;
     private readonly string _connectionString;
+    private readonly IWebHostEnvironment _env;
 
-    public ScheduleRepository(SqlDbHelper db, LogHelper logHelper, IConfiguration configuration)
+    public ScheduleRepository(SqlDbHelper db, LogHelper logHelper, IConfiguration configuration, IWebHostEnvironment env)
     {
         _db = db;
         _logHelper = logHelper;
         _connectionString = configuration.GetConnectionString("DefaultConnection")
             ?? throw new InvalidOperationException("DefaultConnection string is missing.");
+        _env = env ?? throw new ArgumentNullException(nameof(env));
     }
 
     public async Task<List<PaymentScheduleResponse>> GetPaymentSchedulesAsync(int? studentId)
@@ -422,8 +426,62 @@ public class ScheduleRepository : IScheduleRepository
             command.Parameters.AddWithValue("@NoOfInstallments", request.NoOfInstallments);
             command.Parameters.AddWithValue("@Frequency", request.Frequency);
             command.Parameters.AddWithValue("@FirstDueDate", request.FirstDueDate);
-            command.Parameters.AddWithValue("@PaymentList",JsonSerializer.Serialize(request.PaymentList ?? new List<StudentPaymentInstallmentUpdateRequest>()) );
-            command.Parameters.AddWithValue("@CommissionHistory",JsonSerializer.Serialize(request.CommissionHistory ?? new List<StudentCommissionDetailUpdateRequest>()));
+            var paymentList = request.PaymentList ?? new List<StudentPaymentInstallmentUpdateRequest>();
+            try
+            {
+                var imagesFolder = Path.Combine(_env.WebRootPath ?? Directory.GetCurrentDirectory(), "StudentInstallmentImage");
+                Directory.CreateDirectory(imagesFolder);
+
+                foreach (var item in paymentList)
+                {
+                    var img = item.InstallmentImage;
+                    if (string.IsNullOrWhiteSpace(img) || img == "NULL")
+                        continue;
+                    var base64 = img;
+                    string ext = ".jpg";
+                    var commaIndex = img.IndexOf(",");
+                    if (img.StartsWith("data:") && commaIndex > 0)
+                    {
+                        var meta = img.Substring(5, commaIndex - 5); 
+                        if (meta.Contains("image/png")) ext = ".png";
+                        else if (meta.Contains("image/jpeg") || meta.Contains("image/jpg")) ext = ".jpg";
+                        else if (meta.Contains("image/gif")) ext = ".gif";
+
+                        base64 = img.Substring(commaIndex + 1);
+                    }
+
+                    try
+                    {
+                        var bytes = Convert.FromBase64String(base64);
+                        var idPart = item.StudentPaymentInstallmentId.ToString();
+                        var statusPart = (item.PaymentStatus ?? string.Empty).Replace(" ", "_").Replace("/", "_");
+                        var paidPart = item.PaidAmount.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                            .Replace('.', '_');
+
+                        var rawName = $"{idPart}_{statusPart}_{paidPart}";
+                        var invalids = Path.GetInvalidFileNameChars();
+                        foreach (var c in invalids)
+                            rawName = rawName.Replace(c, '_');
+
+                        var fileName = rawName + ext;
+                        var fullPath = Path.Combine(imagesFolder, fileName);
+                        await File.WriteAllBytesAsync(fullPath, bytes);
+
+                        item.InstallmentImage = ("/" + Path.Combine("StudentInstallmentImage", fileName)).Replace('\\', '/');
+                    }
+                    catch (FormatException)
+                    {
+                        _logHelper.LogError($"{nameof(ScheduleRepository)}.{nameof(UpdateStudentPaymentScheduleAsync)}", new Exception("InstallmentImage is not valid base64"));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logHelper.LogError($"{nameof(ScheduleRepository)}.{nameof(UpdateStudentPaymentScheduleAsync)}", ex);
+            }
+
+            command.Parameters.AddWithValue("@PaymentList", JsonSerializer.Serialize(paymentList));
+            command.Parameters.AddWithValue("@CommissionHistory", JsonSerializer.Serialize(request.CommissionHistory ?? new List<StudentCommissionDetailUpdateRequest>()));
 
 
             await connection.OpenAsync();

@@ -69,9 +69,9 @@ public class StudentPaymentScheduleDetailResponse
     public decimal? BonusAmount { get; set; }
     public string? Remark { get; set; }
     // Student Payment List
-    public List<StudentPaymentItem> StudentPaymentList { get; set; } = [];
+    public List<StudentPaymentItem> StudentPaymentList { get; set; } = new();
     // Commission History
-    public List<CommissionHistoryItem> CommissionHistory { get; set; } = [];
+    public List<CommissionHistoryItem> CommissionHistory { get; set; } = new();
 }
 
 public class StudentPaymentItem
@@ -85,6 +85,7 @@ public class StudentPaymentItem
     public decimal BalanceAmount { get; set; }
     public string? PaymentStatus { get; set; }
     public DateTime? PaidDate { get; set; }
+    public string? InstallmentImage { get; set; }
 }
 
 public class CommissionHistoryItem
@@ -95,6 +96,8 @@ public class CommissionHistoryItem
     public DateTime DueDate { get; set; }
     public decimal FeesAmount { get; set; }
     public string? PaymentStatus { get; set; }
+
+    public string? InstallmentImage { get; set; }
 
     public decimal CommissionAmount { get; set; }
     public decimal GSTAmount { get; set; }
