@@ -62,7 +62,7 @@ public class AihController : ControllerBase
     }
 
     [Authorize]
-    [HttpPut("{interestId:int}/convert")]
+    [HttpPost("{interestId:int}/convert")]
     public async Task<IActionResult> ConvertAihToStudent(int interestId)
     {
         try

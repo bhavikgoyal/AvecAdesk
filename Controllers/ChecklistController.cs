@@ -57,7 +57,7 @@ namespace AvecADeskApi.Controllers
             }
 
             
-            [HttpDelete("delete/{checklistId:int}")]
+            [HttpPost("delete/{checklistId:int}")]
             public async Task<IActionResult> Delete(int checklistId)
             {
                 try
@@ -130,7 +130,7 @@ namespace AvecADeskApi.Controllers
             }
         }
 
-        //[HttpPut("item/update-assignee")]
+        //[HttpPost("item/update-assignee")]
         //public async Task<IActionResult> UpdateItemAssignee([FromBody] UpdateItemAssigneeRequest request)
         //{
         //    if (request.ChecklistItemID <= 0 || request.AssignedUserID <= 0)
@@ -165,7 +165,7 @@ namespace AvecADeskApi.Controllers
         }
 
 
-        [HttpDelete("item/delete/{checklistItemId:int}")]
+        [HttpPost("item/delete/{checklistItemId:int}")]
         public async Task<IActionResult> DeleteItem(int checklistItemId)
         {
             try
@@ -181,7 +181,7 @@ namespace AvecADeskApi.Controllers
             }
         }
 
-        [HttpPut("item/update/{checklistItemId:int}")]
+        [HttpPost("item/update/{checklistItemId:int}")]
         public async Task<IActionResult> UpdateItemName(int checklistItemId, [FromBody] UpdateChecklistItemNameRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.ItemName))

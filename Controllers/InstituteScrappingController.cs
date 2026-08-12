@@ -164,7 +164,7 @@ public class InstituteScrappingController : ControllerBase
         }
     }
 
-    [HttpPut("{scrappingId:int}")]
+    [HttpPost("{scrappingId:int}/update")]
     public async Task<IActionResult> Update(int scrappingId, [FromBody] InstituteScrappingUpsertRequest request)
     {
         try
@@ -181,7 +181,7 @@ public class InstituteScrappingController : ControllerBase
         }
     }
 
-    [HttpDelete("{scrappingId:int}")]
+    [HttpPost("{scrappingId:int}/delete")]
     public async Task<IActionResult> Delete(int scrappingId)
     {
         try

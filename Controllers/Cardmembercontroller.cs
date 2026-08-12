@@ -52,7 +52,7 @@ namespace AvecADeskApi.Controllers
         }
 
        
-        [HttpDelete("{cardId:int}/remove/{userId:int}")]
+        [HttpPost("{cardId:int}/remove/{userId:int}")]
         public async Task<IActionResult> RemoveMember(int cardId, int userId)
         {
             try

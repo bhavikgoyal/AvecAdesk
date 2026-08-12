@@ -44,7 +44,7 @@ namespace AvecADeskApi.Controllers
         }
 
 
-        [HttpPut("Update Employee Work Hours")]
+        [HttpPost("Update Employee Work Hours")]
         public async Task<IActionResult> Update([FromBody] StartStop dto)
         {
             try

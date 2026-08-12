@@ -43,7 +43,7 @@ namespace AvecADeskApi.Controllers
       }
     }
 
-    [HttpPut("{studentId:int}/agent")]
+    [HttpPost("{studentId:int}/agent")]
     public async Task<IActionResult> SaveAgent(int studentId, [FromBody] UpdateVendorStudentAgentRequest request)
     {
       try
@@ -58,7 +58,7 @@ namespace AvecADeskApi.Controllers
       }
     }
 
-    [HttpPut("{studentId:int}/immigration")]
+    [HttpPost("{studentId:int}/immigration")]
     public async Task<IActionResult> SaveImmigration(int studentId, [FromBody] UpdateVendorStudentImmigrationRequest request)
     {
       try
@@ -73,7 +73,7 @@ namespace AvecADeskApi.Controllers
       }
     }
 
-    [HttpPut("{studentId:int}/english")]
+    [HttpPost("{studentId:int}/english")]
     public async Task<IActionResult> SaveEnglish(int studentId, [FromBody] UpdateVendorStudentEnglishRequest request)
     {
       try
@@ -133,7 +133,7 @@ namespace AvecADeskApi.Controllers
       }
     }
 
-    [HttpPut("{studentId:int}/checklist")]
+    [HttpPost("{studentId:int}/checklist")]
     public async Task<IActionResult> SaveChecklist(int studentId, [FromBody] UpdateVendorStudentChecklistRequest request)
     {
       try
@@ -148,7 +148,7 @@ namespace AvecADeskApi.Controllers
       }
     }
 
-    [HttpPut("{studentId:int}/declaration")]
+    [HttpPost("{studentId:int}/declaration")]
     public async Task<IActionResult> SaveDeclaration(int studentId, [FromBody] UpdateVendorStudentDeclarationRequest request)
     {
       try
