@@ -1,6 +1,9 @@
-﻿using AvecADeskApi.Interfaces;
+﻿using AvecADeskApi.Hubs;
+using AvecADeskApi.Interfaces;
 using AvecADeskApi.LOG;
+using AvecADeskApi.Model.EmailTemplate;
 using AvecADeskApi.Model.VendorStudent;
+using AvecADeskApi.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using AvecADeskApi.Hubs;
@@ -15,14 +18,15 @@ namespace AvecADeskApi.Controllers
     private readonly LogHelper _logHelper;
     private readonly IWebHostEnvironment _env;
     private readonly IHubContext<NotificationHub> _hubContext;
-
-    public VendorStudentController(IVendorStudentRepository repo, LogHelper logHelper,   IWebHostEnvironment env, IHubContext<NotificationHub> hubContext   )
+    private readonly StudentRegistrationEmailService _studentEmailService; 
+    public VendorStudentController(IVendorStudentRepository repo, LogHelper logHelper,   IWebHostEnvironment env, IHubContext<NotificationHub> hubContext , StudentRegistrationEmailService studentEmailService  )
     {
         _repo = repo;
         _logHelper = logHelper;
         _env = env;
         _hubContext = hubContext;
-    }
+        _studentEmailService = studentEmailService;
+        }
 
     [HttpPost("create")]
     public async Task<IActionResult> CreateStudent([FromBody] SaveVendorStudentRequest request)
@@ -198,13 +202,28 @@ namespace AvecADeskApi.Controllers
             try
             {
                 var vendorId = await _repo.SubmitAsync(studentId);
-                await _hubContext.Clients.All.SendAsync( "VendorStudentCreated",
+                await _hubContext.Clients.All.SendAsync("VendorStudentCreated",
                 new
                 {
                     VendorId = vendorId,
                     StudentId = studentId
                 });  // Notification Signal
+
+                var student = await _repo.GetByIdAsync(studentId);
+                if (student != null && !string.IsNullOrWhiteSpace(student.Email))
+                {
+                    var fullName = $"{student.FirstName} {student.LastName}".Trim();
+
+                    _ = _studentEmailService.SendWelcomeEmailAsync(new StudentEmailInfo
+                    {
+                        Email = student.Email,
+                        FullName = fullName,
+                        EnrollmentNumber = student.StudentID.ToString(),
+                    });
+                }
+
                 return Ok(new { Message = "Application submitted successfully." });
+            
       }
       catch (Exception ex)
       {
