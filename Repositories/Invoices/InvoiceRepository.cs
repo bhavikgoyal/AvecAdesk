@@ -208,14 +208,19 @@ public class InvoiceRepository : IInvoiceRepository
     }
 
     public async Task<InvoiceResponse?> GenerateMonthlyPaidStudentInvoiceAsync(
-        int year,
-        int month,
-        int instituteId,
-        string? campus = null)
+    int year,
+    int month,
+    int instituteId,
+    string? campus = null,
+    List<int>? installmentIds = null)
     {
         try
         {
             var invoiceIdParam = new SqlParameter("@InvoiceId", SqlDbType.Int) { Direction = ParameterDirection.Output };
+            var installmentIdsCsv = (installmentIds is { Count: > 0 })
+                ? string.Join(",", installmentIds)
+                : null;
+
             return await _db.ExecuteReaderSingleAsync(
                 "sp_GenerateMonthlyPaidStudentInvoice",
                 cmd =>
@@ -224,6 +229,7 @@ public class InvoiceRepository : IInvoiceRepository
                     cmd.Parameters.AddWithValue("@Month", month);
                     cmd.Parameters.AddWithValue("@InstituteId", instituteId);
                     cmd.Parameters.AddWithValue("@Campus", string.IsNullOrWhiteSpace(campus) ? DBNull.Value : campus.Trim());
+                    cmd.Parameters.AddWithValue("@InstallmentIds", (object?)installmentIdsCsv ?? DBNull.Value);
                     cmd.Parameters.Add(invoiceIdParam);
                 },
                 MapInvoice);
