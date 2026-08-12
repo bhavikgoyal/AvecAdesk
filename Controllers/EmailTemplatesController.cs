@@ -55,7 +55,7 @@ public class EmailTemplatesController : ControllerBase
         catch (Exception ex) { _logHelper.LogError(nameof(CreateEmailTemplate), ex); return StatusCode(500, "An error occurred while creating email template."); }
     }
 
-    [HttpPut("{templateId:int}")]
+    [HttpPost("{templateId:int}/update")]
     public async Task<IActionResult> UpdateEmailTemplate(int templateId, [FromBody] EmailTemplateUpdateRequest request)
     {
         try
@@ -68,7 +68,7 @@ public class EmailTemplatesController : ControllerBase
         catch (Exception ex) { _logHelper.LogError(nameof(UpdateEmailTemplate), ex); return StatusCode(500, "An error occurred while updating email template."); }
     }
 
-    [HttpDelete("{templateId:int}")]
+    [HttpPost("{templateId:int}/delete")]
     public async Task<IActionResult> DeleteEmailTemplate(int templateId)
     {
         try

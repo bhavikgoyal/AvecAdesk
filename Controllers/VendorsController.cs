@@ -122,7 +122,7 @@ public class VendorsController : ControllerBase
         }
     }
 
-    [HttpPut("{vendorId:int}")]
+    [HttpPost("{vendorId:int}/update")]
     public async Task<IActionResult> UpdateVendor(int vendorId, [FromBody] VendorUpdateRequest request)
     {
         try
@@ -147,7 +147,7 @@ public class VendorsController : ControllerBase
         }
     }
 
-    [HttpPut("{vendorId:int}/status")]
+    [HttpPost("{vendorId:int}/status")]
     public async Task<IActionResult> UpdateVendorStatus(int vendorId, [FromBody] VendorStatusRequest request)
     {
         try
@@ -170,7 +170,7 @@ public class VendorsController : ControllerBase
     }
 
     [Authorize]
-    [HttpPut("{vendorId:int}/onboarding")]
+    [HttpPost("{vendorId:int}/onboarding")]
     public async Task<IActionResult> SaveVendorOnboarding(int vendorId, [FromBody] VendorOnboardingAdminSaveRequest request)
     {
         try
@@ -196,7 +196,7 @@ public class VendorsController : ControllerBase
         }
     }
 
-    [HttpDelete("{vendorId:int}")]
+    [HttpPost("{vendorId:int}/delete")]
     public async Task<IActionResult> DeleteVendor(int vendorId)
     {
         try
@@ -218,7 +218,7 @@ public class VendorsController : ControllerBase
     }
 
     [Authorize]
-    [HttpPut("{vendorId:int}/approve")]
+    [HttpPost("{vendorId:int}/approve")]
     public async Task<IActionResult> ApproveVendor(int vendorId)
     {
         try

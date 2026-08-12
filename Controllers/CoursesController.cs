@@ -135,7 +135,7 @@ public class CoursesController : ControllerBase
     }
 
     [Authorize]
-    [HttpPut("{courseId:int}")]
+    [HttpPost("{courseId:int}/update")]
     public async Task<IActionResult> UpdateCourse(int courseId, [FromForm] CourseUpdateRequest request)
     {
         try
@@ -164,7 +164,7 @@ public class CoursesController : ControllerBase
     }
 
     [Authorize]
-    [HttpPut("{courseId:int}/approve")]
+    [HttpPost("{courseId:int}/approve")]
     public async Task<IActionResult> ApproveCourse(int courseId)
     {
         try
@@ -187,7 +187,7 @@ public class CoursesController : ControllerBase
     }
 
     [Authorize]
-    [HttpDelete("{courseId:int}")]
+    [HttpPost("{courseId:int}/delete")]
     public async Task<IActionResult> DeleteCourse(int courseId)
     {
         try
