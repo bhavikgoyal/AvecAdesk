@@ -199,7 +199,7 @@ var app = builder.Build();
 //}
 var wwwroot = Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
 Directory.CreateDirectory(Path.Combine(wwwroot, "uploads"));
-
+app.UseCors("VendorPortal");
 app.UseStaticFiles();
 app.UseStaticFiles(new StaticFileOptions
 {
@@ -207,7 +207,7 @@ app.UseStaticFiles(new StaticFileOptions
         Path.Combine(builder.Environment.ContentRootPath, "uploads")),
     RequestPath = "/uploads"
 });
-app.UseCors("VendorPortal");
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
