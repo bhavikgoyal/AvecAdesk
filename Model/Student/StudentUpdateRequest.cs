@@ -8,5 +8,6 @@ public class StudentUpdateRequest
     public string Email { get; set; } = string.Empty;
     public string Phone { get; set; } = string.Empty;
     public string? EnrollmentNumber { get; set; }
+    public string? Assignment { get; set; }
     public bool IsActive { get; set; } = true;
 }

@@ -28,6 +28,7 @@ public class StudentResponse
     public DateTime? AIHFormSubmittedAt { get; set; }
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }
+    public string? Assignment { get; set; }
 }
 
 public class StudentPaymentScheduleDetailResponse
@@ -46,6 +47,7 @@ public class StudentPaymentScheduleDetailResponse
     public string? Email { get; set; }
     public string? Phone { get; set; }
     public string? FolderNo { get; set; }
+    public string? Assignment { get; set; }
 
     public DateTime? CourseStartDate { get; set; }
     public DateTime? CourseEndDate { get; set; }

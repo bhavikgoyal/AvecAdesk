@@ -27,6 +27,47 @@ public class ScheduleRepository : IScheduleRepository
         _env = env ?? throw new ArgumentNullException(nameof(env));
     }
 
+    public async Task<List<StudentCourseCompleteResponse>> GetStudentCourseCompleteListAsync()
+    {
+        try
+        {
+            return await _db.ExecuteReaderListAsync(
+                "sp_GetStudentCourseCompleteList",
+                cmd => { },
+                MapStudentCourseComplete);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(ScheduleRepository)}.{nameof(GetStudentCourseCompleteListAsync)}", ex);
+            throw;
+        }
+    }
+    private StudentCourseCompleteResponse MapStudentCourseComplete(SqlDataReader reader)
+    {
+        return new StudentCourseCompleteResponse
+        {
+            ScheduleId = reader.GetInt32(reader.GetOrdinal("ScheduleId")),
+            StudentId = reader.GetInt32(reader.GetOrdinal("StudentId")),
+            StudentName = reader["StudentName"]?.ToString() ?? string.Empty,
+            StudentCreatedAt = reader.GetDateTime(reader.GetOrdinal("StudentCreatedAt")),
+            CourseStartDate = reader.IsDBNull(reader.GetOrdinal("CourseStartDate")) ? null : reader.GetDateTime(reader.GetOrdinal("CourseStartDate")),
+            CourseEndDate = reader.IsDBNull(reader.GetOrdinal("CourseEndDate")) ? null : reader.GetDateTime(reader.GetOrdinal("CourseEndDate")),
+            InstituteName = reader["InstituteName"]?.ToString() ?? string.Empty,
+            CourseName = reader["CourseName"]?.ToString() ?? string.Empty,
+            TotalCourseFee = reader.GetDecimal(reader.GetOrdinal("TotalCourseFee")),
+            NoOfInstallments = reader.GetInt32(reader.GetOrdinal("NoOfInstallments")),
+            Frequency = reader["Frequency"]?.ToString() ?? string.Empty,
+            FirstDueDate = reader.GetDateTime(reader.GetOrdinal("FirstDueDate")),
+            TotalInstallments = reader.GetInt32(reader.GetOrdinal("TotalInstallments")),
+            PaidInstallments = reader.GetInt32(reader.GetOrdinal("PaidInstallments")),
+            PendingInstallments = reader.GetInt32(reader.GetOrdinal("PendingInstallments")),
+            CollectedAmount = reader.GetDecimal(reader.GetOrdinal("CollectedAmount")),
+            BalanceAmount = reader.GetDecimal(reader.GetOrdinal("BalanceAmount")),
+            InstallmentAmount = reader.IsDBNull(reader.GetOrdinal("InstallmentAmount")) ? 0 : reader.GetDecimal(reader.GetOrdinal("InstallmentAmount")),
+            NextDueDate = reader.IsDBNull(reader.GetOrdinal("NextDueDate")) ? null : reader.GetDateTime(reader.GetOrdinal("NextDueDate")),
+            PaymentStatus = reader["PaymentStatus"]?.ToString() ?? string.Empty
+        };
+    }
     public async Task<List<PaymentScheduleResponse>> GetPaymentSchedulesAsync(int? studentId)
     {
         try
