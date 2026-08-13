@@ -33,6 +33,7 @@ public class MonthlyInvoiceGenerateRequest
     public int? Month { get; set; }
     public int? InstituteId { get; set; }
     public string? Campus { get; set; }
+    public List<int>? InstallmentIds { get; set; }
 }
 
 public class MonthlyInvoiceGenerateResult

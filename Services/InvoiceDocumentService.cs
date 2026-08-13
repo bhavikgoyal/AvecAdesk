@@ -9,14 +9,43 @@ using QuestPDF.Infrastructure;
 namespace AvecADeskApi.Services;
 
 /// <summary>
-/// Builds a Tax Invoice PDF matching the Invoice.docx layout
-/// (Education Commission, student particulars, GST, bank details).
+/// Builds a Tax Invoice PDF/HTML matching the branded invoice template
+/// (letterhead, Education Commission particulars, GST, bank details).
 /// </summary>
 public class InvoiceDocumentService
 {
+    // Brand colors (match the frontend invoice template)
+    private const string CompanyBlue = "#1E56A8";
+    private const string LightBlueText = "#1E64C8";
+    private const string BoxFill = "#DEEBF8";
+    private const string BorderGrey = "#333333";
+
+    private readonly byte[]? _logoBytes;
+    private readonly string? _logoBase64;
+
     static InvoiceDocumentService()
     {
         QuestPDF.Settings.License = LicenseType.Community;
+    }
+
+    public InvoiceDocumentService(IWebHostEnvironment env)
+    {
+        try
+        {
+            var webRoot = env.WebRootPath ?? Path.Combine(env.ContentRootPath, "wwwroot");
+            // Using the existing brand logo already stored here:
+            var logoPath = Path.Combine(webRoot, "uploads", "vendor-student", "logo-1.png");
+            if (File.Exists(logoPath))
+            {
+                _logoBytes = File.ReadAllBytes(logoPath);
+                _logoBase64 = Convert.ToBase64String(_logoBytes);
+            }
+        }
+        catch
+        {
+            _logoBytes = null;
+            _logoBase64 = null;
+        }
     }
 
     public string BuildHtml(
@@ -25,79 +54,29 @@ public class InvoiceDocumentService
         IReadOnlyList<MonthlyPaidInstallmentRow> lines,
         DateTime invoiceDate)
     {
-        var gstPct = lines.FirstOrDefault()?.GSTPercentage ?? 10m;
-        var commissionTotal = lines.Sum(x => x.CommissionAmount + x.BonusAmount);
-        var gstTotal = lines.Sum(x => x.GSTAmount);
-        var grandTotal = lines.Sum(x => x.InvoiceAmount);
-        var inWords = AmountToWords(grandTotal);
-
         var sb = new StringBuilder();
-        sb.Append("""
+        sb.Append($$"""
             <!DOCTYPE html><html><head><meta charset="utf-8"/>
             <style>
-              body{font-family:Calibri,Arial,sans-serif;color:#111;margin:24px}
-              h1{text-align:center;letter-spacing:1px;margin:0 0 18px}
-              .meta{width:100%;margin-bottom:16px}
-              .meta td{vertical-align:top;padding:4px 0}
-              table.items{width:100%;border-collapse:collapse;margin-top:8px}
-              table.items th,table.items td{border:1px solid #333;padding:8px;vertical-align:top}
-              table.items th{background:#f3f3f3;text-align:left}
-              .amt{text-align:right;white-space:nowrap}
-              .totals{width:100%;margin-top:12px}
-              .totals td{padding:4px 0}
-              .bank{margin-top:28px;font-size:13px;line-height:1.45}
+              body{font-family:Calibri,Arial,sans-serif;color:#111;margin:24px;line-height:1.6}
+              .company-name{color:{{CompanyBlue}};font-weight:bold;font-size:14px;margin:0 0 4px}
+              .company-info{color:{{LightBlueText}};font-size:11px;line-height:1.5;margin-bottom:24px}
+              p{margin:0 0 12px}
             </style></head><body>
             """);
-        sb.Append("<h1>TAX INVOICE</h1>");
-        sb.Append("<table class='meta'><tr>");
-        sb.Append("<td style='width:60%'><strong>To,</strong><br/>")
-          .Append(WebUtility.HtmlEncode(instituteName))
-          .Append("</td>");
-        sb.Append("<td style='width:40%'><strong>Date:</strong> ")
-          .Append(invoiceDate.ToString("dd-MM-yyyy", CultureInfo.InvariantCulture))
-          .Append("<br/><strong>Invoice No:</strong> ")
-          .Append(WebUtility.HtmlEncode(invoice.InvoiceNumber))
-          .Append("</td></tr></table>");
 
+        sb.Append("<div>")
+          .Append("<div class='company-name'>AVEC GLOBAL GROUP PTY LTD</div>")
+          .Append("<div class='company-info'>ABN Number: 79677235979<br/>")
+          .Append("Unit 3, 380 Clayton Road, Clayton, Victoria<br/>")
+          .Append("E-mail: account@avec-global.com<br/>")
+          .Append("Phone: +61 432 301 842</div>")
+          .Append("</div>");
         sb.Append("""
-            <table class="items">
-              <thead><tr><th style="width:8%">Sr. No</th><th>PARTICULARS</th><th style="width:18%">AMOUNT (AUD$)</th></tr></thead>
-              <tbody>
-            """);
-
-        var sr = 1;
-        foreach (var line in lines)
-        {
-            sb.Append("<tr><td>").Append(sr++).Append(".</td><td>");
-            sb.Append("<strong>Education Commission</strong><br/>");
-            sb.Append("Student Name: ").Append(WebUtility.HtmlEncode(line.FullName)).Append("<br/>");
-            sb.Append("Student Id: ").Append(WebUtility.HtmlEncode(line.StudentCode)).Append("<br/>");
-            sb.Append("Course: ").Append(WebUtility.HtmlEncode(line.CourseName)).Append("<br/>");
-            sb.Append("Fees: ").Append(FormatMoney(line.FeesAmount));
-            sb.Append("</td><td class='amt'>").Append(FormatMoney(line.InvoiceAmount)).Append("</td></tr>");
-        }
-
-        sb.Append("</tbody></table>");
-
-        sb.Append("<table class='totals'>");
-        sb.Append("<tr><td><strong>TOTAL</strong></td><td class='amt'><strong>AUD ")
-          .Append(FormatMoney(commissionTotal)).Append("</strong></td></tr>");
-        sb.Append("<tr><td>GST ").Append(gstPct.ToString("0.##", CultureInfo.InvariantCulture))
-          .Append("%</td><td class='amt'>AUD ").Append(FormatMoney(gstTotal)).Append("</td></tr>");
-        sb.Append("<tr><td><strong>In Words:</strong> ").Append(WebUtility.HtmlEncode(inWords))
-          .Append(" Only</td><td></td></tr>");
-        sb.Append("<tr><td><strong>TOTAL</strong></td><td class='amt'><strong>AUD ")
-          .Append(FormatMoney(grandTotal)).Append("</strong></td></tr>");
-        sb.Append("</table>");
-
-        sb.Append("""
-            <div class="bank">
-              <strong>Bank Details</strong><br/>
-              Account Name: AVEC GLOBAL GROUP PTY LTD<br/>
-              BSB: 063-549<br/>
-              Account Number: 1081 0692<br/>
-              Address: Unit 3, 380 Clayton Road, Clayton, Vic: 3168
-            </div>
+            <p>Dear Team,</p>
+            <p>Please find the attached tax invoice for your reference.</p>
+            <p>Kindly review the attached document and let us know if any clarification is required.</p>
+            <p>Regards,<br/>AVEC Global</p>
             </body></html>
             """);
 
@@ -122,29 +101,62 @@ public class InvoiceDocumentService
             container.Page(page =>
             {
                 page.Size(PageSizes.A4);
-                page.Margin(40);
+                page.Margin(36);
                 page.DefaultTextStyle(x => x.FontSize(11).FontColor(Colors.Black));
 
                 page.Content().Column(col =>
                 {
-                    col.Spacing(14);
+                    col.Spacing(10);
 
-                    col.Item().AlignCenter().Text("TAX INVOICE").Bold().FontSize(18).LetterSpacing(0.5f);
-
+                    // --- Letterhead: logo + company details ---
                     col.Item().Row(row =>
                     {
-                        row.RelativeItem().Column(left =>
+                        if (_logoBytes is not null)
                         {
-                            left.Item().Text("To,").Bold();
-                            left.Item().Text(instituteName);
-                        });
-                        row.RelativeItem().AlignRight().Column(right =>
+                            row.ConstantItem(70).Image(_logoBytes).FitWidth();
+                        }
+                        row.RelativeItem().PaddingLeft(_logoBytes is not null ? 10 : 0).Column(company =>
                         {
-                            right.Item().Text($"Date: {dateText}");
-                            right.Item().Text($"Invoice No: {invoice.InvoiceNumber}");
+                            company.Item().Text("AVEC GLOBAL GROUP PTY LTD")
+                                .Bold().FontSize(13).FontColor(CompanyBlue);
+                            company.Item().Text("ABN Number: 79677235979").FontSize(9).FontColor(LightBlueText);
+                            company.Item().Text("Unit 3, 380 Clayton Road, Clayton, Victoria").FontSize(9).FontColor(LightBlueText);
+                            company.Item().Text("E-mail: account@avec-global.com").FontSize(9).FontColor(LightBlueText);
+                            company.Item().Text("Phone: +61 432 301 842").FontSize(9).FontColor(LightBlueText);
                         });
                     });
 
+                    col.Item().PaddingTop(6).AlignCenter()
+                        .Text("TAX INVOICE").Bold().FontSize(18).LetterSpacing(0.5f);
+
+                    // --- To / Date / Invoice No box ---
+                    col.Item()
+                        .Border(1).BorderColor(Colors.Black)
+                        .Background(BoxFill)
+                        .Padding(10)
+                        .Row(row =>
+                        {
+                            row.RelativeItem(3).Column(left =>
+                            {
+                                left.Item().Text("To,").Bold();
+                                left.Item().Text(instituteName);
+                            });
+                            row.RelativeItem(2).AlignRight().Column(right =>
+                            {
+                                right.Item().Text(t =>
+                                {
+                                    t.Span("Date: ").Bold();
+                                    t.Span(dateText);
+                                });
+                                right.Item().Text(t =>
+                                {
+                                    t.Span("Invoice No: ").Bold();
+                                    t.Span(invoice.InvoiceNumber);
+                                });
+                            });
+                        });
+
+                    // --- Items table ---
                     col.Item().Table(table =>
                     {
                         table.ColumnsDefinition(columns =>
@@ -171,34 +183,47 @@ public class InvoiceDocumentService
                                 c.Item().Text($"Student Name: {line.FullName}");
                                 c.Item().Text($"Student Id: {line.StudentCode}");
                                 c.Item().Text($"Course: {line.CourseName}");
+                                if (!string.IsNullOrWhiteSpace(line.Campus))
+                                    c.Item().Text($"Campus: {line.Campus}");
                                 c.Item().Text($"Fees: {FormatMoney(line.FeesAmount)}");
                             });
                             table.Cell().Element(BodyCell).AlignRight().Text(FormatMoney(line.InvoiceAmount));
                         }
                     });
 
-                    col.Item().PaddingTop(8).Column(totals =>
+                    // --- Totals (bordered grid, matches template) ---
+                    col.Item().Table(table =>
                     {
-                        totals.Spacing(4);
-                        totals.Item().Row(r =>
+                        table.ColumnsDefinition(columns =>
                         {
-                            r.RelativeItem().Text("TOTAL").Bold();
-                            r.ConstantItem(140).AlignRight().Text($"AUD {FormatMoney(commissionTotal)}").Bold();
+                            columns.ConstantColumn(50);
+                            columns.RelativeColumn();
+                            columns.ConstantColumn(110);
                         });
-                        totals.Item().Row(r =>
+
+                        table.Cell().Element(TotalsCell).Text("");
+                        table.Cell().Element(TotalsCell).AlignRight().Text("TOTAL").Bold();
+                        table.Cell().Element(TotalsCell).AlignRight().Text($"AUD {FormatMoney(commissionTotal)}").Bold();
+
+                        table.Cell().Element(TotalsCell).Text("");
+                        table.Cell().Element(TotalsCell).AlignRight()
+                            .Text($"GST {gstPct.ToString("0.##", CultureInfo.InvariantCulture)}%");
+                        table.Cell().Element(TotalsCell).AlignRight().Text($"AUD {FormatMoney(gstTotal)}");
+
+                        table.Cell().Element(TotalsCell).Text("");
+                        table.Cell().Element(TotalsCell).AlignRight().Text("TOTAL").Bold();
+                        table.Cell().Element(TotalsCell).AlignRight().Text($"AUD {FormatMoney(grandTotal)}").Bold();
+
+                        table.Cell().ColumnSpan(2).Element(TotalsCell).Text(t =>
                         {
-                            r.RelativeItem().Text($"GST {gstPct.ToString("0.##", CultureInfo.InvariantCulture)}%");
-                            r.ConstantItem(140).AlignRight().Text($"AUD {FormatMoney(gstTotal)}");
+                            t.Span("In Words: ").Bold();
+                            t.Span($"{inWords} Only");
                         });
-                        totals.Item().Text($"In Words: {inWords} Only").Bold();
-                        totals.Item().Row(r =>
-                        {
-                            r.RelativeItem().Text("TOTAL").Bold();
-                            r.ConstantItem(140).AlignRight().Text($"AUD {FormatMoney(grandTotal)}").Bold();
-                        });
+                        table.Cell().Element(TotalsCell).Text("");
                     });
 
-                    col.Item().PaddingTop(20).Column(bank =>
+                    // --- Bank details ---
+                    col.Item().PaddingTop(16).Column(bank =>
                     {
                         bank.Spacing(2);
                         bank.Item().Text("Bank Details").Bold();
@@ -220,6 +245,12 @@ public class InvoiceDocumentService
             .Padding(6);
 
     private static IContainer BodyCell(IContainer container) =>
+        container
+            .Border(1)
+            .BorderColor(Colors.Grey.Darken2)
+            .Padding(6);
+
+    private static IContainer TotalsCell(IContainer container) =>
         container
             .Border(1)
             .BorderColor(Colors.Grey.Darken2)

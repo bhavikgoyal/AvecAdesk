@@ -68,6 +68,7 @@ public class InvoicesController : ControllerBase
                 request?.Month,
                 request?.InstituteId,
                 request?.Campus,
+                request?.InstallmentIds,
                 cancellationToken);
             return Ok(result);
         }
