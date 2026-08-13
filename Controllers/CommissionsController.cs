@@ -75,7 +75,7 @@ public class CommissionsController : ControllerBase
         }
     }
 
-    [HttpPut("vendor/{vendorId:int}/rates/{commissionId:int}")]
+    [HttpPost("vendor/{vendorId:int}/rates/{commissionId:int}/update")]
     public async Task<IActionResult> UpdateVendorCommissionRate(int vendorId, int commissionId, [FromBody] CommissionRateUpdateRequest request)
     {
         try
@@ -98,7 +98,7 @@ public class CommissionsController : ControllerBase
         }
     }
 
-    [HttpDelete("vendor/{vendorId:int}/rates/{commissionId:int}")]
+    [HttpPost("vendor/{vendorId:int}/rates/{commissionId:int}/delete")]
     public async Task<IActionResult> DeleteVendorCommissionRate(int vendorId, int commissionId)
     {
         try
@@ -179,7 +179,7 @@ public class CommissionsController : ControllerBase
         }
     }
 
-    [HttpPut("earnings/{earningId:int}/approve")]
+    [HttpPost("earnings/{earningId:int}/approve")]
     public async Task<IActionResult> ApproveCommissionEarning(int earningId)
     {
         try

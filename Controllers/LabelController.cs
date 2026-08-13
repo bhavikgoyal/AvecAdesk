@@ -64,7 +64,7 @@ namespace AvecADeskApi.Controllers
             }
         }
 
-        [HttpDelete("delete/{labelId:int}")]
+        [HttpPost("delete/{labelId:int}")]
         public async Task<IActionResult> Delete(int labelId)
         {
             if (labelId <= 0) return BadRequest(new { message = "Valid LabelID is required." });

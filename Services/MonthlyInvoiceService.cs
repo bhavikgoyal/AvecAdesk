@@ -1,3 +1,4 @@
+
 using AvecADeskApi.Interfaces;
 using AvecADeskApi.LOG;
 using AvecADeskApi.Model.Invoice;
@@ -44,11 +45,13 @@ public class MonthlyInvoiceService
             campus);
     }
 
+    
     public async Task<MonthlyInvoiceGenerateResult> GenerateAndSendAsync(
         int? year = null,
         int? month = null,
         int? instituteId = null,
         string? campus = null,
+        List<int>? installmentIds = null,
         CancellationToken cancellationToken = default)
     {
         var (targetYear, targetMonth) = ResolvePeriod(year, month);
@@ -64,6 +67,13 @@ public class MonthlyInvoiceService
             targetMonth,
             instituteId,
             campus);
+
+        // Keep only the rows the user actually checked, if a selection was sent.
+        if (installmentIds is { Count: > 0 })
+        {
+            var selectedSet = installmentIds.ToHashSet();
+            paidRows = paidRows.Where(r => selectedSet.Contains(r.StudentPaymentInstallmentId)).ToList();
+        }
 
         if (paidRows.Count == 0)
         {
@@ -85,12 +95,16 @@ public class MonthlyInvoiceService
             var groupInstituteId = group.Key;
             var instituteName = group.First().InstituteName;
             var lines = group.ToList();
+            // Only the ids belonging to this institute group, so the SP inserts exactly
+            // what's shown in the PDF/email for this group.
+            var groupInstallmentIds = lines.Select(x => x.StudentPaymentInstallmentId).ToList();
 
             var invoice = await _invoiceRepository.GenerateMonthlyPaidStudentInvoiceAsync(
                 targetYear,
                 targetMonth,
                 groupInstituteId,
-                campus);
+                campus,
+                groupInstallmentIds);
             if (invoice is null || invoice.InvoiceId <= 0)
                 continue;
 

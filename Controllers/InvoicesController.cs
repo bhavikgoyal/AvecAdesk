@@ -68,6 +68,7 @@ public class InvoicesController : ControllerBase
                 request?.Month,
                 request?.InstituteId,
                 request?.Campus,
+                request?.InstallmentIds,
                 cancellationToken);
             return Ok(result);
         }
@@ -136,7 +137,7 @@ public class InvoicesController : ControllerBase
             return StatusCode(500, "An error occurred while fetching invoice line items.");
         }
     }
-    [HttpPut("{invoiceId:int}/submit")]
+    [HttpPost("{invoiceId:int}/submit")]
     public async Task<IActionResult> SubmitInvoice(int invoiceId)
     {
         try
@@ -147,7 +148,7 @@ public class InvoicesController : ControllerBase
         catch (Exception ex) { _logHelper.LogError(nameof(SubmitInvoice), ex); return StatusCode(500, "An error occurred while submitting invoice."); }
     }
 
-    [HttpPut("{invoiceId:int}/approve")]
+    [HttpPost("{invoiceId:int}/approve")]
     public async Task<IActionResult> ApproveInvoice(int invoiceId)
     {
         try
@@ -160,7 +161,7 @@ public class InvoicesController : ControllerBase
         catch (Exception ex) { _logHelper.LogError(nameof(ApproveInvoice), ex); return StatusCode(500, "An error occurred while approving invoice."); }
     }
 
-    [HttpPut("{invoiceId:int}/reject")]
+    [HttpPost("{invoiceId:int}/reject")]
     public async Task<IActionResult> RejectInvoice(int invoiceId, [FromBody] InvoiceRejectRequest request)
     {
         try

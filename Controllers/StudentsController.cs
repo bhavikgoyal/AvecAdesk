@@ -101,7 +101,7 @@ public class StudentsController : ControllerBase
     }
 
     [Authorize]
-    [HttpPut("{studentId:int}")]
+    [HttpPost("{studentId:int}")]
     public async Task<IActionResult> UpdateStudent(int studentId, [FromBody] StudentUpdateRequest request)
     {
         try
@@ -120,7 +120,7 @@ public class StudentsController : ControllerBase
     }
 
     [Authorize]
-    [HttpPut("{studentId:int}/enrolment-status")]
+    [HttpPost("{studentId:int}/enrolment-status")]
     public async Task<IActionResult> UpdateEnrolmentStatus(int studentId, [FromBody] StudentEnrolmentStatusRequest request)
     {
         try

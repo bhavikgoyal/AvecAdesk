@@ -69,7 +69,7 @@ namespace AvecADeskApi.Controllers
             }
         }
 
-        [HttpPut("update")]
+        [HttpPost("update")]
         public async Task<IActionResult> UpdateUser([FromBody] UserResponse request)
         {
             try
@@ -98,7 +98,7 @@ namespace AvecADeskApi.Controllers
             }
         }
 
-        [HttpDelete("delete/{userId}")]
+        [HttpPost("delete/{userId}")]
         public async Task<IActionResult> DeleteUser(int userId)
         {
             try

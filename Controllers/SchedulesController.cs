@@ -166,7 +166,7 @@ public class SchedulesController : ControllerBase
         }
     }
 
-    [HttpPut("{scheduleId:int}")]
+    [HttpPost("{scheduleId:int}")]
     public async Task<IActionResult> UpdatePaymentSchedule(int scheduleId, [FromBody] PaymentScheduleUpdateRequest request)
     {
         try
@@ -184,7 +184,7 @@ public class SchedulesController : ControllerBase
         }
     }
 
-    [HttpPut("{scheduleId:int}/status")]
+    [HttpPost("{scheduleId:int}/status")]
     public async Task<IActionResult> UpdatePaymentScheduleStatus(int scheduleId, [FromBody] PaymentScheduleStatusRequest request)
     {
         try
@@ -244,7 +244,7 @@ public class SchedulesController : ControllerBase
             return StatusCode(500, "An error occurred while fetching student course complete list.");
         }
     }
-    [HttpPut("UpdateStudentPaymentSchedule")]
+    [HttpPost("UpdateStudentPaymentSchedule")]
     public async Task<IActionResult> UpdateStudentPaymentSchedule([FromBody] UpdateStudentPaymentScheduleRequest request)
     {
         try

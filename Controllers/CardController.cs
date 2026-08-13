@@ -64,7 +64,7 @@ namespace AvecADeskApi.Controllers
             }
         }
 
-        [HttpPut("update")]
+        [HttpPost("update")]
         public async Task<IActionResult> UpdateCard([FromBody] UpdateCardRequest request)
         {
             if (request == null || request.CardID <= 0)
@@ -101,7 +101,7 @@ namespace AvecADeskApi.Controllers
             }
         }
 
-        [HttpDelete("delete/{cardId}")]
+        [HttpPost("delete/{cardId}")]
         public async Task<IActionResult> DeleteCard(int cardId)
         {
             if (cardId <= 0)

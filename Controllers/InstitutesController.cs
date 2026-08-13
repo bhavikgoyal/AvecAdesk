@@ -100,7 +100,7 @@ public class InstitutesController : ControllerBase
         }
     }
 
-    [HttpPut("{instituteId:int}")]
+    [HttpPost("{instituteId:int}")]
     [Authorize]
     public async Task<IActionResult> UpdateInstitute(int instituteId, [FromBody] InstituteUpdateRequest request)
     {
@@ -122,7 +122,7 @@ public class InstitutesController : ControllerBase
         }
     }
 
-    [HttpPut("{instituteId:int}/status")]
+    [HttpPost("{instituteId:int}/status")]
     [Authorize]
     public async Task<IActionResult> UpdateInstituteStatus(int instituteId, [FromBody] InstituteStatusRequest request)
     {
@@ -145,7 +145,7 @@ public class InstitutesController : ControllerBase
         }
     }
 
-    [HttpPut("{instituteId:int}/publish")]
+    [HttpPost("{instituteId:int}/publish")]
     [Authorize]
     public async Task<IActionResult> PublishInstitute(int instituteId)
     {

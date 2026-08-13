@@ -39,7 +39,7 @@ public class RemindersController : ControllerBase
         catch (Exception ex) { _logHelper.LogError(nameof(CreateReminderRule), ex); return StatusCode(500, "An error occurred while creating reminder rule."); }
     }
 
-    [HttpPut("rules/{ruleId:int}")]
+    [HttpPost("rules/{ruleId:int}")]
     public async Task<IActionResult> UpdateReminderRule(int ruleId, [FromBody] ReminderRuleUpdateRequest request)
     {
         try

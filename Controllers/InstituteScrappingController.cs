@@ -29,11 +29,17 @@ public class InstituteScrappingController : ControllerBase
     }
 
     [HttpGet("export")]
-    public async Task<IActionResult> ExportExcel([FromQuery] string? instituteName)
+    public async Task<IActionResult> ExportExcel([FromQuery] string? instituteName, [FromQuery] int pageNumber = 1,
+    [FromQuery] int pageSize = 10)
     {
         try
         {
-            var rows = await _repository.GetAllAsync(instituteName);
+            var allRows = await _repository.GetAllAsync(instituteName);
+            var rows = allRows
+           .Skip((pageNumber - 1) * pageSize)
+           .Take(pageSize)
+           .ToList();
+
             if (rows.Count == 0)
                 return NotFound("No institute scrapping records found for export.");
 
@@ -164,7 +170,7 @@ public class InstituteScrappingController : ControllerBase
         }
     }
 
-    [HttpPut("{scrappingId:int}")]
+    [HttpPost("{scrappingId:int}/update")]
     public async Task<IActionResult> Update(int scrappingId, [FromBody] InstituteScrappingUpsertRequest request)
     {
         try
@@ -181,7 +187,7 @@ public class InstituteScrappingController : ControllerBase
         }
     }
 
-    [HttpDelete("{scrappingId:int}")]
+    [HttpPost("{scrappingId:int}/delete")]
     public async Task<IActionResult> Delete(int scrappingId)
     {
         try

@@ -52,7 +52,7 @@ public class AgrrementTemplateController : ControllerBase
         catch (Exception ex) { _logHelper.LogError(nameof(CreateAgrrementTemplate), ex); return StatusCode(500, "An error occurred while creating agrrement template."); }
     }
 
-    [HttpPut("{templateId:int}")]
+    [HttpPost("{templateId:int}/update")]
     public async Task<IActionResult> UpdateAgrrementTemplate(int templateId, [FromBody] AgrrementTemplateUpdateRequest request)
     {
         try
@@ -65,7 +65,7 @@ public class AgrrementTemplateController : ControllerBase
         catch (Exception ex) { _logHelper.LogError(nameof(UpdateAgrrementTemplate), ex); return StatusCode(500, "An error occurred while updating agrrement template."); }
     }
 
-    [HttpDelete("{templateId:int}")]
+    [HttpPost("{templateId:int}/delete")]
     public async Task<IActionResult> DeleteAgrrementTemplate(int templateId)
     {
         try
