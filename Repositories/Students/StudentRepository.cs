@@ -86,6 +86,7 @@ public class StudentRepository : IStudentRepository
                 cmd.Parameters.AddWithValue("@FolderNo", (object?)request.FolderNo ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@CourseStartDate",(object?)request.CourseStartDate ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@CourseEndDate",(object?)request.CourseEndDate ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@Assignment", (object?)request.Assignment ?? DBNull.Value);
                 cmd.Parameters.Add(studentIdParam);
             });
 
@@ -113,6 +114,7 @@ public class StudentRepository : IStudentRepository
                 cmd.Parameters.AddWithValue("@Email", request.Email);
                 cmd.Parameters.AddWithValue("@Phone", request.Phone);
                 cmd.Parameters.AddWithValue("@EnrollmentNumber", (object?)request.EnrollmentNumber ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@Assignment", (object?)request.Assignment ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@IsActive", request.IsActive);
                 cmd.Parameters.Add(rowsAffectedParam);
             });
@@ -163,7 +165,8 @@ public class StudentRepository : IStudentRepository
             AIHFormSubmittedAt = reader.IsDBNull(reader.GetOrdinal("AIHFormSubmittedAt")) ? null : reader.GetDateTime(reader.GetOrdinal("AIHFormSubmittedAt")),
             IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
             CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
-          
+            Assignment = reader.IsDBNull(reader.GetOrdinal("Assignment")) ? null : reader.GetString(reader.GetOrdinal("Assignment")),
+
 
         };
     }
@@ -242,6 +245,7 @@ public class StudentRepository : IStudentRepository
             Email = reader["Email"]?.ToString(),
             Phone = reader["Phone"]?.ToString(),
             FolderNo = reader["FolderNo"]?.ToString(),
+            Assignment = reader["Assignment"]?.ToString(),
 
             CourseStartDate = reader.IsDBNull(reader.GetOrdinal("CourseStartDate"))
                 ? null
@@ -305,6 +309,10 @@ public class StudentRepository : IStudentRepository
             PaidDate = reader.IsDBNull(reader.GetOrdinal("PaidDate"))
                 ? null
                 : reader.GetDateTime(reader.GetOrdinal("PaidDate"))
+            ,
+            InstallmentImage = ColumnExists(reader, "InstallmentImage") && !reader.IsDBNull(reader.GetOrdinal("InstallmentImage"))
+                ? reader.GetString(reader.GetOrdinal("InstallmentImage"))
+                : null
         };
     }
     private static CommissionHistoryItem MapCommissionHistoryItem(SqlDataReader reader)
@@ -316,6 +324,9 @@ public class StudentRepository : IStudentRepository
             DueDate = reader.GetDateTime(reader.GetOrdinal("DueDate")),
             FeesAmount = reader.GetDecimal(reader.GetOrdinal("FeesAmount")),
             PaymentStatus = reader["PaymentStatus"]?.ToString(),
+            InstallmentImage = ColumnExists(reader, "InstallmentImage") && !reader.IsDBNull(reader.GetOrdinal("InstallmentImage"))
+                ? reader.GetString(reader.GetOrdinal("InstallmentImage"))
+                : null,
 
             CommissionAmount = reader.GetDecimal(reader.GetOrdinal("CommissionAmount")),
             GSTAmount = reader.GetDecimal(reader.GetOrdinal("GSTAmount")),
@@ -330,6 +341,17 @@ public class StudentRepository : IStudentRepository
 
             CommissionStatus = reader["CommissionStatus"]?.ToString(),
         };
+    }
+
+     private static bool ColumnExists(SqlDataReader reader, string columnName)
+    {
+        for (int i = 0; i < reader.FieldCount; i++)
+        {
+            if (string.Equals(reader.GetName(i), columnName, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        return false;
     }
 
 }

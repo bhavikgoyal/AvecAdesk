@@ -16,6 +16,8 @@ public interface IScheduleRepository
     Task<List<StudentPaymentScheduleListResponse>> GetStudentPaymentScheduleListAsync(int? studentId = null, bool isNextMonth = false);
     Task<UpdateStudentPaymentScheduleResponse> UpdateStudentPaymentScheduleAsync(  UpdateStudentPaymentScheduleRequest request);
 
+    Task<List<Model.PaymentSchedule.StudentCourseCompleteResponse>> GetStudentCourseCompleteListAsync();
+
 
     //Task<PaymentScheduleSummaryResponse> GetPaymentSummaryAsync();
     //Task<PaymentScheduleBulkStatusResult> BulkUpdatePaymentScheduleStatusAsync(PaymentScheduleBulkStatusRequest request);

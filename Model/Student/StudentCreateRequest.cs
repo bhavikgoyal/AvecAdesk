@@ -12,5 +12,6 @@ public class StudentCreateRequest
     public int? FolderNo { get; set; }
     public DateTime? CourseStartDate { get; set; }
     public DateTime? CourseEndDate { get; set; }
+    public string? Assignment { get; set; }
 
 }
