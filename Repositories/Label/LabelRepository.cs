@@ -10,11 +10,12 @@ namespace AvecADeskApi.Repositories.Label
     {
         private readonly SqlDbHelper _db;
         private readonly LogHelper _logHelper;
-
+        
         public LabelRepository(SqlDbHelper db, LogHelper logHelper)
         {
             _db = db;
             _logHelper = logHelper;
+            
         }
 
         public async Task<List<LabelResponse>> GetByCardIdAsync(int cardId)
@@ -33,6 +34,31 @@ namespace AvecADeskApi.Repositories.Label
             }
         }
 
+        // NEW: batch fetch — board load ke liye N+1 se bachne ke liye
+        public async Task<Dictionary<int, List<LabelResponse>>> GetByCardIdsAsync(IEnumerable<int> cardIds)
+        {
+            var idList = cardIds.Distinct().ToList();
+            if (idList.Count == 0) return new Dictionary<int, List<LabelResponse>>();
+
+            try
+            {
+                var csv = string.Join(",", idList);
+
+                var flatLabels = await _db.ExecuteReaderListAsync(
+                    "dbo.SP_GetLabelsByCardIds",
+                    cmd => cmd.Parameters.AddWithValue("@CardIDs", csv),
+                    MapLabel) ?? new List<LabelResponse>();   // NEW
+
+                return flatLabels
+                    .GroupBy(l => l.CardID)
+                    .ToDictionary(g => g.Key, g => g.ToList());
+            }
+            catch (Exception ex)
+            {
+                _logHelper.LogError($"{nameof(LabelRepository)}.{nameof(GetByCardIdsAsync)}", ex);
+                throw;
+            }
+        }
         public async Task<LabelResponse> CreateLabelAsync(CreateLabelRequest request)
         {
             try
@@ -49,6 +75,8 @@ namespace AvecADeskApi.Repositories.Label
 
                 if (created == null)
                     throw new InvalidOperationException("Failed to create label.");
+
+                await SyncCardColorAsync(request.CardID); // NEW: card.Color ko sync karo
 
                 return created;
             }
@@ -76,7 +104,6 @@ namespace AvecADeskApi.Repositories.Label
                 throw;
             }
         }
-
         public async Task SyncCardColorAsync(int cardId)
         {
             try

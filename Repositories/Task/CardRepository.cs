@@ -11,11 +11,12 @@ namespace AvecADeskApi.Repositories.TaskRepo
     {
         private readonly SqlDbHelper _db;
         private readonly LogHelper _logHelper;
-
-        public CardRepository(SqlDbHelper db, LogHelper logHelper)
+        private readonly ILabelRepository _labelRepo;
+        public CardRepository(SqlDbHelper db, LogHelper logHelper, ILabelRepository labelRepo)
         {
             _db = db;
             _logHelper = logHelper;
+            _labelRepo = labelRepo;
         }
 
         public async Task<List<BoardColumnResponse>> GetBoardCardsAsync(
@@ -34,7 +35,18 @@ namespace AvecADeskApi.Repositories.TaskRepo
                     },
                     MapCard);
 
-               
+                // NEW: saare cards ke labels ek hi batch call me
+                var cardIds = flatCards.Select(c => c.CardID).ToList();
+                var labelsByCard = await _labelRepo.GetByCardIdsAsync(cardIds);
+
+                foreach (var card in flatCards)
+                {
+                    if (labelsByCard.TryGetValue(card.CardID, out var cardLabels))
+                    {
+                        card.Labels = cardLabels;
+                    }
+                }
+
                 var columns = flatCards
                     .GroupBy(c => new { c.CardStatusID, c.StatusName })
                     .Select(g => new BoardColumnResponse
