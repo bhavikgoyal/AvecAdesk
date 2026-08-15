@@ -12,6 +12,9 @@ namespace AvecADeskApi.DTOs.Card
         public int? Position { get; set; }
         public string? Color { get; set; }
         public DateTime? DueDate { get; set; }
+        public DateTime? StartDate { get; set; }             
+        public string? RecurringRule { get; set; }           
+        public int? ReminderOffsetMinutes { get; set; }
         public int? CreatedUserID { get; set; }
         public string? CreatedUserName { get; set; }
         public int? AssignedUserID { get; set; }
@@ -27,9 +30,10 @@ namespace AvecADeskApi.DTOs.Card
         // public string? TrelloID { get; set; }
         public int ChecklistTotal { get; set; }
         public int ChecklistCompleted { get; set; }
+        public List<AvecADeskApi.DTOs.Label.LabelResponse> Labels { get; set; } = new();
     }
 
-    
+
     public class BoardColumnResponse
     {
         public int CardStatusID { get; set; }
@@ -45,6 +49,9 @@ namespace AvecADeskApi.DTOs.Card
         public string? Description { get; set; }
         public string? Color { get; set; }
         public DateTime? DueDate { get; set; }
+        public DateTime? StartDate { get; set; }              
+        public string? RecurringRule { get; set; }             
+        public int? ReminderOffsetMinutes { get; set; }
         public int? AssignedUserID { get; set; }
         public int CardStatusID { get; set; }
         public int? CPID { get; set; }
@@ -58,6 +65,9 @@ namespace AvecADeskApi.DTOs.Card
         public string? Description { get; set; }
         public string? Color { get; set; }
         public DateTime? DueDate { get; set; }
+        public DateTime? StartDate { get; set; }              
+        public string? RecurringRule { get; set; }            
+        public int? ReminderOffsetMinutes { get; set; }
         public int? AssignedUserID { get; set; }
         public int? CardStatusID { get; set; }
         public int? CPID { get; set; }
