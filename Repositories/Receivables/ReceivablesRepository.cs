@@ -124,6 +124,7 @@ public class ReceivablesRepository : IReceivablesRepository
         AmountDue = r.GetDecimal(r.GetOrdinal("AmountDue")),
         AmountPaid = r.GetDecimal(r.GetOrdinal("AmountPaid")),
         BalanceDue = r.GetDecimal(r.GetOrdinal("BalanceDue")),
+        InvoiceAmount = r.GetDecimal(r.GetOrdinal("InvoiceAmount")),
         Status = r.GetString(r.GetOrdinal("Status")),
         Notes = r.IsDBNull(r.GetOrdinal("Notes")) ? null : r.GetString(r.GetOrdinal("Notes"))
     };
@@ -141,6 +142,7 @@ public class ReceivablesRepository : IReceivablesRepository
         AmountDue = r.GetDecimal(r.GetOrdinal("AmountDue")),
         AmountPaid = r.GetDecimal(r.GetOrdinal("AmountPaid")),
         BalanceDue = r.GetDecimal(r.GetOrdinal("BalanceDue")),
+        InvoiceAmount = r.GetDecimal(r.GetOrdinal("InvoiceAmount")),
         Status = r.GetString(r.GetOrdinal("Status")),
         Notes = r.IsDBNull(r.GetOrdinal("Notes")) ? null : r.GetString(r.GetOrdinal("Notes"))
     };
