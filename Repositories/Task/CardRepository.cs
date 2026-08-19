@@ -68,6 +68,52 @@ namespace AvecADeskApi.Repositories.TaskRepo
             }
         }
 
+        public async Task<List<BoardColumnResponse>> GetMyAssignedBoardCardsAsync(
+            int assignedUserId, string? searchText, DateTime? fromDate, DateTime? toDate)
+        {
+            try
+            {
+                var flatCards = await _db.ExecuteReaderListAsync(
+                    "dbo.SP_GetMyAssignedBoardCards",
+                    cmd =>
+                    {
+                        cmd.Parameters.AddWithValue("@AssignedUserID", assignedUserId);
+                        cmd.Parameters.AddWithValue("@SearchText", (object?)searchText ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@FromDate", (object?)fromDate ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@ToDate", (object?)toDate ?? DBNull.Value);
+                    },
+                    MapCard);
+
+                var cardIds = flatCards.Select(c => c.CardID).ToList();
+                var labelsByCard = await _labelRepo.GetByCardIdsAsync(cardIds);
+
+                foreach (var card in flatCards)
+                {
+                    if (labelsByCard.TryGetValue(card.CardID, out var cardLabels))
+                    {
+                        card.Labels = cardLabels;
+                    }
+                }
+
+                return flatCards
+                    .GroupBy(c => new { c.CardStatusID, c.StatusName })
+                    .Select(g => new BoardColumnResponse
+                    {
+                        CardStatusID = g.Key.CardStatusID ?? 0,
+                        StatusName = g.Key.StatusName ?? "Unknown",
+                        Count = g.Count(),
+                        Cards = g.ToList()
+                    })
+                    .OrderBy(c => c.CardStatusID)
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                _logHelper.LogError($"{nameof(CardRepository)}.{nameof(GetMyAssignedBoardCardsAsync)}", ex);
+                throw;
+            }
+        }
+
         public async Task<int> CreateCardAsync(CreateCardRequest request, int createdUserId)
         {
             try

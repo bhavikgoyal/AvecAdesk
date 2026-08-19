@@ -1,6 +1,7 @@
 using AvecADeskApi.Interfaces;
 using AvecADeskApi.LOG;
 using AvecADeskApi.Model.Reminder;
+using AvecADeskApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,11 +13,16 @@ namespace AvecADeskApi.Controllers;
 public class RemindersController : ControllerBase
 {
     private readonly IReminderRepository _reminderRepository;
+    private readonly AccountingPaymentReminderService _accountingPaymentReminderService;
     private readonly LogHelper _logHelper;
 
-    public RemindersController(IReminderRepository reminderRepository, LogHelper logHelper)
+    public RemindersController(
+        IReminderRepository reminderRepository,
+        AccountingPaymentReminderService accountingPaymentReminderService,
+        LogHelper logHelper)
     {
         _reminderRepository = reminderRepository;
+        _accountingPaymentReminderService = accountingPaymentReminderService;
         _logHelper = logHelper;
     }
 
@@ -84,6 +90,36 @@ public class RemindersController : ControllerBase
         {
             _logHelper.LogError(nameof(GetReminderStats), ex);
             return StatusCode(500, "An error occurred while fetching reminder stats.");
+        }
+    }
+
+    [HttpGet("accounting-payment-tasks/preview")]
+    public async Task<IActionResult> PreviewAccountingPaymentTasks([FromQuery] int? daysBefore = null)
+    {
+        try
+        {
+            var result = await _accountingPaymentReminderService.PreviewAsync(daysBefore);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(PreviewAccountingPaymentTasks), ex);
+            return StatusCode(500, "An error occurred while previewing accounting payment reminder tasks.");
+        }
+    }
+
+    [HttpPost("accounting-payment-tasks/run")]
+    public async Task<IActionResult> RunAccountingPaymentTasks([FromQuery] int? daysBefore = null)
+    {
+        try
+        {
+            var result = await _accountingPaymentReminderService.RunAsync(daysBefore);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(RunAccountingPaymentTasks), ex);
+            return StatusCode(500, "An error occurred while creating accounting payment reminder tasks.");
         }
     }
 }

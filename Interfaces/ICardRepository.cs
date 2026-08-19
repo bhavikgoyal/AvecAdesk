@@ -7,6 +7,9 @@ namespace AvecADeskApi.Interfaces
         Task<List<BoardColumnResponse>> GetBoardCardsAsync(
             string? searchText, int? assignedUserId, DateTime? fromDate, DateTime? toDate);
 
+        Task<List<BoardColumnResponse>> GetMyAssignedBoardCardsAsync(
+            int assignedUserId, string? searchText, DateTime? fromDate, DateTime? toDate);
+
         Task<int> CreateCardAsync(CreateCardRequest request, int createdUserId);
 
         Task UpdateCardAsync(UpdateCardRequest request);
