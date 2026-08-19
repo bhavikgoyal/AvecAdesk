@@ -139,5 +139,19 @@ public class ReceivablesController : ControllerBase
             return StatusCode(500, "An error occurred while fetching received invoices.");
         }
     }
-    
+    [HttpGet("settled-statuses")]
+    public async Task<IActionResult> GetSettledStatuses()
+    {
+        try
+        {
+            var statuses = await _receivablesRepository.GetSettledStatusesAsync();
+            return Ok(statuses);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(GetSettledStatuses), ex);
+            return StatusCode(500, "An error occurred while fetching settled statuses.");
+        }
+    }
+
 }

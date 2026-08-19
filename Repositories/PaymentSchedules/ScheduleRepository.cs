@@ -483,7 +483,7 @@ public class ScheduleRepository : IScheduleRepository
                     var commaIndex = img.IndexOf(",");
                     if (img.StartsWith("data:") && commaIndex > 0)
                     {
-                        var meta = img.Substring(5, commaIndex - 5); 
+                        var meta = img.Substring(5, commaIndex - 5);
                         if (meta.Contains("image/png")) ext = ".png";
                         else if (meta.Contains("image/jpeg") || meta.Contains("image/jpg")) ext = ".jpg";
                         else if (meta.Contains("image/gif")) ext = ".gif";
@@ -546,6 +546,95 @@ public class ScheduleRepository : IScheduleRepository
                 $"{nameof(ScheduleRepository)}.{nameof(UpdateStudentPaymentScheduleAsync)}",
                 ex);
 
+            throw;
+        }
+    }
+    public async Task<string> SaveInstallmentDocumentAsync(int studentPaymentInstallmentId, string fileBase64, string fileName)
+    {
+        try
+        {
+            var img = fileBase64;
+            var ext = Path.GetExtension(fileName);
+            if (string.IsNullOrWhiteSpace(ext)) ext = ".bin";
+
+            var base64 = img;
+            var commaIndex = img.IndexOf(",", StringComparison.Ordinal);
+            if (img.StartsWith("data:") && commaIndex > 0)
+            {
+                var meta = img.Substring(5, commaIndex - 5);
+                if (meta.Contains("image/png")) ext = ".png";
+                else if (meta.Contains("image/jpeg") || meta.Contains("image/jpg")) ext = ".jpg";
+                else if (meta.Contains("application/pdf")) ext = ".pdf";
+                else if (meta.Contains("msword") || meta.Contains("wordprocessingml")) ext = ".docx";
+
+                base64 = img.Substring(commaIndex + 1);
+            }
+
+            var bytes = Convert.FromBase64String(base64);
+
+            var docsFolder = Path.Combine(_env.WebRootPath ?? Directory.GetCurrentDirectory(), "StudentInstallmentDocuments");
+            Directory.CreateDirectory(docsFolder);
+
+            var storedFileName = $"{studentPaymentInstallmentId}_{DateTime.UtcNow.Ticks}{ext}";
+            var fullPath = Path.Combine(docsFolder, storedFileName);
+            await File.WriteAllBytesAsync(fullPath, bytes);
+
+            var relativeUrl = ("/" + Path.Combine("StudentInstallmentDocuments", storedFileName)).Replace('\\', '/');
+
+            await _db.ExecuteNonQueryAsync("sp_UpdateInstallmentImage", cmd =>
+            {
+                cmd.Parameters.AddWithValue("@StudentPaymentInstallmentId", studentPaymentInstallmentId);
+                cmd.Parameters.AddWithValue("@InstallmentImage", relativeUrl);
+            });
+
+            return relativeUrl;
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(ScheduleRepository)}.{nameof(SaveInstallmentDocumentAsync)}", ex);
+            throw;
+        }
+    }
+
+    public async Task<InstallmentConfirmationInfo?> GetInstallmentConfirmationInfoAsync(int studentPaymentInstallmentId)
+    {
+        try
+        {
+            return await _db.ExecuteReaderSingleAsync(
+                "sp_GetInstallmentConfirmationInfo",
+                cmd => cmd.Parameters.AddWithValue("@StudentPaymentInstallmentId", studentPaymentInstallmentId),
+                r => new InstallmentConfirmationInfo
+                {
+                    StudentPaymentInstallmentId = r.GetInt32(r.GetOrdinal("StudentPaymentInstallmentId")),
+                    InstallmentNo = r.GetInt32(r.GetOrdinal("InstallmentNo")),
+                    DueDate = r.GetDateTime(r.GetOrdinal("DueDate")),
+                    FeesAmount = r.GetDecimal(r.GetOrdinal("FeesAmount")),
+                    InstallmentImage = r.IsDBNull(r.GetOrdinal("InstallmentImage")) ? null : r.GetString(r.GetOrdinal("InstallmentImage")),
+                    FullName = r["FullName"]?.ToString() ?? string.Empty,
+                    Email = r.IsDBNull(r.GetOrdinal("Email")) ? null : r.GetString(r.GetOrdinal("Email")),
+                    CourseName = r.IsDBNull(r.GetOrdinal("CourseName")) ? null : r.GetString(r.GetOrdinal("CourseName")),
+                });
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(ScheduleRepository)}.{nameof(GetInstallmentConfirmationInfoAsync)}", ex);
+            throw;
+        }
+    }
+
+    public async Task<bool> ConfirmInstallmentByStudentAsync(int studentPaymentInstallmentId)
+    {
+        try
+        {
+            var result = await _db.ExecuteScalarAsync(
+                "sp_ConfirmInstallmentByStudent",
+                cmd => cmd.Parameters.AddWithValue("@StudentPaymentInstallmentId", studentPaymentInstallmentId));
+
+            return result != null && Convert.ToInt32(result) > 0;
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(ScheduleRepository)}.{nameof(ConfirmInstallmentByStudentAsync)}", ex);
             throw;
         }
     }
