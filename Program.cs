@@ -181,6 +181,7 @@ builder.Services.AddScoped<IUserRepository, UserPasswordRepository>();
 builder.Services.AddScoped<IVendorStudentRepository, VendorStudentRepository>();
 builder.Services.AddScoped<ICardMemberRepository, CardMemberRepository>();
 builder.Services.AddSingleton<IPasswordResetTokenStore, InMemoryPasswordResetTokenStore>();
+builder.Services.AddScoped<InstallmentConfirmationService>();
 builder.Services.AddScoped<JwtTokenGenerator>();
 
 

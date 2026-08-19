@@ -224,5 +224,20 @@ public class ReceivablesRepository : IReceivablesRepository
         Status = r.GetString(r.GetOrdinal("Status")),
         CreatedAt = r.GetDateTime(r.GetOrdinal("CreatedAt"))
     };
+    public async Task<List<string>> GetSettledStatusesAsync()
+    {
+        try
+        {
+            return await _db.ExecuteReaderListAsync(
+                "sp_GetSettledPaymentStatuses",
+                _ => { },
+                r => r.GetString(r.GetOrdinal("Status")));
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(ReceivablesRepository)}.{nameof(GetSettledStatusesAsync)}", ex);
+            throw;
+        }
+    }
 
 }
