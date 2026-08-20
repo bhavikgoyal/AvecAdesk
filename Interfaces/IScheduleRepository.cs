@@ -17,7 +17,9 @@ public interface IScheduleRepository
     Task<UpdateStudentPaymentScheduleResponse> UpdateStudentPaymentScheduleAsync(  UpdateStudentPaymentScheduleRequest request);
 
     Task<List<Model.PaymentSchedule.StudentCourseCompleteResponse>> GetStudentCourseCompleteListAsync();
-
+    Task<string> SaveInstallmentDocumentAsync(int studentPaymentInstallmentId, string fileBase64, string fileName);
+    Task<InstallmentConfirmationInfo?> GetInstallmentConfirmationInfoAsync(int studentPaymentInstallmentId);
+    Task<bool> ConfirmInstallmentByStudentAsync(int studentPaymentInstallmentId);
 
     //Task<PaymentScheduleSummaryResponse> GetPaymentSummaryAsync();
     //Task<PaymentScheduleBulkStatusResult> BulkUpdatePaymentScheduleStatusAsync(PaymentScheduleBulkStatusRequest request);
