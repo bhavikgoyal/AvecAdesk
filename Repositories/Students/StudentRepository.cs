@@ -163,9 +163,13 @@ public class StudentRepository : IStudentRepository
             EnrollmentNumber = reader.IsDBNull(reader.GetOrdinal("EnrollmentNumber")) ? null : reader.GetString(reader.GetOrdinal("EnrollmentNumber")),
             EnrolmentStatus = reader.GetString(reader.GetOrdinal("EnrolmentStatus")),
             AIHFormSubmittedAt = reader.IsDBNull(reader.GetOrdinal("AIHFormSubmittedAt")) ? null : reader.GetDateTime(reader.GetOrdinal("AIHFormSubmittedAt")),
+            //IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
+            // CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+            Assignment = ColumnExists(reader, "Assignment") && !reader.IsDBNull(reader.GetOrdinal("Assignment"))
+            ? reader.GetString(reader.GetOrdinal("Assignment"))
+            : null,
             IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
             CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
-            Assignment = reader.IsDBNull(reader.GetOrdinal("Assignment")) ? null : reader.GetString(reader.GetOrdinal("Assignment")),
 
 
         };
