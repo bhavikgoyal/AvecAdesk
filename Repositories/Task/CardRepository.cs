@@ -135,7 +135,15 @@ namespace AvecADeskApi.Repositories.TaskRepo
                     cmd.Parameters.Add(newCardIdParam);
                 });
 
-                return (int)newCardIdParam.Value;
+                var newCardId = (int)newCardIdParam.Value;
+                var mappedUserId = request.AssignedUserID ?? createdUserId;
+                await _db.ExecuteNonQueryAsync("dbo.SP_InsertCardUserMapping", cmd =>
+                {
+                    cmd.Parameters.AddWithValue("@CardId", newCardId);
+                    cmd.Parameters.AddWithValue("@UserId", mappedUserId);
+                });
+
+                return newCardId;
             }
             catch (Exception ex)
             {

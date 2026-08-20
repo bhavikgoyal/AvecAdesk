@@ -39,6 +39,34 @@ namespace AvecADeskApi.Repositories
             }
         }
 
+        public async Task<CardStatusResponse> CreateCardStatusAsync(string statusName)
+        {
+            try
+            {
+                var newIdParam = new SqlParameter("@NewCardStatusID", SqlDbType.Int)
+                {
+                    Direction = ParameterDirection.Output
+                };
+
+                await _db.ExecuteNonQueryAsync("dbo.SP_InsertCardStatus", cmd =>
+                {
+                    cmd.Parameters.AddWithValue("@StatusName", statusName.Trim());
+                    cmd.Parameters.Add(newIdParam);
+                });
+
+                return new CardStatusResponse
+                {
+                    CardStatusID = (int)newIdParam.Value,
+                    StatusName = statusName.Trim()
+                };
+            }
+            catch (Exception ex)
+            {
+                _logHelper.LogError($"{nameof(CardStatusRepository)}.{nameof(CreateCardStatusAsync)}", ex);
+                throw;
+            }
+        }
+
        
         private static CardStatusResponse MapCardStatus(SqlDataReader reader)
         {
