@@ -20,6 +20,7 @@ public class StudentPaymentInstallmentUpdateRequest
     public decimal PaidAmount { get; set; }
     public decimal BalanceAmount { get; set; }
     public string PaymentStatus { get; set; }
+    public DateTime? PaidDate { get; set; }
     public string? InstallmentImage { get; set; }
 }
 public class StudentCommissionDetailUpdateRequest
