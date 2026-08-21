@@ -53,12 +53,27 @@ public class InstallmentConfirmationService
         };
 
         var subject = $"Payment Confirmation — Installment #{info.InstallmentNo}";
+
+       
+        string dateLabel;
+        string dateValue;
+        if (info.PaidDate.HasValue)
+        {
+            dateLabel = "Paid Date";
+            dateValue = info.PaidDate.Value.ToString("dd-MM-yyyy");
+        }
+        else
+        {
+            dateLabel = "Next Paid Date";
+            dateValue = info.DueDate.ToString("dd-MM-yyyy");
+        }
+
         var html = $"""
             <p>Dear {info.FullName},</p>
             <p>Please find attached the confirmation document for your installment payment.</p>
             <p><b>Course:</b> {info.CourseName}<br/>
             <b>Installment #:</b> {info.InstallmentNo}<br/>
-            <b>Due Date:</b> {info.DueDate:dd-MM-yyyy}<br/>
+            <b>{dateLabel}:</b> {dateValue}<br/>
             <b>Amount:</b> {info.FeesAmount:0.00}</p>
             <p>Regards,<br/>AVEC Global</p>
             """;
