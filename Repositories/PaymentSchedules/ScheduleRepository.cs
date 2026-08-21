@@ -608,6 +608,7 @@ public class ScheduleRepository : IScheduleRepository
                     StudentPaymentInstallmentId = r.GetInt32(r.GetOrdinal("StudentPaymentInstallmentId")),
                     InstallmentNo = r.GetInt32(r.GetOrdinal("InstallmentNo")),
                     DueDate = r.GetDateTime(r.GetOrdinal("DueDate")),
+                    PaidDate = r.IsDBNull(r.GetOrdinal("PaidDate")) ? null : r.GetDateTime(r.GetOrdinal("PaidDate")),
                     FeesAmount = r.GetDecimal(r.GetOrdinal("FeesAmount")),
                     InstallmentImage = r.IsDBNull(r.GetOrdinal("InstallmentImage")) ? null : r.GetString(r.GetOrdinal("InstallmentImage")),
                     FullName = r["FullName"]?.ToString() ?? string.Empty,

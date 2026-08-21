@@ -35,4 +35,5 @@ public class InstallmentConfirmationInfo
     public string FullName { get; set; } = string.Empty;
     public string? Email { get; set; }
     public string? CourseName { get; set; }
+    public DateTime? PaidDate { get; set; }
 }
