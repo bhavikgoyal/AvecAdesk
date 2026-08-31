@@ -81,7 +81,7 @@ public class SchedulesController : ControllerBase
             return StatusCode(500, "An error occurred while creating the payment schedule.");
         }
     }
-    
+
     [HttpPost("CreateStudentPaymentInstallment")]
     public async Task<IActionResult> CreateStudentPaymentInstallment(StudentPaymentInstallmentCreateRequest request)
     {
@@ -206,12 +206,12 @@ public class SchedulesController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-           
+
             return BadRequest(ex.Message);
         }
         catch (ArgumentException ex)
         {
-            
+
             return BadRequest(ex.Message);
         }
         catch (Exception ex)
@@ -266,7 +266,7 @@ public class SchedulesController : ControllerBase
             });
         }
     }
-   
+
     [HttpPost("UploadInstallmentDocument")]
     public async Task<IActionResult> UploadInstallmentDocument([FromBody] UploadInstallmentDocumentRequest request)
     {
@@ -300,6 +300,43 @@ public class SchedulesController : ControllerBase
         {
             _logHelper.LogError(nameof(SendInstallmentConfirmationEmail), ex);
             return StatusCode(500, "An error occurred while sending the confirmation email.");
+        }
+    }
+
+    [HttpPost("ConfirmInstallmentByStudent")]
+    public async Task<IActionResult> ConfirmInstallmentByStudent(
+    [FromBody] SendInstallmentConfirmationEmailRequest request)
+    {
+        try
+        {
+            var confirmed = await _scheduleRepository
+                .ConfirmInstallmentByStudentAsync(
+                    request.StudentPaymentInstallmentId);
+
+            if (!confirmed)
+            {
+                return BadRequest(new
+                {
+                    Success = false,
+                    Message = "Failed to confirm installment by student."
+                });
+            }
+
+            return Ok(new
+            {
+                Success = true,
+                Message = "Installment confirmed by student successfully."
+            });
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(
+                nameof(ConfirmInstallmentByStudent),
+                ex);
+
+            return StatusCode(
+                500,
+                "An error occurred while confirming installment by student.");
         }
     }
 }

@@ -6,6 +6,7 @@ public class InvoiceResponse
     public string InvoiceNumber { get; set; } = string.Empty;
     public int InstituteId { get; set; }
     public string InstituteName { get; set; } = string.Empty;
+    public string? InstituteAddress { get; set; }
     public decimal TotalAmount { get; set; }
     public string Status { get; set; } = string.Empty;
     public string? PdfPath { get; set; }
