@@ -164,7 +164,7 @@ public class ScheduleRepository : IScheduleRepository
                 cmd.Parameters.AddWithValue("@PaidAmount", request.PaidAmount);
                 cmd.Parameters.AddWithValue("@BalanceAmount", request.BalanceAmount);
                 cmd.Parameters.AddWithValue("@PaymentStatus", request.PaymentStatus);
-
+                cmd.Parameters.AddWithValue("@ParentInstallmentId", (object?)request.ParentInstallmentId ?? DBNull.Value);
                 cmd.Parameters.Add(installmentIdParam);
             });
 

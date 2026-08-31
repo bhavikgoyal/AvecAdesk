@@ -13,4 +13,5 @@ public class InvoiceLineItemResponse
     public string? StudentName { get; set; }
     public string? Description { get; set; }
     public decimal Amount { get; set; }
+    public string? CricosCode { get; set; }
 }

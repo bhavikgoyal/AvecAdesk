@@ -22,9 +22,13 @@ public class InstallmentConfirmationService
         _logHelper = logHelper;
     }
 
-    public async Task<(bool Success, string Message)> SendConfirmationEmailAsync(int studentPaymentInstallmentId, CancellationToken cancellationToken = default)
+    public async Task<(bool Success, string Message)> SendConfirmationEmailAsync(
+        int studentPaymentInstallmentId,
+        CancellationToken cancellationToken = default)
     {
-        var info = await _scheduleRepository.GetInstallmentConfirmationInfoAsync(studentPaymentInstallmentId);
+        var info = await _scheduleRepository
+            .GetInstallmentConfirmationInfoAsync(studentPaymentInstallmentId);
+
         if (info == null)
             return (false, "Installment not found.");
 
@@ -34,29 +38,41 @@ public class InstallmentConfirmationService
         if (string.IsNullOrWhiteSpace(info.Email))
             return (false, "Student does not have an email address on file.");
 
-        var webRoot = _env.WebRootPath ?? Path.Combine(_env.ContentRootPath, "wwwroot");
+        var webRoot = _env.WebRootPath
+            ?? Path.Combine(_env.ContentRootPath, "wwwroot");
+
         var relativePath = info.InstallmentImage.TrimStart('/');
-        var fullPath = Path.Combine(webRoot, relativePath.Replace('/', Path.DirectorySeparatorChar));
+
+        var fullPath = Path.Combine(
+            webRoot,
+            relativePath.Replace('/', Path.DirectorySeparatorChar));
 
         if (!File.Exists(fullPath))
             return (false, "Uploaded document could not be found on the server.");
 
-        var fileBytes = await File.ReadAllBytesAsync(fullPath, cancellationToken);
+        var fileBytes = await File.ReadAllBytesAsync(
+            fullPath,
+            cancellationToken);
+
         var fileName = Path.GetFileName(fullPath);
-        var contentType = Path.GetExtension(fullPath).ToLowerInvariant() switch
+
+        var contentType = Path.GetExtension(fullPath)
+            .ToLowerInvariant() switch
         {
             ".pdf" => "application/pdf",
             ".png" => "image/png",
             ".jpg" or ".jpeg" => "image/jpeg",
-            ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ".docx" =>
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             _ => "application/octet-stream",
         };
 
-        var subject = $"Payment Confirmation — Installment #{info.InstallmentNo}";
+        var subject =
+            $"Payment Confirmation — Installment #{info.InstallmentNo}";
 
-       
         string dateLabel;
         string dateValue;
+
         if (info.PaidDate.HasValue)
         {
             dateLabel = "Paid Date";
@@ -81,17 +97,24 @@ public class InstallmentConfirmationService
         try
         {
             await _emailSender.SendWithAttachmentAsync(
-                info.Email, subject, html, fileBytes, fileName, contentType, cancellationToken);
+                info.Email,
+                subject,
+                html,
+                fileBytes,
+                fileName,
+                contentType,
+                cancellationToken);
         }
         catch (Exception ex)
         {
-            _logHelper.LogError($"{nameof(InstallmentConfirmationService)}.{nameof(SendConfirmationEmailAsync)}", ex);
+            _logHelper.LogError(
+                $"{nameof(InstallmentConfirmationService)}.{nameof(SendConfirmationEmailAsync)}",
+                ex);
+
             return (false, "Failed to send email. Please try again.");
         }
 
-        var confirmed = await _scheduleRepository.ConfirmInstallmentByStudentAsync(studentPaymentInstallmentId);
-        if (!confirmed)
-            return (false, "Email sent, but failed to update installment status.");
+       
 
         return (true, "Confirmation email sent successfully.");
     }
