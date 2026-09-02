@@ -329,7 +329,31 @@ public class InvoicesController : ControllerBase
             return StatusCode(500, "An error occurred while downloading invoice.");
         }
     }
+   
+    [HttpPut("{invoiceId:int}/line-items")]
+    public async Task<IActionResult> UpdateInvoiceLineItemAmounts(
+        int invoiceId,
+        [FromBody] List<InvoiceLineItemAmountUpdateRequest> request)
+    {
+        try
+        {
+            if (request == null || request.Count == 0)
+                return BadRequest("At least one line item is required.");
 
+            var (success, message, invoice) =
+                await _invoiceRepository.UpdateInvoiceLineItemAmountsAsync(invoiceId, request);
+
+            if (!success)
+                return BadRequest(message);
+
+            return Ok(invoice);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(UpdateInvoiceLineItemAmounts), ex);
+            return StatusCode(500, "An error occurred while updating invoice line items.");
+        }
+    }
     private int? GetCurrentUserId()
     {
         var claim = User.FindFirst(ClaimTypes.NameIdentifier) ?? User.FindFirst("sub");

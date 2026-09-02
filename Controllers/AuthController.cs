@@ -45,8 +45,8 @@ namespace AvecADeskApi.Controllers
                 if (user == null)
                     return Unauthorized("Invalid credentials.");
 
-                var token = _tokenGenerator.GenerateToken(user.UserId, user.UserName);
-
+                //var token = _tokenGenerator.GenerateToken(user.UserId, user.UserName);
+                var token = _tokenGenerator.GenerateToken(user.UserId, user.UserName, role: user.UserRoleName);
                 return Ok(new
                 {
                     Token = token,

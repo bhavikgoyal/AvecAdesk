@@ -14,20 +14,23 @@ namespace AvecADeskApi.Helper
             _config = config;
         }
 
-        public string GenerateToken(int userId, string userName, int? vendorId = null)
+        public string GenerateToken(int userId, string userName, int? vendorId = null, string? role = null)
         {
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
                 new Claim(ClaimTypes.Name, userName)
             };
-
+         
             if (vendorId is > 0)
             {
                 claims.Add(new Claim("vendorId", vendorId.Value.ToString()));
                 claims.Add(new Claim("VendorId", vendorId.Value.ToString()));
             }
-
+            if (!string.IsNullOrWhiteSpace(role))
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
