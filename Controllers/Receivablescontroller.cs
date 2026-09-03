@@ -139,5 +139,25 @@ public class ReceivablesController : ControllerBase
             return StatusCode(500, "An error occurred while fetching received invoices.");
         }
     }
-    
+
+    // GET api/receivables/anticipated-receivables
+    // 24-month college grid source (Paid / Overdue / Anticipated)
+    [HttpGet("anticipated-receivables")]
+    public async Task<IActionResult> GetAnticipatedReceivablesGrid(
+        [FromQuery] DateTime? fromDate,
+        [FromQuery] DateTime? toDate,
+        [FromQuery] int? instituteId,
+        [FromQuery] int? studentId)
+    {
+        try
+        {
+            var filter = BuildFilter(fromDate, toDate, instituteId, studentId);
+            return Ok(await _receivablesRepository.GetAnticipatedReceivablesGridAsync(filter));
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(GetAnticipatedReceivablesGrid), ex);
+            return StatusCode(500, "An error occurred while fetching anticipated receivables grid.");
+        }
+    }
 }

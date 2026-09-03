@@ -213,6 +213,20 @@ public class ReceivablesRepository : IReceivablesRepository
         }
     }
 
+    public async Task<List<AnticipatedReceivablesGridRow>> GetAnticipatedReceivablesGridAsync(ReceivablesFilter filter)
+    {
+        try
+        {
+            return await _db.ExecuteReaderListAsync("sp_GetAnticipatedReceivablesGrid",
+                cmd => AddFilterParams(cmd, filter), MapAnticipatedReceivablesGrid);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(ReceivablesRepository)}.{nameof(GetAnticipatedReceivablesGridAsync)}", ex);
+            throw;
+        }
+    }
+
     private static ReceivedInvoiceResponse MapReceivedInvoice(SqlDataReader r) => new()
     {
         InvoiceId = r.GetInt32(r.GetOrdinal("InvoiceId")),
@@ -221,6 +235,24 @@ public class ReceivablesRepository : IReceivablesRepository
         TotalAmount = r.GetDecimal(r.GetOrdinal("TotalAmount")),
         Status = r.GetString(r.GetOrdinal("Status")),
         CreatedAt = r.GetDateTime(r.GetOrdinal("CreatedAt"))
+    };
+
+    private static AnticipatedReceivablesGridRow MapAnticipatedReceivablesGrid(SqlDataReader r) => new()
+    {
+        ScheduleId = r.GetInt32(r.GetOrdinal("ScheduleId")),
+        StudentId = r.GetInt32(r.GetOrdinal("StudentId")),
+        StudentName = r.GetString(r.GetOrdinal("StudentName")),
+        InstituteId = r.IsDBNull(r.GetOrdinal("InstituteId")) ? 0 : r.GetInt32(r.GetOrdinal("InstituteId")),
+        InstituteName = r.IsDBNull(r.GetOrdinal("InstituteName")) ? "Unknown" : r.GetString(r.GetOrdinal("InstituteName")),
+        CollegeName = r.IsDBNull(r.GetOrdinal("CollegeName"))
+            ? (r.IsDBNull(r.GetOrdinal("InstituteName")) ? "Unknown" : r.GetString(r.GetOrdinal("InstituteName")))
+            : r.GetString(r.GetOrdinal("CollegeName")),
+        DueDate = r.GetDateTime(r.GetOrdinal("DueDate")),
+        AmountDue = r.GetDecimal(r.GetOrdinal("AmountDue")),
+        AmountPaid = r.GetDecimal(r.GetOrdinal("AmountPaid")),
+        BalanceDue = r.GetDecimal(r.GetOrdinal("BalanceDue")),
+        Status = r.GetString(r.GetOrdinal("Status")),
+        Notes = r.IsDBNull(r.GetOrdinal("Notes")) ? null : r.GetString(r.GetOrdinal("Notes"))
     };
 
 }

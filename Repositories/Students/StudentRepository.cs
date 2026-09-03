@@ -155,19 +155,21 @@ public class StudentRepository : IStudentRepository
         return new StudentResponse
         {
             StudentId = reader.GetInt32(reader.GetOrdinal("StudentId")),
-            InstituteId = reader.GetInt32(reader.GetOrdinal("InstituteId")),
+            InstituteId = reader.IsDBNull(reader.GetOrdinal("InstituteId"))
+                ? 0
+                : reader.GetInt32(reader.GetOrdinal("InstituteId")),
             CourseId = reader.IsDBNull(reader.GetOrdinal("CourseId")) ? null : reader.GetInt32(reader.GetOrdinal("CourseId")),
-            FullName = reader.GetString(reader.GetOrdinal("FullName")),
-            Email = reader.GetString(reader.GetOrdinal("Email")),
-            Phone = reader.GetString(reader.GetOrdinal("Phone")),
+            FullName = reader.IsDBNull(reader.GetOrdinal("FullName")) ? string.Empty : reader.GetString(reader.GetOrdinal("FullName")),
+            Email = reader.IsDBNull(reader.GetOrdinal("Email")) ? string.Empty : reader.GetString(reader.GetOrdinal("Email")),
+            Phone = reader.IsDBNull(reader.GetOrdinal("Phone")) ? string.Empty : reader.GetString(reader.GetOrdinal("Phone")),
             EnrollmentNumber = reader.IsDBNull(reader.GetOrdinal("EnrollmentNumber")) ? null : reader.GetString(reader.GetOrdinal("EnrollmentNumber")),
-            EnrolmentStatus = reader.GetString(reader.GetOrdinal("EnrolmentStatus")),
+            EnrolmentStatus = reader.IsDBNull(reader.GetOrdinal("EnrolmentStatus")) ? string.Empty : reader.GetString(reader.GetOrdinal("EnrolmentStatus")),
             AIHFormSubmittedAt = reader.IsDBNull(reader.GetOrdinal("AIHFormSubmittedAt")) ? null : reader.GetDateTime(reader.GetOrdinal("AIHFormSubmittedAt")),
-            IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
-            CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
-            Assignment = reader.IsDBNull(reader.GetOrdinal("Assignment")) ? null : reader.GetString(reader.GetOrdinal("Assignment")),
-
-
+            IsActive = !reader.IsDBNull(reader.GetOrdinal("IsActive")) && reader.GetBoolean(reader.GetOrdinal("IsActive")),
+            CreatedAt = reader.IsDBNull(reader.GetOrdinal("CreatedAt")) ? DateTime.MinValue : reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+            Assignment = ColumnExists(reader, "Assignment") && !reader.IsDBNull(reader.GetOrdinal("Assignment"))
+                ? reader.GetString(reader.GetOrdinal("Assignment"))
+                : null,
         };
     }
 
