@@ -182,6 +182,7 @@ namespace AvecADeskApi.Repositories.Members
                     cmd.Parameters.AddWithValue("@UserRoleId", request.UserRoleId);
                     cmd.Parameters.AddWithValue("@CompaniesId", request.CompaniesId);
                     cmd.Parameters.AddWithValue("@IsActive", request.IsActive);
+                    cmd.Parameters.AddWithValue("@Password", string.IsNullOrWhiteSpace(request.Password) ? (object)DBNull.Value : request.Password);
 
                     cmd.Parameters.AddWithValue(
      "@Avatar",

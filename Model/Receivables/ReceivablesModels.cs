@@ -13,6 +13,7 @@ public class AnticipatedReceivableResponse
     public decimal BalanceDue { get; set; }
     public string Status { get; set; } = string.Empty;
     public string? Notes { get; set; }
+    public decimal InvoiceAmount { get; set; }
 }
 
 public class OverdueReceivableResponse
@@ -30,6 +31,7 @@ public class OverdueReceivableResponse
     public decimal BalanceDue { get; set; }
     public string Status { get; set; } = string.Empty;
     public string? Notes { get; set; }
+    public decimal InvoiceAmount { get; set; }
 }
 
 public class ReceivedPaymentResponse

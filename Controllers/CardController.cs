@@ -41,6 +41,33 @@ namespace AvecADeskApi.Controllers
             }
         }
 
+        [HttpGet("my-board")]
+        public async Task<IActionResult> GetMyAssignedBoardCards(
+            [FromQuery] string? searchText,
+            [FromQuery] DateTime? fromDate,
+            [FromQuery] DateTime? toDate)
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                    return Unauthorized("Invalid token");
+
+                var assignedUserId = int.Parse(userIdClaim.Value);
+                var columns = await _repo.GetMyAssignedBoardCardsAsync(
+                    assignedUserId,
+                    searchText,
+                    fromDate,
+                    toDate);
+                return Ok(columns);
+            }
+            catch (Exception ex)
+            {
+                _logHelper.LogError($"{nameof(CardController)}.{nameof(GetMyAssignedBoardCards)}", ex);
+                return StatusCode(500, new { message = "Error loading assigned board", detail = ex.Message });
+            }
+        }
+
         [HttpPost("create")]
         public async Task<IActionResult> CreateCard([FromBody] CreateCardRequest request)
         {

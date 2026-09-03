@@ -270,6 +270,9 @@ public class InvoiceRepository : IInvoiceRepository
                     LineItemId = r.GetInt32(r.GetOrdinal("LineItemId")),
                     InvoiceId = r.GetInt32(r.GetOrdinal("InvoiceId")),
                     StudentId = r.GetInt32(r.GetOrdinal("StudentId")),
+                    CricosCode = HasColumn(r, "CricosCode") && !r.IsDBNull(r.GetOrdinal("CricosCode"))
+                   ? r.GetString(r.GetOrdinal("CricosCode"))
+                   : null,
                     StudentName = HasColumn(r, "StudentName") && !r.IsDBNull(r.GetOrdinal("StudentName"))
                     ? r.GetString(r.GetOrdinal("StudentName"))
                     : null,
@@ -297,6 +300,9 @@ public class InvoiceRepository : IInvoiceRepository
             InstituteName = instituteNameOrdinal >= 0 && !r.IsDBNull(instituteNameOrdinal)
                 ? r.GetString(instituteNameOrdinal)
                 : string.Empty,
+            InstituteAddress = HasColumn(r, "InstituteAddress") && !r.IsDBNull(r.GetOrdinal("InstituteAddress"))
+       ? r.GetString(r.GetOrdinal("InstituteAddress"))
+       : null,
             TotalAmount = r.GetDecimal(r.GetOrdinal("TotalAmount")),
             Status = r.GetString(r.GetOrdinal("Status")),
             PdfPath = r.IsDBNull(r.GetOrdinal("PdfPath")) ? null : r.GetString(r.GetOrdinal("PdfPath")),

@@ -13,6 +13,7 @@ public class StudentPaymentInstallmentCreateRequest
 {
     public int ScheduleId { get; set; }
     public int InstallmentNo { get; set; }
+    public int? ParentInstallmentId { get; set; }
     public DateTime DueDate { get; set; }
     public decimal FeesAmount { get; set; }
     public decimal PaidAmount { get; set; }

@@ -124,10 +124,22 @@ public class ReceivablesRepository : IReceivablesRepository
         AmountDue = r.GetDecimal(r.GetOrdinal("AmountDue")),
         AmountPaid = r.GetDecimal(r.GetOrdinal("AmountPaid")),
         BalanceDue = r.GetDecimal(r.GetOrdinal("BalanceDue")),
+        //InvoiceAmount = r.GetDecimal(r.GetOrdinal("InvoiceAmount")),
+        InvoiceAmount = ColumnExists(r, "InvoiceAmount") && !r.IsDBNull(r.GetOrdinal("InvoiceAmount"))
+        ? r.GetDecimal(r.GetOrdinal("InvoiceAmount"))
+        : r.GetDecimal(r.GetOrdinal("AmountDue")),
         Status = r.GetString(r.GetOrdinal("Status")),
         Notes = r.IsDBNull(r.GetOrdinal("Notes")) ? null : r.GetString(r.GetOrdinal("Notes"))
     };
-
+    private static bool ColumnExists(SqlDataReader reader, string columnName)
+    {
+        for (int i = 0; i < reader.FieldCount; i++)
+        {
+            if (string.Equals(reader.GetName(i), columnName, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+        return false;
+    }
     private static OverdueReceivableResponse MapOverdue(SqlDataReader r) => new()
     {
         ScheduleId = r.GetInt32(r.GetOrdinal("ScheduleId")),
@@ -141,6 +153,7 @@ public class ReceivablesRepository : IReceivablesRepository
         AmountDue = r.GetDecimal(r.GetOrdinal("AmountDue")),
         AmountPaid = r.GetDecimal(r.GetOrdinal("AmountPaid")),
         BalanceDue = r.GetDecimal(r.GetOrdinal("BalanceDue")),
+        InvoiceAmount = r.GetDecimal(r.GetOrdinal("InvoiceAmount")),
         Status = r.GetString(r.GetOrdinal("Status")),
         Notes = r.IsDBNull(r.GetOrdinal("Notes")) ? null : r.GetString(r.GetOrdinal("Notes"))
     };
@@ -236,6 +249,21 @@ public class ReceivablesRepository : IReceivablesRepository
         Status = r.GetString(r.GetOrdinal("Status")),
         CreatedAt = r.GetDateTime(r.GetOrdinal("CreatedAt"))
     };
+    public async Task<List<string>> GetSettledStatusesAsync()
+    {
+        try
+        {
+            return await _db.ExecuteReaderListAsync(
+                "sp_GetSettledPaymentStatuses",
+                _ => { },
+                r => r.GetString(r.GetOrdinal("Status")));
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(ReceivablesRepository)}.{nameof(GetSettledStatusesAsync)}", ex);
+            throw;
+        }
+    }
 
     private static AnticipatedReceivablesGridRow MapAnticipatedReceivablesGrid(SqlDataReader r) => new()
     {

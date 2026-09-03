@@ -142,7 +142,14 @@ public class InvoicesController : ControllerBase
     {
         try
         {
-            if (!await _invoiceRepository.SubmitInvoiceAsync(invoiceId)) return NotFound("Invoice not found");
+            if (!await _invoiceRepository.SubmitInvoiceAsync(invoiceId))
+            {
+                var existing = await _invoiceRepository.GetInvoiceByIdAsync(invoiceId);
+                if (existing == null)
+                    return NotFound("Invoice not found");
+
+                return BadRequest($"Invoice cannot be submitted from its current status ('{existing.Status}'). Only Draft invoices can be submitted.");
+            }
             return Ok(await _invoiceRepository.GetInvoiceByIdAsync(invoiceId));
         }
         catch (Exception ex) { _logHelper.LogError(nameof(SubmitInvoice), ex); return StatusCode(500, "An error occurred while submitting invoice."); }

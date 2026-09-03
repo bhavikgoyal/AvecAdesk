@@ -13,5 +13,6 @@ namespace AvecADeskApi.Interfaces
         Task<ReceivablesSummaryResponse> GetSummaryAsync(ReceivablesFilter filter);
         Task<List<ReceivedInvoiceResponse>> GetReceivedInvoicesLastMonthAsync();
         Task<List<AnticipatedReceivablesGridRow>> GetAnticipatedReceivablesGridAsync(ReceivablesFilter filter);
+        Task<List<string>> GetSettledStatusesAsync();
     }
 }

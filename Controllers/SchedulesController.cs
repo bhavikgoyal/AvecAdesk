@@ -1,6 +1,7 @@
 using AvecADeskApi.Interfaces;
 using AvecADeskApi.LOG;
 using AvecADeskApi.Model.PaymentSchedule;
+using AvecADeskApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,6 +14,7 @@ public class SchedulesController : ControllerBase
 {
     private readonly IScheduleRepository _scheduleRepository;
     private readonly IStudentRepository _studentRepository;
+    private readonly InstallmentConfirmationService _confirmationService;
     private readonly LogHelper _logHelper;
 
     private static readonly HashSet<string> AllowedStatuses = new(StringComparer.OrdinalIgnoreCase)
@@ -23,10 +25,12 @@ public class SchedulesController : ControllerBase
     public SchedulesController(
         IScheduleRepository scheduleRepository,
         IStudentRepository studentRepository,
+        InstallmentConfirmationService confirmationService,
         LogHelper logHelper)
     {
         _scheduleRepository = scheduleRepository;
         _studentRepository = studentRepository;
+        _confirmationService = confirmationService;
         _logHelper = logHelper;
     }
     //[HttpGet("summary")]
@@ -77,7 +81,7 @@ public class SchedulesController : ControllerBase
             return StatusCode(500, "An error occurred while creating the payment schedule.");
         }
     }
-    
+
     [HttpPost("CreateStudentPaymentInstallment")]
     public async Task<IActionResult> CreateStudentPaymentInstallment(StudentPaymentInstallmentCreateRequest request)
     {
@@ -202,12 +206,12 @@ public class SchedulesController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-           
+
             return BadRequest(ex.Message);
         }
         catch (ArgumentException ex)
         {
-            
+
             return BadRequest(ex.Message);
         }
         catch (Exception ex)
@@ -260,6 +264,79 @@ public class SchedulesController : ControllerBase
                 Success = false,
                 Message = ex.Message
             });
+        }
+    }
+
+    [HttpPost("UploadInstallmentDocument")]
+    public async Task<IActionResult> UploadInstallmentDocument([FromBody] UploadInstallmentDocumentRequest request)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(request.FileBase64))
+                return BadRequest("File is required.");
+
+            var url = await _scheduleRepository.SaveInstallmentDocumentAsync(
+                request.StudentPaymentInstallmentId, request.FileBase64, request.FileName);
+
+            return Ok(new UploadInstallmentDocumentResponse { Success = true, DocumentUrl = url });
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(UploadInstallmentDocument), ex);
+            return StatusCode(500, "An error occurred while uploading the document.");
+        }
+    }
+
+    [HttpPost("SendInstallmentConfirmationEmail")]
+    public async Task<IActionResult> SendInstallmentConfirmationEmail([FromBody] SendInstallmentConfirmationEmailRequest request)
+    {
+        try
+        {
+            var (success, message) = await _confirmationService.SendConfirmationEmailAsync(request.StudentPaymentInstallmentId);
+            if (!success) return BadRequest(message);
+            return Ok(new SendInstallmentConfirmationEmailResponse { Success = true, Message = message });
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(SendInstallmentConfirmationEmail), ex);
+            return StatusCode(500, "An error occurred while sending the confirmation email.");
+        }
+    }
+
+    [HttpPost("ConfirmInstallmentByStudent")]
+    public async Task<IActionResult> ConfirmInstallmentByStudent(
+    [FromBody] SendInstallmentConfirmationEmailRequest request)
+    {
+        try
+        {
+            var confirmed = await _scheduleRepository
+                .ConfirmInstallmentByStudentAsync(
+                    request.StudentPaymentInstallmentId);
+
+            if (!confirmed)
+            {
+                return BadRequest(new
+                {
+                    Success = false,
+                    Message = "Failed to confirm installment by student."
+                });
+            }
+
+            return Ok(new
+            {
+                Success = true,
+                Message = "Installment confirmed by student successfully."
+            });
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(
+                nameof(ConfirmInstallmentByStudent),
+                ex);
+
+            return StatusCode(
+                500,
+                "An error occurred while confirming installment by student.");
         }
     }
 }

@@ -42,5 +42,28 @@ namespace AvecADeskApi.Controllers
                 );
             }
         }
+
+        [HttpPost("create")]
+        public async Task<IActionResult> CreateCardStatus([FromBody] CreateCardStatusRequest request)
+        {
+            if (request == null || string.IsNullOrWhiteSpace(request.StatusName))
+                return BadRequest(new { message = "List name is required." });
+
+            try
+            {
+                var status = await _repo.CreateCardStatusAsync(request.StatusName);
+                return Ok(status);
+            }
+            catch (Exception ex)
+            {
+                _logHelper.LogError($"{nameof(CardStatusController)}.{nameof(CreateCardStatus)}", ex);
+                return StatusCode(500, new { message = "An error occurred while creating the list." });
+            }
+        }
+    }
+
+    public class CreateCardStatusRequest
+    {
+        public string StatusName { get; set; } = string.Empty;
     }
 }

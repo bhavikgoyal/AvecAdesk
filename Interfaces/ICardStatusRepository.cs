@@ -6,5 +6,6 @@ namespace AvecADeskApi.Interfaces
     public interface ICardStatusRepository
     {
         Task<List<CardStatusResponse>> GetCardStatusesAsync();
+        Task<CardStatusResponse> CreateCardStatusAsync(string statusName);
     }
 }

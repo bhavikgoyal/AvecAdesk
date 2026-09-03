@@ -160,4 +160,19 @@ public class ReceivablesController : ControllerBase
             return StatusCode(500, "An error occurred while fetching anticipated receivables grid.");
         }
     }
+
+    // GET api/receivables/settled-statuses
+    [HttpGet("settled-statuses")]
+    public async Task<IActionResult> GetSettledStatuses()
+    {
+        try
+        {
+            return Ok(await _receivablesRepository.GetSettledStatusesAsync());
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(GetSettledStatuses), ex);
+            return StatusCode(500, "An error occurred while fetching settled payment statuses.");
+        }
+    }
 }
