@@ -24,6 +24,7 @@ using AvecADeskApi.Repositories.Members;
 using AvecADeskApi.Repositories.PaymentSchedules;
 using AvecADeskApi.Repositories.Receivables;
 using AvecADeskApi.Repositories.Reminders;
+using AvecADeskApi.Repositories.StudentContract;
 using AvecADeskApi.Repositories.Students;
 using AvecADeskApi.Repositories.TaskRepo;
 using AvecADeskApi.Repositories.Uploads;
@@ -191,6 +192,7 @@ builder.Services.AddScoped<InstallmentConfirmationService>();
 builder.Services.AddScoped<IInstituteContactRepository, InstituteContactRepository>();
 builder.Services.AddScoped<IInstituteContractRepository, InstituteContractRepository>();
 builder.Services.AddScoped<IInstituteCredentialRepository, InstituteCredentialRepository>();
+builder.Services.AddScoped<IStudentContractRepository, StudentContractRepository>();
 builder.Services.AddScoped<JwtTokenGenerator>();
 
 

@@ -13,11 +13,13 @@ public class InstituteContractController : ControllerBase
 {
     private readonly IInstituteContractRepository _repository;
     private readonly LogHelper _logHelper;
+    private readonly IWebHostEnvironment _env;
 
-    public InstituteContractController(IInstituteContractRepository repository, LogHelper logHelper)
+    public InstituteContractController(IInstituteContractRepository repository, LogHelper logHelper, IWebHostEnvironment env)
     {
         _repository = repository;
         _logHelper = logHelper;
+        _env = env;
     }
 
     [HttpGet]
@@ -88,6 +90,41 @@ public class InstituteContractController : ControllerBase
         {
             _logHelper.LogError(nameof(DeleteContract), ex);
             return StatusCode(500, "An error occurred while deleting the contract.");
+        }
+    }
+
+    [HttpPost("upload")]
+    [RequestSizeLimit(20_000_000)] // 20 MB cap
+    public async Task<IActionResult> UploadContractFile(int instituteId, IFormFile file)
+    {
+        try
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("No file uploaded.");
+
+            var allowedExtensions = new[] { ".pdf", ".doc", ".docx", ".jpg", ".jpeg", ".png" };
+            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (!allowedExtensions.Contains(extension))
+                return BadRequest("Unsupported file type. Allowed: PDF, DOC, DOCX, JPG, PNG.");
+
+            var uploadsRoot = Path.Combine(_env.ContentRootPath, "uploads", "contracts");
+            Directory.CreateDirectory(uploadsRoot);
+
+            var safeFileName = $"{instituteId}_{DateTime.UtcNow.Ticks}{extension}";
+            var fullPath = Path.Combine(uploadsRoot, safeFileName);
+
+            await using (var stream = new FileStream(fullPath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            var relativeUrl = $"/uploads/contracts/{safeFileName}";
+            return Ok(new { url = relativeUrl });
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(UploadContractFile), ex);
+            return StatusCode(500, "An error occurred while uploading the file.");
         }
     }
 }
