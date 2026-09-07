@@ -1,6 +1,7 @@
 using AvecADeskApi.Helper;
 using AvecADeskApi.Helpers;
 using AvecADeskApi.Hubs;
+using AvecADeskApi.Hubs;
 using AvecADeskApi.Interfaces;
 using AvecADeskApi.IRepository;
 using AvecADeskApi.LOG;
@@ -13,6 +14,9 @@ using AvecADeskApi.Repositories.Colleges;
 using AvecADeskApi.Repositories.Commissions;
 using AvecADeskApi.Repositories.Courses;
 using AvecADeskApi.Repositories.EmailTemplates;
+using AvecADeskApi.Repositories.InstituteContact;
+using AvecADeskApi.Repositories.InstituteContract;
+using AvecADeskApi.Repositories.InstituteCredential;
 using AvecADeskApi.Repositories.Institutes;
 using AvecADeskApi.Repositories.InstituteScrapping;
 using AvecADeskApi.Repositories.Invoices;
@@ -20,6 +24,7 @@ using AvecADeskApi.Repositories.Members;
 using AvecADeskApi.Repositories.PaymentSchedules;
 using AvecADeskApi.Repositories.Receivables;
 using AvecADeskApi.Repositories.Reminders;
+using AvecADeskApi.Repositories.StudentContract;
 using AvecADeskApi.Repositories.Students;
 using AvecADeskApi.Repositories.TaskRepo;
 using AvecADeskApi.Repositories.Uploads;
@@ -36,7 +41,6 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
-using AvecADeskApi.Hubs;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -185,6 +189,10 @@ builder.Services.AddScoped<IVendorStudentRepository, VendorStudentRepository>();
 builder.Services.AddScoped<ICardMemberRepository, CardMemberRepository>();
 builder.Services.AddSingleton<IPasswordResetTokenStore, InMemoryPasswordResetTokenStore>();
 builder.Services.AddScoped<InstallmentConfirmationService>();
+builder.Services.AddScoped<IInstituteContactRepository, InstituteContactRepository>();
+builder.Services.AddScoped<IInstituteContractRepository, InstituteContractRepository>();
+builder.Services.AddScoped<IInstituteCredentialRepository, InstituteCredentialRepository>();
+builder.Services.AddScoped<IStudentContractRepository, StudentContractRepository>();
 builder.Services.AddScoped<JwtTokenGenerator>();
 
 

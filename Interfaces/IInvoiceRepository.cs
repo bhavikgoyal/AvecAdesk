@@ -29,5 +29,8 @@ public interface IInvoiceRepository
         List<int>? installmentIds = null);
     Task UpdateInvoicePdfPathAsync(int invoiceId, string pdfPath);
     Task<List<InvoiceLineItemResponse>> GetInvoiceLineItemsAsync(int invoiceId);
+    Task<(bool Success, string Message, InvoiceResponse? Invoice)> UpdateInvoiceLineItemAmountsAsync(
+    int invoiceId,
+    List<InvoiceLineItemAmountUpdateRequest> items);
     Task<decimal> GetNextMonthInvoiceTotalAsync();
 }

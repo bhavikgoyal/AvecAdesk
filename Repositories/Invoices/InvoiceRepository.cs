@@ -3,6 +3,8 @@ using AvecADeskApi.Interfaces;
 using AvecADeskApi.LOG;
 using AvecADeskApi.Model.Invoice;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
+using System.Text.Json;
 using System.Data;
 
 namespace AvecADeskApi.Repositories.Invoices;
@@ -11,11 +13,14 @@ public class InvoiceRepository : IInvoiceRepository
 {
     private readonly SqlDbHelper _db;
     private readonly LogHelper _logHelper;
-
-    public InvoiceRepository(SqlDbHelper db, LogHelper logHelper)
+    private readonly string _connectionString;
+    public InvoiceRepository(SqlDbHelper db, LogHelper logHelper, IConfiguration configuration)
     {
         _db = db;
         _logHelper = logHelper;
+        _connectionString = configuration.GetConnectionString("DefaultConnection")
+           ?? throw new InvalidOperationException("DefaultConnection string is missing.");
+    
     }
 
     public async Task<List<InvoiceResponse>> GetInvoicesAsync()
@@ -257,7 +262,51 @@ public class InvoiceRepository : IInvoiceRepository
             throw;
         }
     }
+    public async Task<(bool Success, string Message, InvoiceResponse? Invoice)> UpdateInvoiceLineItemAmountsAsync(
+        int invoiceId,
+        List<InvoiceLineItemAmountUpdateRequest> items)
+    {
+        try
+        {
+            await using var connection = new SqlConnection(_connectionString);
+            await using var command = new SqlCommand("sp_UpdateInvoiceLineItemAmounts", connection)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
 
+            command.Parameters.AddWithValue("@InvoiceId", invoiceId);
+            command.Parameters.AddWithValue("@LineItems", JsonSerializer.Serialize(items));
+
+            var successParam = new SqlParameter("@Success", SqlDbType.Bit) { Direction = ParameterDirection.Output };
+            var messageParam = new SqlParameter("@Message", SqlDbType.NVarChar, 500) { Direction = ParameterDirection.Output };
+            command.Parameters.Add(successParam);
+            command.Parameters.Add(messageParam);
+
+            await connection.OpenAsync();
+
+            InvoiceResponse? invoice = null;
+
+            await using (var reader = await command.ExecuteReaderAsync())
+            {
+                if (await reader.ReadAsync())
+                {
+                    invoice = MapInvoice(reader);
+                }
+            }
+            // Reader is closed by the `await using` block above — output params
+            // are now guaranteed to be populated.
+
+            var success = successParam.Value != DBNull.Value && (bool)successParam.Value;
+            var message = messageParam.Value == DBNull.Value ? string.Empty : (string)messageParam.Value;
+
+            return (success, message, invoice);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(InvoiceRepository)}.{nameof(UpdateInvoiceLineItemAmountsAsync)}", ex);
+            throw;
+        }
+    }
     public async Task<List<InvoiceLineItemResponse>> GetInvoiceLineItemsAsync(int invoiceId)
     {
         try
