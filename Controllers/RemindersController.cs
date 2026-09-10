@@ -14,15 +14,21 @@ public class RemindersController : ControllerBase
 {
     private readonly IReminderRepository _reminderRepository;
     private readonly AccountingPaymentReminderService _accountingPaymentReminderService;
+    private readonly ContractExpiryReminderService _contractExpiryReminderService;
+    private readonly InvoiceDueReminderService _invoiceDueReminderService;
     private readonly LogHelper _logHelper;
 
     public RemindersController(
         IReminderRepository reminderRepository,
         AccountingPaymentReminderService accountingPaymentReminderService,
+        ContractExpiryReminderService contractExpiryReminderService,
+         InvoiceDueReminderService invoiceDueReminderService,
         LogHelper logHelper)
     {
         _reminderRepository = reminderRepository;
         _accountingPaymentReminderService = accountingPaymentReminderService;
+        _contractExpiryReminderService = contractExpiryReminderService;
+        _invoiceDueReminderService = invoiceDueReminderService;
         _logHelper = logHelper;
     }
 
@@ -122,4 +128,64 @@ public class RemindersController : ControllerBase
             return StatusCode(500, "An error occurred while creating accounting payment reminder tasks.");
         }
     }
+    [HttpGet("contract-expiry-tasks/preview")]
+    public async Task<IActionResult> PreviewContractExpiryTasks([FromQuery] int? daysBefore = null)
+    {
+        try
+        {
+            var result = await _contractExpiryReminderService.PreviewAsync(daysBefore);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(PreviewContractExpiryTasks), ex);
+            return StatusCode(500, "An error occurred while previewing contract expiry tasks.");
+        }
+    }
+
+    [HttpPost("contract-expiry-tasks/run")]
+    public async Task<IActionResult> RunContractExpiryTasks([FromQuery] int? daysBefore = null)
+    {
+        try
+        {
+            var result = await _contractExpiryReminderService.RunAsync(daysBefore);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(RunContractExpiryTasks), ex);
+            return StatusCode(500, "An error occurred while creating contract expiry tasks.");
+        }
+    }
+
+    [HttpGet("invoice-due-tasks/preview")]
+    public async Task<IActionResult> PreviewInvoiceDueTasks()
+    {
+        try
+        {
+            var result = await _invoiceDueReminderService.PreviewAsync();
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(PreviewInvoiceDueTasks), ex);
+            return StatusCode(500, "An error occurred while previewing invoice due tasks.");
+        }
+    }
+
+    [HttpPost("invoice-due-tasks/run")]
+    public async Task<IActionResult> RunInvoiceDueTasks()
+    {
+        try
+        {
+            var result = await _invoiceDueReminderService.RunAsync();
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(RunInvoiceDueTasks), ex);
+            return StatusCode(500, "An error occurred while creating invoice due tasks.");
+        }
+    }
+
 }
