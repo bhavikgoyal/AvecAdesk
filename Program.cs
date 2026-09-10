@@ -193,6 +193,12 @@ builder.Services.AddScoped<IInstituteContactRepository, InstituteContactReposito
 builder.Services.AddScoped<IInstituteContractRepository, InstituteContractRepository>();
 builder.Services.AddScoped<IInstituteCredentialRepository, InstituteCredentialRepository>();
 builder.Services.AddScoped<IStudentContractRepository, StudentContractRepository>();
+builder.Services.AddScoped<IContractExpiryReminderRepository, ContractExpiryReminderRepository>();
+builder.Services.AddScoped<ContractExpiryReminderService>();
+builder.Services.AddScoped<IInvoiceDueReminderRepository, InvoiceDueReminderRepository>();
+builder.Services.AddScoped<InvoiceDueReminderService>();
+builder.Services.AddHostedService<TaskAutomationBackgroundService>();
+
 builder.Services.AddScoped<JwtTokenGenerator>();
 
 
