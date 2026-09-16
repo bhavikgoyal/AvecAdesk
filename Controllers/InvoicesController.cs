@@ -297,8 +297,8 @@ public class InvoicesController : ControllerBase
                                 foreach (var line in lines)
                                 {
                                     table.Cell().Text(sr.ToString());
-                                    table.Cell().Text(line.StudentName ?? "—");
-                                    table.Cell().Text(line.Description ?? "—");
+                                    table.Cell().Text(line.StudentName ?? "?");
+                                    table.Cell().Text(line.Description ?? "?");
                                     table.Cell().Text(line.Amount.ToString("0.00"));
                                     sr++;
                                 }
@@ -352,6 +352,33 @@ public class InvoicesController : ControllerBase
         {
             _logHelper.LogError(nameof(UpdateInvoiceLineItemAmounts), ex);
             return StatusCode(500, "An error occurred while updating invoice line items.");
+        }
+    }
+
+    /// <summary>
+    /// Update FeesAmount / InvoiceAmount for selected settled installments before generating an invoice.
+    /// </summary>
+    [HttpPost("installment-amounts")]
+    public async Task<IActionResult> UpdateInstallmentFeesAndInvoiceAmounts(
+        [FromBody] List<InstallmentAmountUpdateRequest> request)
+    {
+        try
+        {
+            if (request == null || request.Count == 0)
+                return BadRequest("At least one installment is required.");
+
+            var (success, message) =
+                await _invoiceRepository.UpdateInstallmentFeesAndInvoiceAmountsAsync(request);
+
+            if (!success)
+                return BadRequest(message);
+
+            return Ok(new { message });
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(UpdateInstallmentFeesAndInvoiceAmounts), ex);
+            return StatusCode(500, "An error occurred while updating installment amounts.");
         }
     }
     private int? GetCurrentUserId()
