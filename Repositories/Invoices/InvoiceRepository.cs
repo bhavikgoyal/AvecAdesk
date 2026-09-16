@@ -307,6 +307,45 @@ public class InvoiceRepository : IInvoiceRepository
             throw;
         }
     }
+
+    public async Task<(bool Success, string Message)> UpdateInstallmentFeesAndInvoiceAmountsAsync(
+        List<InstallmentAmountUpdateRequest> items)
+    {
+        try
+        {
+            await using var connection = new SqlConnection(_connectionString);
+            await using var command = new SqlCommand("sp_UpdateInstallmentFeesAndInvoiceAmounts", connection)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            var payload = items.Select(item => new
+            {
+                InstallmentId = item.InstallmentId,
+                FeesAmount = item.FeesAmount,
+                InvoiceAmount = item.InvoiceAmount
+            });
+
+            command.Parameters.AddWithValue("@Items", JsonSerializer.Serialize(payload));
+
+            var successParam = new SqlParameter("@Success", SqlDbType.Bit) { Direction = ParameterDirection.Output };
+            var messageParam = new SqlParameter("@Message", SqlDbType.NVarChar, 500) { Direction = ParameterDirection.Output };
+            command.Parameters.Add(successParam);
+            command.Parameters.Add(messageParam);
+
+            await connection.OpenAsync();
+            await command.ExecuteNonQueryAsync();
+
+            var success = successParam.Value != DBNull.Value && (bool)successParam.Value;
+            var message = messageParam.Value == DBNull.Value ? string.Empty : (string)messageParam.Value;
+            return (success, message);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(InvoiceRepository)}.{nameof(UpdateInstallmentFeesAndInvoiceAmountsAsync)}", ex);
+            throw;
+        }
+    }
     public async Task<List<InvoiceLineItemResponse>> GetInvoiceLineItemsAsync(int invoiceId)
     {
         try

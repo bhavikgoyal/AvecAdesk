@@ -32,5 +32,7 @@ public interface IInvoiceRepository
     Task<(bool Success, string Message, InvoiceResponse? Invoice)> UpdateInvoiceLineItemAmountsAsync(
     int invoiceId,
     List<InvoiceLineItemAmountUpdateRequest> items);
+    Task<(bool Success, string Message)> UpdateInstallmentFeesAndInvoiceAmountsAsync(
+        List<InstallmentAmountUpdateRequest> items);
     Task<decimal> GetNextMonthInvoiceTotalAsync();
 }
