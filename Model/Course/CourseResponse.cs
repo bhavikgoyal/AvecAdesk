@@ -27,6 +27,10 @@ public class CourseResponse
     public DateTime CreatedAt { get; set; }
     public string? RateType { get; set; } = string.Empty;
     public decimal? CommissionRate { get; set; }
+    public decimal? EnrollmentFee { get; set; }
+    public decimal? MaterialFee { get; set; }
+    public decimal? TuitionFee { get; set; }
+    public decimal? OSHCFee { get; set; }
 }
 public class CourseListResponse
 {
@@ -60,4 +64,8 @@ public class InstituteScrappingCourseResponse
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }
     public string? Campus { get; set; }
+    public decimal? EnrollmentFee { get; set; }
+    public decimal? MaterialFee { get; set; }
+    public decimal? TuitionFee { get; set; }
+    public decimal? OSHCFee { get; set; }
 }

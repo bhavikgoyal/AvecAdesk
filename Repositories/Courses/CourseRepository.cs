@@ -109,6 +109,10 @@ public class CourseRepository : ICourseRepository
                 cmd.Parameters.AddWithValue("@IsApproved", request.IsApproved);
                 cmd.Parameters.AddWithValue("@IsActive", request.IsActive);
                 cmd.Parameters.AddWithValue("@IsAIFetched", request.IsAIFetched);
+                cmd.Parameters.AddWithValue("@EnrollmentFee", (object?)request.EnrollmentFee ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@MaterialFee", (object?)request.MaterialFee ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@TuitionFee", (object?)request.TuitionFee ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@OSHCFee", (object?)request.OSHCFee ?? DBNull.Value);
                 cmd.Parameters.Add(courseIdParam);
             });
 
@@ -151,7 +155,11 @@ public class CourseRepository : ICourseRepository
                 cmd.Parameters.AddWithValue("@ProgramLogo", (object?)programLogoPath ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@IsApproved", request.IsApproved);
                 cmd.Parameters.AddWithValue("@IsActive", request.IsActive);
-               
+                cmd.Parameters.AddWithValue("@EnrollmentFee", (object?)request.EnrollmentFee ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@MaterialFee", (object?)request.MaterialFee ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@TuitionFee", (object?)request.TuitionFee ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@OSHCFee", (object?)request.OSHCFee ?? DBNull.Value);
+
                 cmd.Parameters.Add(rowsAffectedParam);
             });
 
@@ -245,6 +253,7 @@ public class CourseRepository : ICourseRepository
                 ? reader.GetString(reader.GetOrdinal("RateType")) : string.Empty,
             CommissionRate = HasColumn(reader, "CommissionRate") && !reader.IsDBNull(reader.GetOrdinal("CommissionRate"))
                 ? reader.GetDecimal(reader.GetOrdinal("CommissionRate")) : 0
+          
         };
     }
 
@@ -303,8 +312,16 @@ public class CourseRepository : ICourseRepository
             AddmissionRequirements = reader.IsDBNull(reader.GetOrdinal("AddmissionRequirements"))
                 ? null : reader.GetString(reader.GetOrdinal("AddmissionRequirements")),
             ProgramLogo = reader.IsDBNull(reader.GetOrdinal("ProgramLogo"))
-                ? null : reader.GetString(reader.GetOrdinal("ProgramLogo"))
-          
+                ? null : reader.GetString(reader.GetOrdinal("ProgramLogo")),
+            EnrollmentFee = HasColumn(reader, "EnrollmentFee") && !reader.IsDBNull(reader.GetOrdinal("EnrollmentFee"))
+                ? reader.GetDecimal(reader.GetOrdinal("EnrollmentFee")) : null,
+            MaterialFee = HasColumn(reader, "MaterialFee") && !reader.IsDBNull(reader.GetOrdinal("MaterialFee"))
+                ? reader.GetDecimal(reader.GetOrdinal("MaterialFee")) : null,
+            TuitionFee = HasColumn(reader, "TuitionFee") && !reader.IsDBNull(reader.GetOrdinal("TuitionFee"))
+                ? reader.GetDecimal(reader.GetOrdinal("TuitionFee")) : null,
+            OSHCFee = HasColumn(reader, "OSHCFee") && !reader.IsDBNull(reader.GetOrdinal("OSHCFee"))
+                ? reader.GetDecimal(reader.GetOrdinal("OSHCFee")) : null
+
         };
     }
     private static CourseListResponse MapCourseList(SqlDataReader reader)
@@ -373,6 +390,18 @@ public class CourseRepository : ICourseRepository
             Campus = HasColumn(reader, "Campus") && !reader.IsDBNull(reader.GetOrdinal("Campus"))
                 ? reader.GetString(reader.GetOrdinal("Campus"))
                 : null,
+            EnrollmentFee = reader.IsDBNull(reader.GetOrdinal("EnrollmentFee"))
+            ? null
+            : reader.GetDecimal(reader.GetOrdinal("EnrollmentFee")),
+            MaterialFee = reader.IsDBNull(reader.GetOrdinal("MaterialFee"))
+            ? null
+            : reader.GetDecimal(reader.GetOrdinal("MaterialFee")),
+            TuitionFee = reader.IsDBNull(reader.GetOrdinal("TuitionFee"))
+            ? null
+            : reader.GetDecimal(reader.GetOrdinal("TuitionFee")),
+            OSHCFee = reader.IsDBNull(reader.GetOrdinal("OSHCFee"))
+            ? null
+            : reader.GetDecimal(reader.GetOrdinal("OSHCFee")),
         };
     }
 }

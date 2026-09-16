@@ -19,6 +19,7 @@ public class StudentPaymentInstallmentCreateRequest
     public decimal PaidAmount { get; set; }
     public decimal BalanceAmount { get; set; }
     public string PaymentStatus { get; set; } = "";
+    public string? FeeType { get; set; }
 }
 public class StudentCommissionCreateRequest
 {

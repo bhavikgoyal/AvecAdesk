@@ -89,6 +89,7 @@ public class StudentPaymentItem
     public string? PaymentStatus { get; set; }
     public DateTime? PaidDate { get; set; }
     public string? InstallmentImage { get; set; }
+    public string? FeeType { get; set; }
 }
 
 public class CommissionHistoryItem
