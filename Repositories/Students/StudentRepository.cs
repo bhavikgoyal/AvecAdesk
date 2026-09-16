@@ -308,6 +308,9 @@ public class StudentRepository : IStudentRepository
             PaidAmount = reader.GetDecimal(reader.GetOrdinal("PaidAmount")),
             BalanceAmount = reader.GetDecimal(reader.GetOrdinal("BalanceAmount")),
             PaymentStatus = reader["PaymentStatus"]?.ToString(),
+            FeeType = ColumnExists(reader, "FeeType") && !reader.IsDBNull(reader.GetOrdinal("FeeType"))
+                ? reader.GetString(reader.GetOrdinal("FeeType"))
+                : null,
             ParentInstallmentId = reader.IsDBNull(reader.GetOrdinal("ParentInstallmentId"))
             ? null
             : reader.GetInt32(reader.GetOrdinal("ParentInstallmentId")),

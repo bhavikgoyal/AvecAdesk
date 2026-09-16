@@ -20,4 +20,8 @@ public class CourseUpdateRequest
     public IFormFile? ProgramLogo { get; set; }
     public bool IsApproved { get; set; }
     public bool IsActive { get; set; }
+    public decimal? EnrollmentFee { get; set; }
+    public decimal? MaterialFee { get; set; }
+    public decimal? TuitionFee { get; set; }
+    public decimal? OSHCFee { get; set; }
 }
