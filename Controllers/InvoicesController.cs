@@ -330,7 +330,7 @@ public class InvoicesController : ControllerBase
         }
     }
    
-    [HttpPut("{invoiceId:int}/line-items")]
+    [HttpPost("{invoiceId:int}/line-items")]
     public async Task<IActionResult> UpdateInvoiceLineItemAmounts(
         int invoiceId,
         [FromBody] List<InvoiceLineItemAmountUpdateRequest> request)
