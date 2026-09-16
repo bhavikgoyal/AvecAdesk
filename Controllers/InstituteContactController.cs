@@ -37,7 +37,7 @@ public class InstituteContactController : ControllerBase
         }
     }
 
-    [HttpPut]
+    [HttpPost]
     public async Task<IActionResult> UpdateContact(int instituteId, [FromBody] InstituteContactUpsertRequest request)
     {
         try

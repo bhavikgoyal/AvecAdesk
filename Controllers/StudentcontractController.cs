@@ -55,7 +55,7 @@ public class StudentContractController : ControllerBase
         }
     }
 
-    [HttpPut("{contractId:int}")]
+    [HttpPost("{contractId:int}")]
     public async Task<IActionResult> UpdateContract(int studentId, int contractId, [FromBody] StudentContractUpsertRequest request)
     {
         try

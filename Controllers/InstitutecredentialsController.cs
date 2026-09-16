@@ -58,7 +58,7 @@ public class InstituteCredentialsController : ControllerBase
         }
     }
 
-    [HttpPut("{credentialId:int}")]
+    [HttpPost("{credentialId:int}")]
     public async Task<IActionResult> UpdateCredential(int instituteId, int credentialId, [FromBody] InstituteCredentialUpsertRequest request)
     {
         try
