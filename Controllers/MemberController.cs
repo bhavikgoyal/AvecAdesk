@@ -127,7 +127,7 @@ namespace AvecADeskApi.Controllers
             }
         }
 
-        [HttpPatch("Resign/{userId}")]
+        [HttpPost("Resign/{userId}")]
         public async Task<IActionResult> ResignMember(int userId)
         {
             if (userId <= 0)
