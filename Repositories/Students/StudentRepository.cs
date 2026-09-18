@@ -87,6 +87,10 @@ public class StudentRepository : IStudentRepository
                 cmd.Parameters.AddWithValue("@CourseStartDate",(object?)request.CourseStartDate ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@CourseEndDate",(object?)request.CourseEndDate ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@Assignment", (object?)request.Assignment ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@EnrollmentFee", (object?)request.EnrollmentFee ?? DBNull.Value);  
+                cmd.Parameters.AddWithValue("@MaterialFee", (object?)request.MaterialFee ?? DBNull.Value);       
+                cmd.Parameters.AddWithValue("@TuitionFee", (object?)request.TuitionFee ?? DBNull.Value);         
+                cmd.Parameters.AddWithValue("@OSHCFee", (object?)request.OSHCFee ?? DBNull.Value);
                 cmd.Parameters.Add(studentIdParam);
             });
 
@@ -114,8 +118,12 @@ public class StudentRepository : IStudentRepository
                 cmd.Parameters.AddWithValue("@Email", request.Email);
                 cmd.Parameters.AddWithValue("@Phone", request.Phone);
                 cmd.Parameters.AddWithValue("@EnrollmentNumber", (object?)request.EnrollmentNumber ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@Assignment", (object?)request.Assignment ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@Assignment", (object?)request.Assignment ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@IsActive", request.IsActive);
+                cmd.Parameters.AddWithValue("@EnrollmentFee", (object?)request.EnrollmentFee ?? DBNull.Value);   
+                cmd.Parameters.AddWithValue("@MaterialFee", (object?)request.MaterialFee ?? DBNull.Value);      
+                cmd.Parameters.AddWithValue("@TuitionFee", (object?)request.TuitionFee ?? DBNull.Value);        
+                cmd.Parameters.AddWithValue("@OSHCFee", (object?)request.OSHCFee ?? DBNull.Value);
                 cmd.Parameters.Add(rowsAffectedParam);
             });
 
@@ -262,7 +270,18 @@ public class StudentRepository : IStudentRepository
             TotalCourseFee = reader.GetDecimal(reader.GetOrdinal("TotalCourseFee")),
             NoOfInstallments = reader.GetInt32(reader.GetOrdinal("NoOfInstallments")),
             Frequency = reader["Frequency"]?.ToString(),
-
+            EnrollmentFee = ColumnExists(reader, "EnrollmentFee") && !reader.IsDBNull(reader.GetOrdinal("EnrollmentFee"))
+            ? reader.GetDecimal(reader.GetOrdinal("EnrollmentFee"))
+            : null,
+            MaterialFee = ColumnExists(reader, "MaterialFee") && !reader.IsDBNull(reader.GetOrdinal("MaterialFee"))
+            ? reader.GetDecimal(reader.GetOrdinal("MaterialFee"))
+            : null,
+            TuitionFee = ColumnExists(reader, "TuitionFee") && !reader.IsDBNull(reader.GetOrdinal("TuitionFee"))
+            ? reader.GetDecimal(reader.GetOrdinal("TuitionFee"))
+            : null,
+            OSHCFee = ColumnExists(reader, "OSHCFee") && !reader.IsDBNull(reader.GetOrdinal("OSHCFee"))
+            ? reader.GetDecimal(reader.GetOrdinal("OSHCFee"))
+            : null,
             CommissionId = reader.IsDBNull(reader.GetOrdinal("CommissionId"))
                 ? null
                 : reader.GetInt32(reader.GetOrdinal("CommissionId")),

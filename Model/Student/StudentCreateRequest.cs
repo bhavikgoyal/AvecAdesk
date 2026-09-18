@@ -13,5 +13,9 @@ public class StudentCreateRequest
     public DateTime? CourseStartDate { get; set; }
     public DateTime? CourseEndDate { get; set; }
     public string? Assignment { get; set; }
+    public decimal? EnrollmentFee { get; set; }   
+    public decimal? MaterialFee { get; set; }    
+    public decimal? TuitionFee { get; set; }     
+    public decimal? OSHCFee { get; set; }
 
 }

@@ -42,7 +42,10 @@ public class StudentPaymentScheduleDetailResponse
     public int? CourseId { get; set; }
     public string? CourseName { get; set; }
     public string? Campus { get; set; }
-
+    public decimal? EnrollmentFee { get; set; }
+    public decimal? MaterialFee { get; set; }
+    public decimal? TuitionFee { get; set; }
+    public decimal? OSHCFee { get; set; }
     public string? FullName { get; set; }
     public string? Email { get; set; }
     public string? Phone { get; set; }
