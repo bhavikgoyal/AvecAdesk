@@ -10,4 +10,8 @@ public class StudentUpdateRequest
     public string? EnrollmentNumber { get; set; }
     public string? Assignment { get; set; }
     public bool IsActive { get; set; } = true;
+    public decimal? EnrollmentFee { get; set; }
+    public decimal? MaterialFee { get; set; }
+    public decimal? TuitionFee { get; set; }     
+    public decimal? OSHCFee { get; set; }
 }
