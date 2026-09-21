@@ -17,6 +17,7 @@ public class UpdateStudentPaymentScheduleRequest
 public class StudentPaymentInstallmentUpdateRequest
 {
     public int StudentPaymentInstallmentId { get; set; }
+    public DateTime? DueDate { get; set; }
     public decimal PaidAmount { get; set; }
     public decimal BalanceAmount { get; set; }
     public string PaymentStatus { get; set; }
