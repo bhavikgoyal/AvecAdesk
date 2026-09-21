@@ -12,6 +12,10 @@ public class StudentUpdateRequest
     public bool IsActive { get; set; } = true;
     public decimal? EnrollmentFee { get; set; }
     public decimal? MaterialFee { get; set; }
-    public decimal? TuitionFee { get; set; }     
+    public decimal? TuitionFee { get; set; }
     public decimal? OSHCFee { get; set; }
+    public string? CoeVoe { get; set; }
+    public string? ServiceType { get; set; }
+    public string? Agent { get; set; }
+    public string? LeadNo { get; set; }
 }

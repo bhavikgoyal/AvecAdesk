@@ -15,7 +15,11 @@ public class StudentCreateRequest
     public string? Assignment { get; set; }
     public decimal? EnrollmentFee { get; set; }   
     public decimal? MaterialFee { get; set; }    
-    public decimal? TuitionFee { get; set; }     
+    public decimal? TuitionFee { get; set; }
     public decimal? OSHCFee { get; set; }
+    public string? CoeVoe { get; set; }
+    public string? ServiceType { get; set; }
+    public string? Agent { get; set; }
+    public string? LeadNo { get; set; }
 
 }

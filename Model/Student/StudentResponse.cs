@@ -51,7 +51,10 @@ public class StudentPaymentScheduleDetailResponse
     public string? Phone { get; set; }
     public string? FolderNo { get; set; }
     public string? Assignment { get; set; }
-
+    public string? CoeVoe { get; set; }
+    public string? ServiceType { get; set; }
+    public string? Agent { get; set; }
+    public string? LeadNo { get; set; }
     public DateTime? CourseStartDate { get; set; }
     public DateTime? CourseEndDate { get; set; }
 

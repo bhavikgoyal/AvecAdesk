@@ -89,8 +89,12 @@ public class StudentRepository : IStudentRepository
                 cmd.Parameters.AddWithValue("@Assignment", (object?)request.Assignment ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@EnrollmentFee", (object?)request.EnrollmentFee ?? DBNull.Value);  
                 cmd.Parameters.AddWithValue("@MaterialFee", (object?)request.MaterialFee ?? DBNull.Value);       
-                cmd.Parameters.AddWithValue("@TuitionFee", (object?)request.TuitionFee ?? DBNull.Value);         
+                cmd.Parameters.AddWithValue("@TuitionFee", (object?)request.TuitionFee ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@OSHCFee", (object?)request.OSHCFee ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@CoeVoe", (object?)request.CoeVoe ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@ServiceType", (object?)request.ServiceType ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@Agent", (object?)request.Agent ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@LeadNo", (object?)request.LeadNo ?? DBNull.Value);
                 cmd.Parameters.Add(studentIdParam);
             });
 
@@ -122,8 +126,12 @@ public class StudentRepository : IStudentRepository
                 cmd.Parameters.AddWithValue("@IsActive", request.IsActive);
                 cmd.Parameters.AddWithValue("@EnrollmentFee", (object?)request.EnrollmentFee ?? DBNull.Value);   
                 cmd.Parameters.AddWithValue("@MaterialFee", (object?)request.MaterialFee ?? DBNull.Value);      
-                cmd.Parameters.AddWithValue("@TuitionFee", (object?)request.TuitionFee ?? DBNull.Value);        
+                cmd.Parameters.AddWithValue("@TuitionFee", (object?)request.TuitionFee ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@OSHCFee", (object?)request.OSHCFee ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@CoeVoe", (object?)request.CoeVoe ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@ServiceType", (object?)request.ServiceType ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@Agent", (object?)request.Agent ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@LeadNo", (object?)request.LeadNo ?? DBNull.Value);
                 cmd.Parameters.Add(rowsAffectedParam);
             });
 
@@ -282,6 +290,10 @@ public class StudentRepository : IStudentRepository
             OSHCFee = ColumnExists(reader, "OSHCFee") && !reader.IsDBNull(reader.GetOrdinal("OSHCFee"))
             ? reader.GetDecimal(reader.GetOrdinal("OSHCFee"))
             : null,
+            CoeVoe = reader["CoeVoe"]?.ToString(),
+            ServiceType = reader["ServiceType"]?.ToString(),
+            Agent = reader["Agent"]?.ToString(),
+            LeadNo = reader["LeadNo"]?.ToString(),
             CommissionId = reader.IsDBNull(reader.GetOrdinal("CommissionId"))
                 ? null
                 : reader.GetInt32(reader.GetOrdinal("CommissionId")),
