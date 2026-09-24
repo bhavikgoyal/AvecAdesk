@@ -186,16 +186,11 @@ public class InvoiceRepository : IInvoiceRepository
         }
     }
 
-    public async Task<List<MonthlyPaidInstallmentRow>> GetInstallmentsForMonthPreviewAsync(
-        int year,
-        int month,
-        int? instituteId = null,
-        string? campus = null)
+    public async Task<List<MonthlyPaidInstallmentRow>> GetInstallmentsForMonthPreviewAsync( int year, int month,int? instituteId = null, string? campus = null)
     {
         try
         {
-            return await _db.ExecuteReaderListAsync(
-                "sp_GetInstallmentsForMonthlyInvoicePreview",
+            return await _db.ExecuteReaderListAsync( "sp_GetInstallmentsForMonthlyInvoicePreview",
                 cmd =>
                 {
                     cmd.Parameters.AddWithValue("@Year", year);

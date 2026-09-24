@@ -30,19 +30,11 @@ public class MonthlyInvoiceService
         _logHelper = logHelper;
     }
 
-    public async Task<List<MonthlyPaidInstallmentRow>> GetPaidStudentsAsync(
-        int? year = null,
-        int? month = null,
-        int? instituteId = null,
-        string? campus = null)
+    public async Task<List<MonthlyPaidInstallmentRow>> GetPaidStudentsAsync( int? year = null, int? month = null, int? instituteId = null, string? campus = null)
     {
         var (targetYear, targetMonth) = ResolvePeriod(year, month);
         // Preview list: all installments due in the month (Paid + Pending, etc.)
-        return await _invoiceRepository.GetInstallmentsForMonthPreviewAsync(
-            targetYear,
-            targetMonth,
-            instituteId,
-            campus);
+        return await _invoiceRepository.GetInstallmentsForMonthPreviewAsync( targetYear, targetMonth, instituteId, campus);
     }
 
     

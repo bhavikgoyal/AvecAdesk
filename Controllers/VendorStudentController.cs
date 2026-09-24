@@ -26,7 +26,7 @@ namespace AvecADeskApi.Controllers
         _env = env;
         _hubContext = hubContext;
         _studentEmailService = studentEmailService;
-        }
+     }
 
     [HttpPost("create")]
     public async Task<IActionResult> CreateStudent([FromBody] SaveVendorStudentRequest request)
@@ -251,11 +251,7 @@ namespace AvecADeskApi.Controllers
     }
 
     [HttpGet("vendor/{vendorId:int}/history")]
-    public async Task<IActionResult> GetHistory(
-        int vendorId,
-        [FromQuery] string? search,
-        [FromQuery] int pageNumber = 1,
-        [FromQuery] int pageSize = 50)
+    public async Task<IActionResult> GetHistory(int vendorId, [FromQuery] string? search, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 50)
     {
       try
       {
@@ -279,32 +275,30 @@ namespace AvecADeskApi.Controllers
         return StatusCode(500, new { message = "Error while fetching application history.", detail = ex.Message });
       }
     }
-[HttpGet("GetStudentApplicationList")]
-        public async Task<IActionResult> GetStudentApplicationList(
-    [FromQuery] string? search,
-    [FromQuery] int pagenumber = 1,
-    [FromQuery] int pageSize = 200,
-    [FromQuery] int? vendorId = null)
+
+    [HttpGet("GetStudentApplicationList")]
+    public async Task<IActionResult> GetStudentApplicationList( [FromQuery] string? search,[FromQuery] int pagenumber = 1, [FromQuery] int pageSize = 200,[FromQuery] int? vendorId = null)
+    {
+        try
         {
-            try
-            {
-                var result = await _repo.GetStudentApplicationListAsync(search, pagenumber, pageSize, vendorId);
-                var totalRecords = result.Count > 0 ? result[0].TotalRecords : 0;
+            var result = await _repo.GetStudentApplicationListAsync(search, pagenumber, pageSize, vendorId);
+            var totalRecords = result.Count > 0 ? result[0].TotalRecords : 0;
  
-                return Ok(new
-                {
-                    Data = result,
-                    TotalRecords = totalRecords,
-                    PageNumber = pagenumber,
-                    PageSize = pageSize
-                });
-            }
-            catch (Exception ex)
+            return Ok(new
             {
-                _logHelper.LogError($"{nameof(VendorStudentController)}.{nameof(GetStudentApplicationList)}", ex);
-                return StatusCode(500, new { message = "Error while fetching student applications.", detail = ex.Message });
-            }
+                Data = result,
+                TotalRecords = totalRecords,
+                PageNumber = pagenumber,
+                PageSize = pageSize
+            });
         }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(VendorStudentController)}.{nameof(GetStudentApplicationList)}", ex);
+            return StatusCode(500, new { message = "Error while fetching student applications.", detail = ex.Message });
+        }
+    }
+
     private async Task<string?> SaveSignatureImageAsync(int studentId, string signature, string prefix)
     {
       if (string.IsNullOrWhiteSpace(signature))

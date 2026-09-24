@@ -36,11 +36,7 @@ public class InvoicesController : ControllerBase
     /// Invoice generation still uses Paid rows only.
     /// </summary>
     [HttpGet("paid-students")]
-    public async Task<IActionResult> GetPaidStudentsForInvoice(
-        [FromQuery] int? year,
-        [FromQuery] int? month,
-        [FromQuery] int? instituteId,
-        [FromQuery] string? campus)
+    public async Task<IActionResult> GetPaidStudentsForInvoice( [FromQuery] int? year, [FromQuery] int? month, [FromQuery] int? instituteId, [FromQuery] string? campus)
     {
         try
         {
