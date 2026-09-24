@@ -191,6 +191,8 @@ public class ScheduleRepository : IScheduleRepository
                 cmd.Parameters.AddWithValue("@ScheduleId", request.ScheduleId);
                 cmd.Parameters.AddWithValue("@CommissionPercentage", request.CommissionPercentage);
                 cmd.Parameters.AddWithValue("@GSTPercentage", request.GSTPercentage);
+                cmd.Parameters.AddWithValue("@CommissionAmount", request.CommissionAmount);
+                cmd.Parameters.AddWithValue("@GSTAmount", request.GSTAmount);
                 cmd.Parameters.AddWithValue("@BonusType", (object?)request.BonusType ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@BonusOption", (object?)request.BonusOption ?? DBNull.Value);
 

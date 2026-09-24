@@ -28,6 +28,8 @@ public class StudentCommissionCreateRequest
     public decimal GSTPercentage { get; set; }
     public string? BonusType { get; set; }
     public string? BonusOption { get; set; }
+    public decimal CommissionAmount { get; set; }
+    public decimal GSTAmount { get; set; }
 }
 public class StudentCommissionDetailCreateRequest
 {
