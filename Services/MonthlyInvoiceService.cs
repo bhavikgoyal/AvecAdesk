@@ -2,6 +2,7 @@
 using AvecADeskApi.Interfaces;
 using AvecADeskApi.LOG;
 using AvecADeskApi.Model.Invoice;
+using Azure.Core;
 
 namespace AvecADeskApi.Services;
 
@@ -38,13 +39,7 @@ public class MonthlyInvoiceService
     }
 
     
-    public async Task<MonthlyInvoiceGenerateResult> GenerateAndSendAsync(
-        int? year = null,
-        int? month = null,
-        int? instituteId = null,
-        string? campus = null,
-        List<int>? installmentIds = null,
-        CancellationToken cancellationToken = default)
+    public async Task<MonthlyInvoiceGenerateResult> GenerateAndSendAsync(int? year = null,int? month = null,int? instituteId = null,string? campus = null,List<int>? installmentIds = null, List<int>? commissionDetailIds = null, List<decimal>? bonusAmounts = null, List<decimal>? invoiceAmounts = null, CancellationToken cancellationToken = default)
     {
         var (targetYear, targetMonth) = ResolvePeriod(year, month);
 
@@ -54,19 +49,15 @@ public class MonthlyInvoiceService
             Month = targetMonth
         };
 
-        var paidRows = await _invoiceRepository.GetPaidInstallmentsForMonthAsync(
-            targetYear,
-            targetMonth,
-            instituteId,
-            campus);
+        var paidRows = await _invoiceRepository.GetPaidInstallmentsForMonthAsync(targetYear, targetMonth,instituteId, campus);
 
         // Keep only the rows the user actually checked, if a selection was sent.
-        if (installmentIds is { Count: > 0 })
+        if (commissionDetailIds is { Count: > 0 })
         {
-            var selectedSet = installmentIds.ToHashSet();
-            paidRows = paidRows.Where(r => selectedSet.Contains(r.StudentPaymentInstallmentId)).ToList();
-        }
+            var selectedSet = commissionDetailIds.ToHashSet();
 
+            paidRows = paidRows.Where(r => r.CommissionDetailId.HasValue && selectedSet.Contains(r.CommissionDetailId.Value)).ToList();
+        }
         if (paidRows.Count == 0)
         {
             result.Message = $"No paid student installments found for {targetMonth:D2}/{targetYear} that still need invoicing.";
@@ -90,13 +81,24 @@ public class MonthlyInvoiceService
             // Only the ids belonging to this institute group, so the SP inserts exactly
             // what's shown in the PDF/email for this group.
             var groupInstallmentIds = lines.Select(x => x.StudentPaymentInstallmentId).ToList();
+            var groupCommissionDetailIds = lines.Where(x => x.CommissionDetailId.HasValue) .Select(x => x.CommissionDetailId!.Value).Distinct().ToList();
 
+            // Bonus Amounts
+            List<decimal>? groupBonusAmounts = null;
+
+            if (bonusAmounts is { Count: > 0 })
+            {
+                groupBonusAmounts = bonusAmounts;
+            }
             var invoice = await _invoiceRepository.GenerateMonthlyPaidStudentInvoiceAsync(
                 targetYear,
                 targetMonth,
                 groupInstituteId,
                 campus,
-                groupInstallmentIds);
+                groupInstallmentIds,
+                groupCommissionDetailIds,
+                groupBonusAmounts,
+                invoiceAmounts);
             if (invoice is null || invoice.InvoiceId <= 0)
                 continue;
 

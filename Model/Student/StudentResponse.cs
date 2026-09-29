@@ -112,6 +112,7 @@ public class CommissionHistoryItem
     public decimal CommissionAmount { get; set; }
     public decimal GSTAmount { get; set; }
     public decimal BonusAmount { get; set; }
+    public bool IsBonus { get; set; }
     public decimal InvoiceAmount { get; set; }
 
     public string? InvoiceNo { get; set; }
