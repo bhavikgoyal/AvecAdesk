@@ -153,6 +153,7 @@ public class CommissionRepository : ICommissionRepository
             {
                 cmd.Parameters.AddWithValue("@InstituteId", instituteId);
                 cmd.Parameters.AddWithValue("@CourseId", (object?)request.CourseId ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@AppliesToAllCourses", request.AppliesToAllCourses);
                 cmd.Parameters.AddWithValue("@RateType", request.RateType);
                 cmd.Parameters.AddWithValue("@Rate", request.Rate);
                 cmd.Parameters.AddWithValue("@EffectiveFrom", request.EffectiveFrom);
@@ -239,6 +240,9 @@ public class CommissionRepository : ICommissionRepository
 
     private static CommissionRateResponse MapRate(SqlDataReader reader)
     {
+        int appliesAllOrdinal = -1;
+        try { appliesAllOrdinal = reader.GetOrdinal("AppliesToAllCourses"); } catch { }
+
         return new CommissionRateResponse
         {
             CommissionId = reader.GetInt32(reader.GetOrdinal("CommissionId")),
@@ -249,7 +253,8 @@ public class CommissionRepository : ICommissionRepository
             RateType = reader.GetString(reader.GetOrdinal("RateType")),
             Rate = reader.GetDecimal(reader.GetOrdinal("Rate")),
             EffectiveFrom = reader.GetDateTime(reader.GetOrdinal("EffectiveFrom")),
-            EffectiveTo = reader.IsDBNull(reader.GetOrdinal("EffectiveTo")) ? null : reader.GetDateTime(reader.GetOrdinal("EffectiveTo"))
+            EffectiveTo = reader.IsDBNull(reader.GetOrdinal("EffectiveTo")) ? null : reader.GetDateTime(reader.GetOrdinal("EffectiveTo")),
+            AppliesToAllCourses = appliesAllOrdinal >= 0 && !reader.IsDBNull(appliesAllOrdinal) && reader.GetBoolean(appliesAllOrdinal)
         };
     }
 
@@ -280,7 +285,70 @@ public class CommissionRepository : ICommissionRepository
             RecordCount = reader.GetInt32(reader.GetOrdinal("RecordCount"))
         };
     }
+    public async Task<List<CommissionRateResponse>> GetScrappingCommissionRatesAsync(int scrappingId)
+    {
+        try
+        {
+            return await _db.ExecuteReaderListAsync(
+                "sp_GetScrappingCommissionRates",
+                cmd => cmd.Parameters.AddWithValue("@ScrappingId", scrappingId),
+                MapRate);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(CommissionRepository)}.{nameof(GetScrappingCommissionRatesAsync)}", ex);
+            throw;
+        }
+    }
 
+    public async Task<int> SetScrappingCommissionRateAsync(int scrappingId, CommissionRateCreateRequest request)
+    {
+        try
+        {
+            var commissionIdParam = new SqlParameter("@CommissionId", SqlDbType.Int) { Direction = ParameterDirection.Output };
+
+            await _db.ExecuteNonQueryAsync("sp_SetScrappingCommissionRate", cmd =>
+            {
+                cmd.Parameters.AddWithValue("@ScrappingId", scrappingId);
+                cmd.Parameters.AddWithValue("@CourseId", (object?)request.CourseId ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@AppliesToAllCourses", request.AppliesToAllCourses);
+                cmd.Parameters.AddWithValue("@RateType", request.RateType);
+                cmd.Parameters.AddWithValue("@Rate", request.Rate);
+                cmd.Parameters.AddWithValue("@EffectiveFrom", request.EffectiveFrom);
+                cmd.Parameters.AddWithValue("@EffectiveTo", (object?)request.EffectiveTo ?? DBNull.Value);
+                cmd.Parameters.Add(commissionIdParam);
+            });
+
+            return (int)commissionIdParam.Value;
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(CommissionRepository)}.{nameof(SetScrappingCommissionRateAsync)}", ex);
+            throw;
+        }
+    }
+
+    public async Task<List<CommissionRateResponse>> GetScrappingCommissionHistoryAsync(
+        int scrappingId, int? courseId, bool appliesToAllCourses)
+    {
+        try
+        {
+            return await _db.ExecuteReaderListAsync(
+                "sp_GetScrappingCommissionHistory",
+                cmd =>
+                {
+                    cmd.Parameters.AddWithValue("@ScrappingId", scrappingId);
+                    cmd.Parameters.AddWithValue("@CourseId", (object?)courseId ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@AppliesToAllCourses", appliesToAllCourses);
+                },
+                MapRate);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(CommissionRepository)}.{nameof(GetScrappingCommissionHistoryAsync)}", ex);
+            throw;
+        }
+    }
     public async Task<List<CommissionRateResponse>> GetCommissionHistoryAsync(
     int vendorId, int? instituteId, int? courseId)
     {

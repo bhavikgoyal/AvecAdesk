@@ -17,4 +17,7 @@ public interface ICommissionRepository
     Task<List<CommissionEarningResponse>> GetCommissionStatementAsync(int vendorId);
     Task<List<CommissionRateResponse>> GetCommissionHistoryAsync(int vendorId, int? instituteId, int? courseId);
     Task<List<CommissionRateResponse>> GetInstituteCommissionHistoryAsync(int instituteId, int? courseId);
+    Task<List<CommissionRateResponse>> GetScrappingCommissionRatesAsync(int scrappingId);
+    Task<int> SetScrappingCommissionRateAsync(int scrappingId, CommissionRateCreateRequest request);
+    Task<List<CommissionRateResponse>> GetScrappingCommissionHistoryAsync(int scrappingId, int? courseId, bool appliesToAllCourses);
 }
