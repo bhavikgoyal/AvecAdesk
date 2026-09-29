@@ -11,14 +11,16 @@ public interface IInvoiceRepository
     Task<InvoiceResponse?> ApproveInvoiceAsync(int invoiceId, int? approvedByUserId);
     Task<bool> RejectInvoiceAsync(int invoiceId, string rejectionReason);
     Task<string?> GetInvoicePdfPathAsync(int invoiceId);
-    Task<List<MonthlyPaidInstallmentRow>> GetPaidInstallmentsForMonthAsync(int year,int month, int? instituteId = null,string? campus = null);
-    Task<List<MonthlyPaidInstallmentRow>> GetInstallmentsForMonthPreviewAsync(int year, int month, int? instituteId = null,string? campus = null);
-    Task<InvoiceResponse?> GenerateMonthlyPaidStudentInvoiceAsync( int year, int month, int instituteId, string? campus = null, List<int>? installmentIds = null);
+    Task<List<MonthlyPaidInstallmentRow>> GetPaidInstallmentsForMonthAsync(int year, int month, int? instituteId = null, string? campus = null);
+    Task<List<MonthlyPaidInstallmentRow>> GetInstallmentsForMonthPreviewAsync(int year, int month, int? instituteId = null, string? campus = null);
+    Task<InvoiceResponse?> GenerateMonthlyPaidStudentInvoiceAsync(int year, int month, int instituteId, string? campus = null, List<int>? installmentIds = null, List<int>? commissionDetailIds = null,
+    List<decimal>? bonusAmounts = null, List<decimal>? invoiceAmounts = null);
     Task UpdateInvoicePdfPathAsync(int invoiceId, string pdfPath);
     Task<List<InvoiceLineItemResponse>> GetInvoiceLineItemsAsync(int invoiceId);
     Task<(bool Success, string Message, InvoiceResponse? Invoice)> UpdateInvoiceLineItemAmountsAsync(
     int invoiceId,
     List<InvoiceLineItemAmountUpdateRequest> items);
-    Task<(bool Success, string Message)> UpdateInstallmentFeesAndInvoiceAmountsAsync( List<InstallmentAmountUpdateRequest> items);
+    Task<(bool Success, string Message)> UpdateInstallmentFeesAndInvoiceAmountsAsync(List<InstallmentAmountUpdateRequest> items);
     Task<decimal> GetNextMonthInvoiceTotalAsync();
+    Task<(bool Success, string Message)>InsertBonusInstallmentAndCommissionAsync(List<BonusInstallmentRequest> items);
 }

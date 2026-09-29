@@ -207,22 +207,23 @@ public class InvoiceRepository : IInvoiceRepository
         }
     }
 
-    public async Task<InvoiceResponse?> GenerateMonthlyPaidStudentInvoiceAsync(
-    int year,
-    int month,
-    int instituteId,
-    string? campus = null,
-    List<int>? installmentIds = null)
+    public async Task<InvoiceResponse?> GenerateMonthlyPaidStudentInvoiceAsync(int year,int month,int instituteId, string? campus = null, List<int>? installmentIds = null,List<int>? commissionDetailIds = null, List<decimal>? bonusAmounts = null, List<decimal>? invoiceAmounts = null)
     {
         try
         {
             var invoiceIdParam = new SqlParameter("@InvoiceId", SqlDbType.Int) { Direction = ParameterDirection.Output };
             var installmentIdsCsv = (installmentIds is { Count: > 0 })
-                ? string.Join(",", installmentIds)
-                : null;
+                ? string.Join(",", installmentIds) : null;
+            var commissionDetailIdsCsv = commissionDetailIds is { Count: > 0 }
+               ? string.Join(",", commissionDetailIds): null;
 
-            return await _db.ExecuteReaderSingleAsync(
-                "sp_GenerateMonthlyPaidStudentInvoice",
+            var bonusAmountsCsv = bonusAmounts is { Count: > 0 }
+               ? string.Join(",", bonusAmounts) : null;
+
+            var invoiceAmountsCsv = invoiceAmounts is { Count: > 0 }
+               ? string.Join(",", invoiceAmounts) : null;
+
+            return await _db.ExecuteReaderSingleAsync("sp_GenerateMonthlyPaidStudentInvoice",
                 cmd =>
                 {
                     cmd.Parameters.AddWithValue("@Year", year);
@@ -230,6 +231,9 @@ public class InvoiceRepository : IInvoiceRepository
                     cmd.Parameters.AddWithValue("@InstituteId", instituteId);
                     cmd.Parameters.AddWithValue("@Campus", string.IsNullOrWhiteSpace(campus) ? DBNull.Value : campus.Trim());
                     cmd.Parameters.AddWithValue("@InstallmentIds", (object?)installmentIdsCsv ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@CommissionDetailIds", (object?)commissionDetailIdsCsv ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue( "@BonusAmounts",(object?)bonusAmountsCsv?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@InvoiceAmounts",(object?)invoiceAmountsCsv ?? DBNull.Value);
                     cmd.Parameters.Add(invoiceIdParam);
                 },
                 MapInvoice);
@@ -317,6 +321,7 @@ public class InvoiceRepository : IInvoiceRepository
             var payload = items.Select(item => new
             {
                 InstallmentId = item.InstallmentId,
+                CommissionDetailId = item.CommissionDetailId,
                 FeesAmount = item.FeesAmount,
                 InvoiceAmount = item.InvoiceAmount
             });
@@ -341,6 +346,57 @@ public class InvoiceRepository : IInvoiceRepository
             throw;
         }
     }
+    public async Task<(bool Success, string Message)> InsertBonusInstallmentAndCommissionAsync( List<BonusInstallmentRequest> items)
+    {
+        try
+        {
+            await using var connection =
+                new SqlConnection(_connectionString);
+
+            await using var command =  new SqlCommand("sp_InsertBonusInCommission", connection)
+            {
+                    CommandType = CommandType.StoredProcedure
+            };
+
+            var payload = items.Select(item => new
+            {
+                CommissionDetailId = item.CommissionDetailId,
+                StudentPaymentInstallmentId =item.StudentPaymentInstallmentId,
+                BonusAmount = item.BonusAmount,
+            });
+
+            command.Parameters.AddWithValue("@Items",JsonSerializer.Serialize(payload));
+            var successParam = new SqlParameter( "@Success",SqlDbType.Bit)
+            {
+                Direction = ParameterDirection.Output
+            };
+
+            var messageParam = new SqlParameter("@Message", SqlDbType.NVarChar, 500)
+            {
+                Direction = ParameterDirection.Output
+            };
+
+            command.Parameters.Add(successParam);
+            command.Parameters.Add(messageParam);
+
+            await connection.OpenAsync();
+            await command.ExecuteNonQueryAsync();
+
+            var success =  successParam.Value != DBNull.Value && (bool)successParam.Value;
+            var message = messageParam.Value == DBNull.Value ? string.Empty: (string)messageParam.Value;
+
+            return (success, message);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(
+                $"{nameof(InvoiceRepository)}." +
+                $"{nameof(InsertBonusInstallmentAndCommissionAsync)}",
+                ex);
+
+            throw;
+        }
+    }
     public async Task<List<InvoiceLineItemResponse>> GetInvoiceLineItemsAsync(int invoiceId)
     {
         try
@@ -360,7 +416,8 @@ public class InvoiceRepository : IInvoiceRepository
                     ? r.GetString(r.GetOrdinal("StudentName"))
                     : null,
                     Description = r.IsDBNull(r.GetOrdinal("Description")) ? null : r.GetString(r.GetOrdinal("Description")),
-                    Amount = r.GetDecimal(r.GetOrdinal("Amount"))
+                    Amount = r.GetDecimal(r.GetOrdinal("Amount")),
+                    BonusAmount = r.IsDBNull(r.GetOrdinal("BonusAmount")) ? 0 : r.GetDecimal(r.GetOrdinal("BonusAmount"))
                 });
         }
         catch (Exception ex)
@@ -420,9 +477,9 @@ public class InvoiceRepository : IInvoiceRepository
         GSTAmount = r.GetDecimal(r.GetOrdinal("GSTAmount")),
         BonusAmount = r.GetDecimal(r.GetOrdinal("BonusAmount")),
         InvoiceAmount = r.GetDecimal(r.GetOrdinal("InvoiceAmount")),
-        GSTPercentage = r.GetDecimal(r.GetOrdinal("GSTPercentage"))
+        GSTPercentage = r.GetDecimal(r.GetOrdinal("GSTPercentage")),
+        IsBonus =  r.GetBoolean(r.GetOrdinal("IsBonus")),
     };
-
     private static bool HasColumn(SqlDataReader reader, string column)
     {
         for (var i = 0; i < reader.FieldCount; i++)

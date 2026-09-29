@@ -25,6 +25,7 @@ public class MonthlyPaidInstallmentRow
     public decimal BonusAmount { get; set; }
     public decimal InvoiceAmount { get; set; }
     public decimal GSTPercentage { get; set; }
+    public bool IsBonus { get; set; }
 }
 
 public class MonthlyInvoiceGenerateRequest
@@ -34,6 +35,9 @@ public class MonthlyInvoiceGenerateRequest
     public int? InstituteId { get; set; }
     public string? Campus { get; set; }
     public List<int>? InstallmentIds { get; set; }
+    public List<int>? CommissionDetailId { get; set; }
+    public List<decimal>? BonusAmount { get; set; }
+    public List<decimal>? InvoiceAmounts { get; set; }
 }
 
 public class MonthlyInvoiceGenerateResult

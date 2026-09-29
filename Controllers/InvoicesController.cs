@@ -65,6 +65,9 @@ public class InvoicesController : ControllerBase
                 request?.InstituteId,
                 request?.Campus,
                 request?.InstallmentIds,
+                request?.CommissionDetailId,
+                request?.BonusAmount,
+                request?.InvoiceAmounts,
                 cancellationToken);
             return Ok(result);
         }
@@ -375,6 +378,41 @@ public class InvoicesController : ControllerBase
         {
             _logHelper.LogError(nameof(UpdateInstallmentFeesAndInvoiceAmounts), ex);
             return StatusCode(500, "An error occurred while updating installment amounts.");
+        }
+    }
+
+    [HttpPost("bonus-installments")]
+    public async Task<IActionResult> InsertBonusInstallmentAndCommission( [FromBody] List<BonusInstallmentRequest> request)
+    {
+        try
+        {
+            if (request == null || request.Count == 0)
+            {
+                return BadRequest("At least one bonus installment is required.");
+            }
+
+            if (request.Any(x => x.CommissionDetailId <= 0 || x.StudentPaymentInstallmentId <= 0 || x.BonusAmount < 0))
+            {
+                return BadRequest("Invalid bonus installment data.");
+            }
+
+            var (success, message) = await _invoiceRepository.InsertBonusInstallmentAndCommissionAsync(request);
+
+            if (!success)
+            {
+                return BadRequest(message);
+            }
+
+            return Ok(new { message });
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(
+                nameof(InsertBonusInstallmentAndCommission), ex);
+
+            return StatusCode(
+                500,
+                "An error occurred while inserting bonus installments.");
         }
     }
     private int? GetCurrentUserId()

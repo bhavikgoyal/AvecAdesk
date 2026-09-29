@@ -14,4 +14,5 @@ public class InvoiceLineItemResponse
     public string? Description { get; set; }
     public decimal Amount { get; set; }
     public string? CricosCode { get; set; }
+    public decimal BonusAmount { get; set; }
 }
