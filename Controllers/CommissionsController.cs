@@ -274,4 +274,52 @@ public class CommissionsController : ControllerBase
             return StatusCode(500, "Error fetching history.");
         }
     }
+    [HttpGet("scrapping/{scrappingId:int}")]
+    public async Task<IActionResult> GetScrappingCommissionRates(int scrappingId)
+    {
+        try
+        {
+            return Ok(await _commissionRepository.GetScrappingCommissionRatesAsync(scrappingId));
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(GetScrappingCommissionRates), ex);
+            return StatusCode(500, "An error occurred while fetching scrapping commission rates.");
+        }
+    }
+
+    [HttpPost("scrapping/{scrappingId:int}")]
+    public async Task<IActionResult> SetScrappingCommissionRate(int scrappingId, [FromBody] CommissionRateCreateRequest request)
+    {
+        try
+        {
+            if (!AllowedRateTypes.Contains(request.RateType))
+                return BadRequest("Invalid rate type. Use: Percentage or Fixed.");
+
+            var commissionId = await _commissionRepository.SetScrappingCommissionRateAsync(scrappingId, request);
+            var rates = await _commissionRepository.GetScrappingCommissionRatesAsync(scrappingId);
+            var created = rates.FirstOrDefault(x => x.CommissionId == commissionId);
+            return Ok(created ?? rates.LastOrDefault());
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(SetScrappingCommissionRate), ex);
+            return StatusCode(500, "An error occurred while setting scrapping commission rate.");
+        }
+    }
+
+    [HttpGet("scrapping/{scrappingId:int}/history")]
+    public async Task<IActionResult> GetScrappingCommissionHistory(
+        int scrappingId, [FromQuery] int? courseId, [FromQuery] bool appliesToAllCourses = false)
+    {
+        try
+        {
+            return Ok(await _commissionRepository.GetScrappingCommissionHistoryAsync(scrappingId, courseId, appliesToAllCourses));
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(GetScrappingCommissionHistory), ex);
+            return StatusCode(500, "Error fetching history.");
+        }
+    }
 }
