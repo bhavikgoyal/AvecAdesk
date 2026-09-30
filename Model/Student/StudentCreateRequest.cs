@@ -9,7 +9,7 @@ public class StudentCreateRequest
     public string Phone { get; set; } = string.Empty;
     public string? EnrollmentNumber { get; set; }
     public string EnrolmentStatus { get; set; } = "Interested";
-    public int? FolderNo { get; set; }
+    public string? FolderNo { get; set; }
     public DateTime? CourseStartDate { get; set; }
     public DateTime? CourseEndDate { get; set; }
     public string? Assignment { get; set; }
