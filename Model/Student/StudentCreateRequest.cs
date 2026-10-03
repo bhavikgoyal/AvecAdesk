@@ -21,5 +21,6 @@ public class StudentCreateRequest
     public string? ServiceType { get; set; }
     public string? Agent { get; set; }
     public string? LeadNo { get; set; }
+    public string? Campus { get; set; }
 
 }
