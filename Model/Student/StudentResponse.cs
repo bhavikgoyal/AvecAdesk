@@ -86,7 +86,7 @@ public class StudentPaymentItem
 {
     public int StudentPaymentInstallmentId { get; set; }
     public int ScheduleId { get; set; }
-    public int InstallmentNo { get; set; }
+    public string InstallmentNo { get; set; } = "";
     public int? ParentInstallmentId { get; set; }
     public DateTime DueDate { get; set; }
     public decimal FeesAmount { get; set; }
@@ -101,23 +101,20 @@ public class StudentPaymentItem
 public class CommissionHistoryItem
 {
     public int CommissionDetailId { get; set; }
-
-    public int InstallmentNo { get; set; }
+    public int? StudentPaymentInstallmentId { get; set; }
+    public string InstallmentNo { get; set; } = "";
+    public string? FeeType { get; set; }
     public DateTime DueDate { get; set; }
     public decimal FeesAmount { get; set; }
     public string? PaymentStatus { get; set; }
-
     public string? InstallmentImage { get; set; }
-
     public decimal CommissionAmount { get; set; }
     public decimal GSTAmount { get; set; }
     public decimal BonusAmount { get; set; }
     public bool IsBonus { get; set; }
     public decimal InvoiceAmount { get; set; }
-
     public string? InvoiceNo { get; set; }
     public DateTime? ReceivedDate { get; set; }
-
     public string? CommissionStatus { get; set; }
     public string? Remark { get; set; }
 }

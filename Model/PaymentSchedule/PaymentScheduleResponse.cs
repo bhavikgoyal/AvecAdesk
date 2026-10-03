@@ -21,7 +21,7 @@ public class StudentPaymentScheduleListResponse
     public string CourseName { get; set; } = string.Empty;
 
     public decimal TotalCourseFee { get; set; }
-    public int NoOfInstallments { get; set; }
+    public string NoOfInstallments { get; set; }
     public string Frequency { get; set; } = string.Empty;
 
     public DateTime FirstDueDate { get; set; }

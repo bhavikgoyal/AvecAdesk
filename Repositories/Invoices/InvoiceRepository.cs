@@ -466,7 +466,7 @@ public class InvoiceRepository : IInvoiceRepository
         InstituteName = r["InstituteName"]?.ToString() ?? string.Empty,
         ScheduleId = r.GetInt32(r.GetOrdinal("ScheduleId")),
         StudentPaymentInstallmentId = r.GetInt32(r.GetOrdinal("StudentPaymentInstallmentId")),
-        InstallmentNo = r.GetInt32(r.GetOrdinal("InstallmentNo")),
+        InstallmentNo = r.IsDBNull(r.GetOrdinal("InstallmentNo"))? null : r.GetString(r.GetOrdinal("InstallmentNo")),
         DueDate = r.GetDateTime(r.GetOrdinal("DueDate")),
         FeesAmount = r.GetDecimal(r.GetOrdinal("FeesAmount")),
         PaidAmount = r.GetDecimal(r.GetOrdinal("PaidAmount")),
