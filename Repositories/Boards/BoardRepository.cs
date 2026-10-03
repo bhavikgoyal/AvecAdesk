@@ -73,5 +73,26 @@ namespace AvecADeskApi.Repositories.Boards
                 throw;
             }
         }
+
+        public async Task<bool> UpdateBoardNameAsync(int boardId, string boardName, int userId)
+        {
+            try
+            {
+                await _db.ExecuteNonQueryAsync("dbo.Sp_Boards_Update", 
+                    cmd =>
+                    {
+                        cmd.Parameters.AddWithValue("@BoardID", boardId);
+                        cmd.Parameters.AddWithValue("@BoardName", boardName.Trim());
+                        cmd.Parameters.AddWithValue("@UserID", userId);
+                    });
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logHelper.LogError($"{nameof(BoardRepository)}.{nameof(UpdateBoardNameAsync)}", ex);
+                throw;
+            }
+        }
     }
 }
