@@ -64,5 +64,31 @@ namespace AvecADeskApi.Controllers
                 })
             );
         }
+
+        [HttpPut("{boardId:int}")]
+        public async Task<IActionResult> UpdateBoardName(int boardId, [FromBody] UpdateBoardNameRequest request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (!int.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized();
+            }
+
+            await _boardRepository.UpdateBoardNameAsync(
+                boardId,
+                request.BoardName,
+                userId
+            );
+
+            return Ok(new
+            {
+                BoardID = boardId,
+                BoardName = request.BoardName.Trim()
+            });
+        }
     }
 }
