@@ -7,6 +7,7 @@ namespace AvecADeskApi.DTOs.Card
     {
         public int CardID { get; set; }
         public int? ListID { get; set; }
+        public int? BoardID { get; set; }
         public string? CardTitle { get; set; }
         public string? Description { get; set; }
         public int? Position { get; set; }
@@ -31,6 +32,8 @@ namespace AvecADeskApi.DTOs.Card
         public int ChecklistTotal { get; set; }
         public int ChecklistCompleted { get; set; }
         public List<AvecADeskApi.DTOs.Label.LabelResponse> Labels { get; set; } = new();
+        public CardCoverResponse? Cover { get; set; }
+        public int AttachmentCount { get; set; }
     }
 
 
@@ -45,6 +48,7 @@ namespace AvecADeskApi.DTOs.Card
     public class CreateCardRequest
     {
         public int? ListID { get; set; }
+        public int? BoardID { get; set; }
         public string CardTitle { get; set; } = string.Empty;
         public string? Description { get; set; }
         public string? Color { get; set; }
@@ -53,7 +57,7 @@ namespace AvecADeskApi.DTOs.Card
         public string? RecurringRule { get; set; }             
         public int? ReminderOffsetMinutes { get; set; }
         public int? AssignedUserID { get; set; }
-        public int CardStatusID { get; set; }
+        public int? CardStatusID { get; set; }
         public int? CPID { get; set; }
         public string? SheetType { get; set; }
     }
@@ -79,6 +83,22 @@ namespace AvecADeskApi.DTOs.Card
         public int CardID { get; set; }
         public int NewCardStatusID { get; set; }
         public int NewPosition { get; set; }
+    }
+
+    public class MoveCardToListRequest
+    {
+        public int CardID { get; set; }
+        public int ListID { get; set; }
+        /// <summary>0-based index in the destination list.</summary>
+        public int Position { get; set; }
+    }
+
+    public class MoveCardToListResponse
+    {
+        public int CardID { get; set; }
+        public int ListID { get; set; }
+        public int BoardID { get; set; }
+        public int Position { get; set; }
     }
 
     public class CardStatusResponse

@@ -41,6 +41,46 @@ namespace AvecADeskApi.Controllers
             }
         }
 
+        [HttpGet("board/{boardId:int}")]
+        public async Task<IActionResult> GetCardsByBoardId(
+    int boardId,
+    [FromQuery] string? searchText,
+    [FromQuery] int? assignedUserId,
+    [FromQuery] DateTime? fromDate,
+    [FromQuery] DateTime? toDate)
+        {
+            try
+            {
+                if (boardId <= 0)
+                    return BadRequest("Invalid BoardID.");
+
+                var cards = await _repo.GetCardsByBoardIdAsync(
+                    boardId,
+                    searchText,
+                    assignedUserId,
+                    fromDate,
+                    toDate);
+
+                return Ok(cards);
+            }
+            catch (Exception ex)
+            {
+                _logHelper.LogError(
+                    $"{nameof(CardController)}.{nameof(GetCardsByBoardId)}",
+                    ex
+                );
+
+                return StatusCode(
+                    500,
+                    new
+                    {
+                        message = "Error loading board cards",
+                        detail = ex.Message
+                    }
+                );
+            }
+        }
+
         [HttpGet("my-board")]
         public async Task<IActionResult> GetMyAssignedBoardCards(
             [FromQuery] string? searchText,
@@ -124,6 +164,24 @@ namespace AvecADeskApi.Controllers
             catch (Exception ex)
             {
                 _logHelper.LogError(nameof(MoveCard), ex);
+                return StatusCode(500, new { message = "Error moving card", detail = ex.Message });
+            }
+        }
+
+        [HttpPost("move-to-list")]
+        public async Task<IActionResult> MoveCardToList([FromBody] MoveCardToListRequest request)
+        {
+            if (request == null || request.CardID <= 0 || request.ListID <= 0)
+                return BadRequest(new { message = "CardID and ListID are required." });
+
+            try
+            {
+                var result = await _repo.MoveCardToListAsync(request);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logHelper.LogError(nameof(MoveCardToList), ex);
                 return StatusCode(500, new { message = "Error moving card", detail = ex.Message });
             }
         }

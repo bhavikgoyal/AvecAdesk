@@ -12,11 +12,57 @@ namespace AvecADeskApi.Repositories.TaskRepo
         private readonly SqlDbHelper _db;
         private readonly LogHelper _logHelper;
         private readonly ILabelRepository _labelRepo;
-        public CardRepository(SqlDbHelper db, LogHelper logHelper, ILabelRepository labelRepo)
+        private readonly ICardCoverRepository _coverRepo;
+        private readonly ICardAttachmentRepository _attachmentRepo;
+        public CardRepository(
+            SqlDbHelper db,
+            LogHelper logHelper,
+            ILabelRepository labelRepo,
+            ICardCoverRepository coverRepo,
+            ICardAttachmentRepository attachmentRepo)
         {
             _db = db;
             _logHelper = logHelper;
             _labelRepo = labelRepo;
+            _coverRepo = coverRepo;
+            _attachmentRepo = attachmentRepo;
+        }
+
+        // Cover optional hai - cover load fail ho to bhi board load hona chahiye
+        private async Task AttachCoversAsync(List<CardResponse> cards)
+        {
+            try
+            {
+                var coversByCard = await _coverRepo.GetByCardIdsAsync(cards.Select(c => c.CardID));
+                foreach (var card in cards)
+                {
+                    if (coversByCard.TryGetValue(card.CardID, out var cover))
+                    {
+                        card.Cover = cover;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logHelper.LogError($"{nameof(CardRepository)}.{nameof(AttachCoversAsync)}", ex);
+            }
+
+            // Attachment count bhi optional - script na chali ho to board phir bhi load ho
+            try
+            {
+                var counts = await _attachmentRepo.GetCountsByCardIdsAsync(cards.Select(c => c.CardID));
+                foreach (var card in cards)
+                {
+                    if (counts.TryGetValue(card.CardID, out var count))
+                    {
+                        card.AttachmentCount = count;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logHelper.LogError($"{nameof(CardRepository)}.{nameof(AttachCoversAsync)}.AttachmentCounts", ex);
+            }
         }
 
         public async Task<List<BoardColumnResponse>> GetBoardCardsAsync(
@@ -46,6 +92,8 @@ namespace AvecADeskApi.Repositories.TaskRepo
                         card.Labels = cardLabels;
                     }
                 }
+
+                await AttachCoversAsync(flatCards);
 
                 var columns = flatCards
                     .GroupBy(c => new { c.CardStatusID, c.StatusName })
@@ -95,6 +143,8 @@ namespace AvecADeskApi.Repositories.TaskRepo
                     }
                 }
 
+                await AttachCoversAsync(flatCards);
+
                 return flatCards
                     .GroupBy(c => new { c.CardStatusID, c.StatusName })
                     .Select(g => new BoardColumnResponse
@@ -114,6 +164,66 @@ namespace AvecADeskApi.Repositories.TaskRepo
             }
         }
 
+        public async Task<List<CardResponse>> GetCardsByBoardIdAsync(
+    int boardId,
+    string? searchText,
+    int? assignedUserId,
+    DateTime? fromDate,
+    DateTime? toDate)
+        {
+            try
+            {
+                var flatCards = await _db.ExecuteReaderListAsync(
+                    "dbo.Sp_Cards_GetByBoardID",
+                    cmd =>
+                    {
+                        cmd.Parameters.AddWithValue("@BoardID", boardId);
+                        cmd.Parameters.AddWithValue(
+                            "@SearchText",
+                            (object?)searchText ?? DBNull.Value
+                        );
+                        cmd.Parameters.AddWithValue(
+                            "@AssignedUserID",
+                            (object?)assignedUserId ?? DBNull.Value
+                        );
+                        cmd.Parameters.AddWithValue(
+                            "@FromDate",
+                            (object?)fromDate ?? DBNull.Value
+                        );
+                        cmd.Parameters.AddWithValue(
+                            "@ToDate",
+                            (object?)toDate ?? DBNull.Value
+                        );
+                    },
+                    MapCard
+                );
+
+                var cardIds = flatCards.Select(c => c.CardID).ToList();
+                var labelsByCard = await _labelRepo.GetByCardIdsAsync(cardIds);
+
+                foreach (var card in flatCards)
+                {
+                    if (labelsByCard.TryGetValue(card.CardID, out var cardLabels))
+                    {
+                        card.Labels = cardLabels;
+                    }
+                }
+
+                await AttachCoversAsync(flatCards);
+
+                return flatCards;
+            }
+            catch (Exception ex)
+            {
+                _logHelper.LogError(
+                    $"{nameof(CardRepository)}.{nameof(GetCardsByBoardIdAsync)}",
+                    ex
+                );
+
+                throw;
+            }
+        }
+
         public async Task<int> CreateCardAsync(CreateCardRequest request, int createdUserId)
         {
             try
@@ -123,13 +233,14 @@ namespace AvecADeskApi.Repositories.TaskRepo
                 await _db.ExecuteNonQueryAsync("dbo.SP_InsertCard", cmd =>
                 {
                     cmd.Parameters.AddWithValue("@ListID", (object?)request.ListID ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@BoardID", (object?)request.BoardID ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@CardTitle", request.CardTitle);
                     cmd.Parameters.AddWithValue("@Description", request.Description ?? (object)DBNull.Value);
                     cmd.Parameters.AddWithValue("@Color", request.Color ?? (object)DBNull.Value);
                     cmd.Parameters.AddWithValue("@DueDate", request.DueDate ?? (object)DBNull.Value);
                     cmd.Parameters.AddWithValue("@CreatedUserID", createdUserId);
                     cmd.Parameters.AddWithValue("@AssignedUserID", (object?)request.AssignedUserID ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@CardStatusID", request.CardStatusID);
+                    cmd.Parameters.AddWithValue("@CardStatusID", (object?)request.CardStatusID ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@CPID", (object?)request.CPID ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@SheetType", request.SheetType ?? (object)DBNull.Value);
                     cmd.Parameters.Add(newCardIdParam);
@@ -194,6 +305,33 @@ namespace AvecADeskApi.Repositories.TaskRepo
             }
         }
 
+        public async Task<MoveCardToListResponse?> MoveCardToListAsync(MoveCardToListRequest request)
+        {
+            try
+            {
+                return await _db.ExecuteReaderSingleAsync(
+                    "dbo.SP_MoveCardToList",
+                    cmd =>
+                    {
+                        cmd.Parameters.AddWithValue("@CardID", request.CardID);
+                        cmd.Parameters.AddWithValue("@ListID", request.ListID);
+                        cmd.Parameters.AddWithValue("@Position", request.Position);
+                    },
+                    reader => new MoveCardToListResponse
+                    {
+                        CardID = reader.GetInt32(reader.GetOrdinal("CardID")),
+                        ListID = reader.GetInt32(reader.GetOrdinal("ListID")),
+                        BoardID = reader.GetInt32(reader.GetOrdinal("BoardID")),
+                        Position = reader.GetInt32(reader.GetOrdinal("Position"))
+                    });
+            }
+            catch (Exception ex)
+            {
+                _logHelper.LogError($"{nameof(CardRepository)}.{nameof(MoveCardToListAsync)}", ex);
+                throw;
+            }
+        }
+
         public async Task DeleteCardAsync(int cardId)
         {
             try
@@ -217,6 +355,7 @@ namespace AvecADeskApi.Repositories.TaskRepo
             {
                 CardID = reader.GetInt32(reader.GetOrdinal("CardID")),
                 ListID = reader["ListID"] is DBNull ? null : (int?)reader.GetInt32(reader.GetOrdinal("ListID")),
+                BoardID = reader["BoardID"] is DBNull ? null : (int?)reader.GetInt32(reader.GetOrdinal("BoardID")),
                 CardTitle = reader["CardTitle"] as string,
                 Description = reader["Description"] as string,
                 Position = reader["Position"] is DBNull ? null : (int?)reader.GetInt32(reader.GetOrdinal("Position")),
