@@ -43,6 +43,7 @@ public class CourseListResponse
     public string? CourseCategory { get; set; }
     public string? Level { get; set; }
     public string? Campus { get; set; }
+    public string? CricosCode { get; set; }
     public string? Intake { get; set; }
     public decimal? Fees { get; set; }
     public string? Duration { get; set; }

@@ -333,7 +333,7 @@ public class StudentRepository : IStudentRepository
         {
             StudentPaymentInstallmentId = reader.GetInt32(reader.GetOrdinal("StudentPaymentInstallmentId")),
             ScheduleId = reader.GetInt32(reader.GetOrdinal("ScheduleId")),
-            InstallmentNo = reader.GetInt32(reader.GetOrdinal("InstallmentNo")),
+            InstallmentNo = reader["InstallmentNo"]?.ToString() ?? "",
             DueDate = reader.GetDateTime(reader.GetOrdinal("DueDate")),
             FeesAmount = reader.GetDecimal(reader.GetOrdinal("FeesAmount")),
             PaidAmount = reader.GetDecimal(reader.GetOrdinal("PaidAmount")),
@@ -359,7 +359,13 @@ public class StudentRepository : IStudentRepository
         return new CommissionHistoryItem
         {
             CommissionDetailId = reader.GetInt32(reader.GetOrdinal("CommissionDetailId")),
-            InstallmentNo = reader.GetInt32(reader.GetOrdinal("InstallmentNo")),
+            StudentPaymentInstallmentId = ColumnExists(reader, "StudentPaymentInstallmentId") && !reader.IsDBNull(reader.GetOrdinal("StudentPaymentInstallmentId"))
+                ? reader.GetInt32(reader.GetOrdinal("StudentPaymentInstallmentId"))
+                : null,
+            InstallmentNo = reader["InstallmentNo"]?.ToString() ?? "",
+            FeeType = ColumnExists(reader, "FeeType") && !reader.IsDBNull(reader.GetOrdinal("FeeType"))
+                ? reader.GetString(reader.GetOrdinal("FeeType"))
+                : null,
             DueDate = reader.GetDateTime(reader.GetOrdinal("DueDate")),
             FeesAmount = reader.GetDecimal(reader.GetOrdinal("FeesAmount")),
             PaymentStatus = reader["PaymentStatus"]?.ToString(),

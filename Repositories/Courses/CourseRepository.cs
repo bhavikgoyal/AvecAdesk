@@ -349,6 +349,9 @@ public class CourseRepository : ICourseRepository
             Campus = reader.IsDBNull(reader.GetOrdinal("Campus"))
                 ? null
                 : reader.GetString(reader.GetOrdinal("Campus")),
+            CricosCode = HasColumn(reader, "CricosCode") && !reader.IsDBNull(reader.GetOrdinal("CricosCode"))
+                ? reader.GetString(reader.GetOrdinal("CricosCode"))
+                : null,
             Intake = reader.IsDBNull(reader.GetOrdinal("Intake"))
                 ? null
                 : reader.GetString(reader.GetOrdinal("Intake")),

@@ -166,6 +166,7 @@ public class ScheduleRepository : IScheduleRepository
                 cmd.Parameters.AddWithValue("@PaymentStatus", request.PaymentStatus);
                 cmd.Parameters.AddWithValue("@ParentInstallmentId", (object?)request.ParentInstallmentId ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@FeeType", (object?)request.FeeType ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@PaidDate", (object?)request.PaidDate ?? DBNull.Value);
                 cmd.Parameters.Add(installmentIdParam);
             });
 
@@ -444,7 +445,7 @@ public class ScheduleRepository : IScheduleRepository
             InstituteName = reader["InstituteName"]?.ToString() ?? "",
             CourseName = reader["CourseName"]?.ToString() ?? "",
             TotalCourseFee = reader.GetDecimal(reader.GetOrdinal("TotalCourseFee")),
-            NoOfInstallments = reader.GetInt32(reader.GetOrdinal("NoOfInstallments")),
+            NoOfInstallments = reader["NoOfInstallments"]?.ToString() ?? "",
             Frequency = reader["Frequency"]?.ToString() ?? "",
             FirstDueDate = reader.GetDateTime(reader.GetOrdinal("FirstDueDate")),
             TotalInstallments = reader.GetInt32(reader.GetOrdinal("TotalInstallments")),
@@ -470,6 +471,13 @@ public class ScheduleRepository : IScheduleRepository
             command.Parameters.AddWithValue("@NoOfInstallments", request.NoOfInstallments);
             command.Parameters.AddWithValue("@Frequency", request.Frequency);
             command.Parameters.AddWithValue("@FirstDueDate", request.FirstDueDate);
+            command.Parameters.AddWithValue("@Phone", (object?)request.Phone ?? DBNull.Value);
+            command.Parameters.AddWithValue("@FolderNo", (object?)request.FolderNo ?? DBNull.Value);
+            command.Parameters.AddWithValue("@LeadNo", (object?)request.LeadNo ?? DBNull.Value);
+            command.Parameters.AddWithValue("@Bonus", (object?)request.Bonus ?? DBNull.Value);
+            command.Parameters.AddWithValue("@BonusType", (object?)request.BonusType ?? DBNull.Value);
+            command.Parameters.AddWithValue("@BonusOption", (object?)request.BonusOption ?? DBNull.Value);
+
             var paymentList = request.PaymentList ?? new List<StudentPaymentInstallmentUpdateRequest>();
             try
             {
