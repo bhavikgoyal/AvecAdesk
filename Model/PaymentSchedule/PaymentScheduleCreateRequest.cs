@@ -31,6 +31,7 @@ public class StudentCommissionCreateRequest
     public string? BonusOption { get; set; }
     public decimal CommissionAmount { get; set; }
     public decimal GSTAmount { get; set; }
+    public DateTime? DueDate { get; set; }
 }
 public class StudentCommissionDetailCreateRequest
 {

@@ -95,6 +95,7 @@ public class StudentRepository : IStudentRepository
                 cmd.Parameters.AddWithValue("@ServiceType", (object?)request.ServiceType ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@Agent", (object?)request.Agent ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@LeadNo", (object?)request.LeadNo ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@Campus", (object?)request.Campus ?? DBNull.Value);
                 cmd.Parameters.Add(studentIdParam);
             });
 
@@ -386,6 +387,9 @@ public class StudentRepository : IStudentRepository
                 : reader.GetDateTime(reader.GetOrdinal("ReceivedDate")),
 
             CommissionStatus = reader["CommissionStatus"]?.ToString(),
+            Remark = ColumnExists(reader, "Remark") && !reader.IsDBNull(reader.GetOrdinal("Remark"))
+                ? reader.GetString(reader.GetOrdinal("Remark"))
+                : null,
         };
     }
 
