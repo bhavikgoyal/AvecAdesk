@@ -7,6 +7,7 @@ namespace AvecADeskApi.DTOs.Card
     {
         public int CardID { get; set; }
         public int? ListID { get; set; }
+        public int? BoardID { get; set; }
         public string? CardTitle { get; set; }
         public string? Description { get; set; }
         public int? Position { get; set; }
@@ -45,6 +46,7 @@ namespace AvecADeskApi.DTOs.Card
     public class CreateCardRequest
     {
         public int? ListID { get; set; }
+        public int? BoardID { get; set; }
         public string CardTitle { get; set; } = string.Empty;
         public string? Description { get; set; }
         public string? Color { get; set; }
@@ -53,7 +55,7 @@ namespace AvecADeskApi.DTOs.Card
         public string? RecurringRule { get; set; }             
         public int? ReminderOffsetMinutes { get; set; }
         public int? AssignedUserID { get; set; }
-        public int CardStatusID { get; set; }
+        public int? CardStatusID { get; set; }
         public int? CPID { get; set; }
         public string? SheetType { get; set; }
     }

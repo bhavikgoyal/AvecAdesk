@@ -41,6 +41,46 @@ namespace AvecADeskApi.Controllers
             }
         }
 
+        [HttpGet("board/{boardId:int}")]
+        public async Task<IActionResult> GetCardsByBoardId(
+    int boardId,
+    [FromQuery] string? searchText,
+    [FromQuery] int? assignedUserId,
+    [FromQuery] DateTime? fromDate,
+    [FromQuery] DateTime? toDate)
+        {
+            try
+            {
+                if (boardId <= 0)
+                    return BadRequest("Invalid BoardID.");
+
+                var cards = await _repo.GetCardsByBoardIdAsync(
+                    boardId,
+                    searchText,
+                    assignedUserId,
+                    fromDate,
+                    toDate);
+
+                return Ok(cards);
+            }
+            catch (Exception ex)
+            {
+                _logHelper.LogError(
+                    $"{nameof(CardController)}.{nameof(GetCardsByBoardId)}",
+                    ex
+                );
+
+                return StatusCode(
+                    500,
+                    new
+                    {
+                        message = "Error loading board cards",
+                        detail = ex.Message
+                    }
+                );
+            }
+        }
+
         [HttpGet("my-board")]
         public async Task<IActionResult> GetMyAssignedBoardCards(
             [FromQuery] string? searchText,

@@ -114,6 +114,64 @@ namespace AvecADeskApi.Repositories.TaskRepo
             }
         }
 
+        public async Task<List<CardResponse>> GetCardsByBoardIdAsync(
+    int boardId,
+    string? searchText,
+    int? assignedUserId,
+    DateTime? fromDate,
+    DateTime? toDate)
+        {
+            try
+            {
+                var flatCards = await _db.ExecuteReaderListAsync(
+                    "dbo.Sp_Cards_GetByBoardID",
+                    cmd =>
+                    {
+                        cmd.Parameters.AddWithValue("@BoardID", boardId);
+                        cmd.Parameters.AddWithValue(
+                            "@SearchText",
+                            (object?)searchText ?? DBNull.Value
+                        );
+                        cmd.Parameters.AddWithValue(
+                            "@AssignedUserID",
+                            (object?)assignedUserId ?? DBNull.Value
+                        );
+                        cmd.Parameters.AddWithValue(
+                            "@FromDate",
+                            (object?)fromDate ?? DBNull.Value
+                        );
+                        cmd.Parameters.AddWithValue(
+                            "@ToDate",
+                            (object?)toDate ?? DBNull.Value
+                        );
+                    },
+                    MapCard
+                );
+
+                var cardIds = flatCards.Select(c => c.CardID).ToList();
+                var labelsByCard = await _labelRepo.GetByCardIdsAsync(cardIds);
+
+                foreach (var card in flatCards)
+                {
+                    if (labelsByCard.TryGetValue(card.CardID, out var cardLabels))
+                    {
+                        card.Labels = cardLabels;
+                    }
+                }
+
+                return flatCards;
+            }
+            catch (Exception ex)
+            {
+                _logHelper.LogError(
+                    $"{nameof(CardRepository)}.{nameof(GetCardsByBoardIdAsync)}",
+                    ex
+                );
+
+                throw;
+            }
+        }
+
         public async Task<int> CreateCardAsync(CreateCardRequest request, int createdUserId)
         {
             try
@@ -123,13 +181,14 @@ namespace AvecADeskApi.Repositories.TaskRepo
                 await _db.ExecuteNonQueryAsync("dbo.SP_InsertCard", cmd =>
                 {
                     cmd.Parameters.AddWithValue("@ListID", (object?)request.ListID ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@BoardID", (object?)request.BoardID ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@CardTitle", request.CardTitle);
                     cmd.Parameters.AddWithValue("@Description", request.Description ?? (object)DBNull.Value);
                     cmd.Parameters.AddWithValue("@Color", request.Color ?? (object)DBNull.Value);
                     cmd.Parameters.AddWithValue("@DueDate", request.DueDate ?? (object)DBNull.Value);
                     cmd.Parameters.AddWithValue("@CreatedUserID", createdUserId);
                     cmd.Parameters.AddWithValue("@AssignedUserID", (object?)request.AssignedUserID ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@CardStatusID", request.CardStatusID);
+                    cmd.Parameters.AddWithValue("@CardStatusID", (object?)request.CardStatusID ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@CPID", (object?)request.CPID ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@SheetType", request.SheetType ?? (object)DBNull.Value);
                     cmd.Parameters.Add(newCardIdParam);
@@ -217,6 +276,7 @@ namespace AvecADeskApi.Repositories.TaskRepo
             {
                 CardID = reader.GetInt32(reader.GetOrdinal("CardID")),
                 ListID = reader["ListID"] is DBNull ? null : (int?)reader.GetInt32(reader.GetOrdinal("ListID")),
+                BoardID = reader["BoardID"] is DBNull ? null : (int?)reader.GetInt32(reader.GetOrdinal("BoardID")),
                 CardTitle = reader["CardTitle"] as string,
                 Description = reader["Description"] as string,
                 Position = reader["Position"] is DBNull ? null : (int?)reader.GetInt32(reader.GetOrdinal("Position")),
