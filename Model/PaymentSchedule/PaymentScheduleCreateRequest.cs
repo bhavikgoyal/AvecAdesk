@@ -12,7 +12,7 @@ public class PaymentScheduleCreateRequest
 public class StudentPaymentInstallmentCreateRequest
 {
     public int ScheduleId { get; set; }
-    public int InstallmentNo { get; set; }
+    public string InstallmentNo { get; set; } = "";
     public int? ParentInstallmentId { get; set; }
     public DateTime DueDate { get; set; }
     public decimal FeesAmount { get; set; }
@@ -20,6 +20,7 @@ public class StudentPaymentInstallmentCreateRequest
     public decimal BalanceAmount { get; set; }
     public string PaymentStatus { get; set; } = "";
     public string? FeeType { get; set; }
+    public DateTime? PaidDate { get; set; }
 }
 public class StudentCommissionCreateRequest
 {

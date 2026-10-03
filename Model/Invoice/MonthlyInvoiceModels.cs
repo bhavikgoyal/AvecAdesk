@@ -13,7 +13,7 @@ public class MonthlyPaidInstallmentRow
     public string InstituteName { get; set; } = string.Empty;
     public int ScheduleId { get; set; }
     public int StudentPaymentInstallmentId { get; set; }
-    public int InstallmentNo { get; set; }
+    public string? InstallmentNo { get; set; }
     public DateTime DueDate { get; set; }
     public decimal FeesAmount { get; set; }
     public decimal PaidAmount { get; set; }
