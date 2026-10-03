@@ -35,5 +35,24 @@ namespace AvecADeskApi.Controllers
                 ListName = request.ListName.Trim()
             });
         }
+
+        [HttpGet("{boardId:int}")]
+        public async Task<IActionResult> GetListsByBoardId(int boardId)
+        {
+            if (boardId <= 0)
+                return BadRequest("Invalid BoardID.");
+
+            var lists = await _listRepository.GetListsByBoardIdAsync(boardId);
+
+            return Ok(
+                lists.Select(list => new
+                {
+                    ListID = list.ListID,
+                    BoardID = list.BoardID,
+                    ListName = list.ListName,
+                    Position = list.Position
+                })
+            );
+        }
     }
 }

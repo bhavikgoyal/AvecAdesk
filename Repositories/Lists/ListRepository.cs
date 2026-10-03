@@ -45,5 +45,35 @@ namespace AvecADeskApi.Repositories.Lists
                 throw;
             }
         }
+
+        public async Task<List<(int ListID, int BoardID, string ListName, int Position)>> GetListsByBoardIdAsync(int boardId)
+        {
+            try
+            {
+                return await _db.ExecuteReaderListAsync(
+                    "dbo.sp_Lists_GetByBoardId",
+                    cmd =>
+                    {
+                        cmd.Parameters.AddWithValue("@BoardID", boardId);
+                    },
+                    reader =>
+                    (
+                        reader.GetInt32(reader.GetOrdinal("ListID")),
+                        reader.GetInt32(reader.GetOrdinal("BoardID")),
+                        reader.GetString(reader.GetOrdinal("ListName")),
+                        reader.GetInt32(reader.GetOrdinal("Position"))
+                    )
+                );
+            }
+            catch (Exception ex)
+            {
+                _logHelper.LogError(
+                    $"{nameof(ListRepository)}.{nameof(GetListsByBoardIdAsync)}",
+                    ex
+                );
+
+                throw;
+            }
+        }
     }
 }
