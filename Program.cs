@@ -193,6 +193,9 @@ builder.Services.AddScoped<IViewActivityHistoryRepository, ViewActivityHistoryRe
 builder.Services.AddScoped<IUserRepository, UserPasswordRepository>();
 builder.Services.AddScoped<IVendorStudentRepository, VendorStudentRepository>();
 builder.Services.AddScoped<ICardMemberRepository, CardMemberRepository>();
+builder.Services.AddScoped<ICardCoverRepository, AvecADeskApi.Repositories.CardCover.CardCoverRepository>();
+builder.Services.AddScoped<ICardCommentRepository, AvecADeskApi.Repositories.CardComment.CardCommentRepository>();
+builder.Services.AddScoped<ICardAttachmentRepository, AvecADeskApi.Repositories.CardAttachment.CardAttachmentRepository>();
 builder.Services.AddSingleton<IPasswordResetTokenStore, InMemoryPasswordResetTokenStore>();
 builder.Services.AddScoped<InstallmentConfirmationService>();
 builder.Services.AddScoped<IInstituteContactRepository, InstituteContactRepository>();

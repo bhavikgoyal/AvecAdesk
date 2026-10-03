@@ -12,11 +12,57 @@ namespace AvecADeskApi.Repositories.TaskRepo
         private readonly SqlDbHelper _db;
         private readonly LogHelper _logHelper;
         private readonly ILabelRepository _labelRepo;
-        public CardRepository(SqlDbHelper db, LogHelper logHelper, ILabelRepository labelRepo)
+        private readonly ICardCoverRepository _coverRepo;
+        private readonly ICardAttachmentRepository _attachmentRepo;
+        public CardRepository(
+            SqlDbHelper db,
+            LogHelper logHelper,
+            ILabelRepository labelRepo,
+            ICardCoverRepository coverRepo,
+            ICardAttachmentRepository attachmentRepo)
         {
             _db = db;
             _logHelper = logHelper;
             _labelRepo = labelRepo;
+            _coverRepo = coverRepo;
+            _attachmentRepo = attachmentRepo;
+        }
+
+        // Cover optional hai - cover load fail ho to bhi board load hona chahiye
+        private async Task AttachCoversAsync(List<CardResponse> cards)
+        {
+            try
+            {
+                var coversByCard = await _coverRepo.GetByCardIdsAsync(cards.Select(c => c.CardID));
+                foreach (var card in cards)
+                {
+                    if (coversByCard.TryGetValue(card.CardID, out var cover))
+                    {
+                        card.Cover = cover;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logHelper.LogError($"{nameof(CardRepository)}.{nameof(AttachCoversAsync)}", ex);
+            }
+
+            // Attachment count bhi optional - script na chali ho to board phir bhi load ho
+            try
+            {
+                var counts = await _attachmentRepo.GetCountsByCardIdsAsync(cards.Select(c => c.CardID));
+                foreach (var card in cards)
+                {
+                    if (counts.TryGetValue(card.CardID, out var count))
+                    {
+                        card.AttachmentCount = count;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logHelper.LogError($"{nameof(CardRepository)}.{nameof(AttachCoversAsync)}.AttachmentCounts", ex);
+            }
         }
 
         public async Task<List<BoardColumnResponse>> GetBoardCardsAsync(
@@ -46,6 +92,8 @@ namespace AvecADeskApi.Repositories.TaskRepo
                         card.Labels = cardLabels;
                     }
                 }
+
+                await AttachCoversAsync(flatCards);
 
                 var columns = flatCards
                     .GroupBy(c => new { c.CardStatusID, c.StatusName })
@@ -94,6 +142,8 @@ namespace AvecADeskApi.Repositories.TaskRepo
                         card.Labels = cardLabels;
                     }
                 }
+
+                await AttachCoversAsync(flatCards);
 
                 return flatCards
                     .GroupBy(c => new { c.CardStatusID, c.StatusName })
@@ -158,6 +208,8 @@ namespace AvecADeskApi.Repositories.TaskRepo
                         card.Labels = cardLabels;
                     }
                 }
+
+                await AttachCoversAsync(flatCards);
 
                 return flatCards;
             }
@@ -249,6 +301,33 @@ namespace AvecADeskApi.Repositories.TaskRepo
             catch (Exception ex)
             {
                 _logHelper.LogError($"{nameof(CardRepository)}.{nameof(MoveCardAsync)}", ex);
+                throw;
+            }
+        }
+
+        public async Task<MoveCardToListResponse?> MoveCardToListAsync(MoveCardToListRequest request)
+        {
+            try
+            {
+                return await _db.ExecuteReaderSingleAsync(
+                    "dbo.SP_MoveCardToList",
+                    cmd =>
+                    {
+                        cmd.Parameters.AddWithValue("@CardID", request.CardID);
+                        cmd.Parameters.AddWithValue("@ListID", request.ListID);
+                        cmd.Parameters.AddWithValue("@Position", request.Position);
+                    },
+                    reader => new MoveCardToListResponse
+                    {
+                        CardID = reader.GetInt32(reader.GetOrdinal("CardID")),
+                        ListID = reader.GetInt32(reader.GetOrdinal("ListID")),
+                        BoardID = reader.GetInt32(reader.GetOrdinal("BoardID")),
+                        Position = reader.GetInt32(reader.GetOrdinal("Position"))
+                    });
+            }
+            catch (Exception ex)
+            {
+                _logHelper.LogError($"{nameof(CardRepository)}.{nameof(MoveCardToListAsync)}", ex);
                 throw;
             }
         }

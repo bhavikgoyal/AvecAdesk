@@ -120,6 +120,131 @@ namespace AvecADeskApi.Repositories.Label
             }
         }
 
+        public async Task<List<BoardLabelResponse>> GetBoardLabelsForCardAsync(int cardId)
+        {
+            try
+            {
+                return await _db.ExecuteReaderListAsync(
+                    "dbo.SP_GetBoardLabelsForCard",
+                    cmd => cmd.Parameters.AddWithValue("@CardID", cardId),
+                    MapBoardLabel);
+            }
+            catch (Exception ex)
+            {
+                _logHelper.LogError($"{nameof(LabelRepository)}.{nameof(GetBoardLabelsForCardAsync)}", ex);
+                throw;
+            }
+        }
+
+        public async Task<BoardLabelResponse?> CreateBoardLabelAsync(CreateBoardLabelRequest request, int? userId)
+        {
+            try
+            {
+                return await _db.ExecuteReaderSingleAsync(
+                    "dbo.SP_CreateBoardLabel",
+                    cmd =>
+                    {
+                        cmd.Parameters.AddWithValue("@CardID", request.CardID);
+                        cmd.Parameters.AddWithValue("@LabelName", request.LabelName ?? string.Empty);
+                        cmd.Parameters.AddWithValue("@Color", request.Color ?? string.Empty);
+                        cmd.Parameters.AddWithValue("@UserID", (object?)userId ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@AssignToCard", request.AssignToCard);
+                    },
+                    MapBoardLabel);
+            }
+            catch (Exception ex)
+            {
+                _logHelper.LogError($"{nameof(LabelRepository)}.{nameof(CreateBoardLabelAsync)}", ex);
+                throw;
+            }
+        }
+
+        public async Task<BoardLabelResponse?> UpdateBoardLabelAsync(int boardLabelId, UpdateBoardLabelRequest request)
+        {
+            try
+            {
+                return await _db.ExecuteReaderSingleAsync(
+                    "dbo.SP_UpdateBoardLabel",
+                    cmd =>
+                    {
+                        cmd.Parameters.AddWithValue("@BoardLabelID", boardLabelId);
+                        cmd.Parameters.AddWithValue("@LabelName", request.LabelName ?? string.Empty);
+                        cmd.Parameters.AddWithValue("@Color", request.Color ?? string.Empty);
+                    },
+                    MapBoardLabel);
+            }
+            catch (Exception ex)
+            {
+                _logHelper.LogError($"{nameof(LabelRepository)}.{nameof(UpdateBoardLabelAsync)}", ex);
+                throw;
+            }
+        }
+
+        public async Task<bool> DeleteBoardLabelAsync(int boardLabelId)
+        {
+            try
+            {
+                var result = await _db.ExecuteScalarAsync(
+                    "dbo.SP_DeleteBoardLabel",
+                    cmd => cmd.Parameters.AddWithValue("@BoardLabelID", boardLabelId));
+
+                return result != null && result != DBNull.Value && Convert.ToInt32(result) > 0;
+            }
+            catch (Exception ex)
+            {
+                _logHelper.LogError($"{nameof(LabelRepository)}.{nameof(DeleteBoardLabelAsync)}", ex);
+                throw;
+            }
+        }
+
+        public async Task<BoardLabelResponse?> SetCardBoardLabelAsync(SetCardBoardLabelRequest request)
+        {
+            try
+            {
+                return await _db.ExecuteReaderSingleAsync(
+                    "dbo.SP_SetCardBoardLabel",
+                    cmd =>
+                    {
+                        cmd.Parameters.AddWithValue("@CardID", request.CardID);
+                        cmd.Parameters.AddWithValue("@BoardLabelID", request.BoardLabelID);
+                        cmd.Parameters.AddWithValue("@IsAssigned", request.IsAssigned);
+                    },
+                    MapBoardLabel);
+            }
+            catch (Exception ex)
+            {
+                _logHelper.LogError($"{nameof(LabelRepository)}.{nameof(SetCardBoardLabelAsync)}", ex);
+                throw;
+            }
+        }
+
+        private static BoardLabelResponse MapBoardLabel(SqlDataReader reader)
+        {
+            var hasAssigned = HasColumn(reader, "IsAssigned");
+            var hasCardLabel = HasColumn(reader, "CardLabelID");
+            return new BoardLabelResponse
+            {
+                BoardLabelID = reader.GetInt32(reader.GetOrdinal("BoardLabelID")),
+                BoardID = reader["BoardID"] is DBNull ? null : reader.GetInt32(reader.GetOrdinal("BoardID")),
+                LabelName = reader["LabelName"] as string ?? string.Empty,
+                Color = reader["Color"] as string ?? string.Empty,
+                IsAssigned = hasAssigned && reader["IsAssigned"] is bool assigned && assigned,
+                CardLabelID = hasCardLabel && reader["CardLabelID"] is not DBNull
+                    ? reader.GetInt32(reader.GetOrdinal("CardLabelID"))
+                    : null,
+            };
+        }
+
+        private static bool HasColumn(SqlDataReader reader, string name)
+        {
+            for (var i = 0; i < reader.FieldCount; i++)
+            {
+                if (string.Equals(reader.GetName(i), name, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+            return false;
+        }
+
         private static LabelResponse MapLabel(SqlDataReader reader)
         {
             var color = reader["Color"] is DBNull ? null : reader["Color"] as string;

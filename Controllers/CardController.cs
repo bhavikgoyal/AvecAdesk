@@ -168,6 +168,24 @@ namespace AvecADeskApi.Controllers
             }
         }
 
+        [HttpPost("move-to-list")]
+        public async Task<IActionResult> MoveCardToList([FromBody] MoveCardToListRequest request)
+        {
+            if (request == null || request.CardID <= 0 || request.ListID <= 0)
+                return BadRequest(new { message = "CardID and ListID are required." });
+
+            try
+            {
+                var result = await _repo.MoveCardToListAsync(request);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logHelper.LogError(nameof(MoveCardToList), ex);
+                return StatusCode(500, new { message = "Error moving card", detail = ex.Message });
+            }
+        }
+
         [HttpPost("delete/{cardId}")]
         public async Task<IActionResult> DeleteCard(int cardId)
         {
