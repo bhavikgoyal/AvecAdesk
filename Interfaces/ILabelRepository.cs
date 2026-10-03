@@ -9,5 +9,11 @@ namespace AvecADeskApi.Interfaces
         Task<LabelResponse> CreateLabelAsync(CreateLabelRequest request);
         Task<bool> DeleteLabelAsync(int labelId);
         Task SyncCardColorAsync(int cardId);
+
+        Task<List<BoardLabelResponse>> GetBoardLabelsForCardAsync(int cardId);
+        Task<BoardLabelResponse?> CreateBoardLabelAsync(CreateBoardLabelRequest request, int? userId);
+        Task<BoardLabelResponse?> UpdateBoardLabelAsync(int boardLabelId, UpdateBoardLabelRequest request);
+        Task<bool> DeleteBoardLabelAsync(int boardLabelId);
+        Task<BoardLabelResponse?> SetCardBoardLabelAsync(SetCardBoardLabelRequest request);
     }
 }

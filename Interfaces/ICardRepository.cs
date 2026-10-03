@@ -22,6 +22,7 @@ namespace AvecADeskApi.Interfaces
         Task UpdateCardAsync(UpdateCardRequest request);
 
         Task MoveCardAsync(MoveCardRequest request);
+        Task<MoveCardToListResponse?> MoveCardToListAsync(MoveCardToListRequest request);
 
         Task DeleteCardAsync(int cardId);
     }
