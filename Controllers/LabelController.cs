@@ -3,6 +3,7 @@ using AvecADeskApi.Interfaces;
 using AvecADeskApi.LOG;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using System.Security.Claims;
 
 namespace AvecADeskApi.Controllers
@@ -12,6 +13,9 @@ namespace AvecADeskApi.Controllers
     [Authorize]
     public class LabelController : ControllerBase
     {
+        /// <summary>THROW number used by the board label SPs for duplicate names.</summary>
+        private const int DuplicateLabelError = 50010;
+
         private readonly ILabelRepository _repo;
         private readonly LogHelper _logHelper;
 
@@ -99,6 +103,10 @@ namespace AvecADeskApi.Controllers
                 var created = await _repo.CreateBoardLabelAsync(request, GetCurrentUserId());
                 return Ok(created);
             }
+            catch (SqlException ex) when (ex.Number == DuplicateLabelError)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
             catch (Exception ex)
             {
                 _logHelper.LogError($"{nameof(LabelController)}.{nameof(CreateBoardLabel)}", ex);
@@ -123,6 +131,10 @@ namespace AvecADeskApi.Controllers
                 var updated = await _repo.UpdateBoardLabelAsync(boardLabelId, request);
                 if (updated == null) return NotFound(new { message = "Label not found." });
                 return Ok(updated);
+            }
+            catch (SqlException ex) when (ex.Number == DuplicateLabelError)
+            {
+                return BadRequest(new { message = ex.Message });
             }
             catch (Exception ex)
             {
@@ -159,6 +171,10 @@ namespace AvecADeskApi.Controllers
             {
                 var label = await _repo.SetCardBoardLabelAsync(request);
                 return Ok(label);
+            }
+            catch (SqlException ex) when (ex.Number == DuplicateLabelError)
+            {
+                return BadRequest(new { message = ex.Message });
             }
             catch (Exception ex)
             {
