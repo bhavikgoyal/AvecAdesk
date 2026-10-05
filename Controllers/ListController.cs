@@ -1,5 +1,6 @@
 ﻿using AvecADeskApi.DTOs.List;
 using AvecADeskApi.Interfaces;
+using AvecADeskApi.Services.Trello;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,10 +12,12 @@ namespace AvecADeskApi.Controllers
     public class ListController : ControllerBase
     {
         private readonly IListRepository _listRepository;
+        private readonly TrelloSyncQueue _trelloQueue;
 
-        public ListController(IListRepository listRepository)
+        public ListController(IListRepository listRepository, TrelloSyncQueue trelloQueue)
         {
             _listRepository = listRepository;
+            _trelloQueue = trelloQueue;
         }
 
         [HttpPost]
@@ -27,6 +30,7 @@ namespace AvecADeskApi.Controllers
                 request.BoardID,
                 request.ListName
             );
+            _trelloQueue.LocalBoardChanged(request.BoardID);
 
             return Ok(new
             {

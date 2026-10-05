@@ -207,6 +207,17 @@ builder.Services.AddScoped<ContractExpiryReminderService>();
 builder.Services.AddScoped<IInvoiceDueReminderRepository, InvoiceDueReminderRepository>();
 builder.Services.AddScoped<InvoiceDueReminderService>();
 builder.Services.AddHostedService<TaskAutomationBackgroundService>();
+builder.Services.AddHttpClient(AvecADeskApi.Services.Trello.TrelloClient.HttpClientName, client =>
+{
+    client.BaseAddress = new Uri("https://api.trello.com/1/");
+    client.Timeout = TimeSpan.FromSeconds(60);
+});
+builder.Services.AddScoped<AvecADeskApi.Services.Trello.TrelloClient>();
+builder.Services.AddScoped<ITrelloSyncRepository, AvecADeskApi.Repositories.Trello.TrelloSyncRepository>();
+builder.Services.AddScoped<AvecADeskApi.Services.Trello.TrelloSyncService>();
+builder.Services.AddScoped<AvecADeskApi.Services.Trello.TrelloAutoSyncService>();
+builder.Services.AddSingleton<AvecADeskApi.Services.Trello.TrelloSyncQueue>();
+builder.Services.AddHostedService<AvecADeskApi.Services.Trello.TrelloSyncWorker>();
 
 builder.Services.AddScoped<JwtTokenGenerator>();
 
