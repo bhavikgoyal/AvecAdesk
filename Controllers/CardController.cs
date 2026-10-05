@@ -1,6 +1,7 @@
 ﻿using AvecADeskApi.DTOs.Card;
 using AvecADeskApi.Interfaces;
 using AvecADeskApi.LOG;
+using AvecADeskApi.Services.Trello;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -14,11 +15,13 @@ namespace AvecADeskApi.Controllers
     {
         private readonly ICardRepository _repo;
         private readonly LogHelper _logHelper;
+        private readonly TrelloSyncQueue _trelloQueue;
 
-        public CardController(ICardRepository repo, LogHelper logHelper)
+        public CardController(ICardRepository repo, LogHelper logHelper, TrelloSyncQueue trelloQueue)
         {
             _repo = repo;
             _logHelper = logHelper;
+            _trelloQueue = trelloQueue;
         }
 
 
@@ -122,6 +125,7 @@ namespace AvecADeskApi.Controllers
 
                 var createdUserId = int.Parse(userIdClaim.Value);
                 var cardId = await _repo.CreateCardAsync(request, createdUserId);
+                _trelloQueue.LocalCardChanged(cardId);
                 return Ok(new { Success = true, Message = "Card created successfully", CardId = cardId });
             }
             catch (Exception ex)
@@ -140,6 +144,7 @@ namespace AvecADeskApi.Controllers
             try
             {
                 await _repo.UpdateCardAsync(request);
+                _trelloQueue.LocalCardChanged(request.CardID);
                 return Ok(new { Success = true, Message = "Card updated successfully" });
             }
             catch (Exception ex)
@@ -177,6 +182,7 @@ namespace AvecADeskApi.Controllers
             try
             {
                 var result = await _repo.MoveCardToListAsync(request);
+                _trelloQueue.LocalCardChanged(request.CardID);
                 return Ok(result);
             }
             catch (Exception ex)

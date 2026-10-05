@@ -1,5 +1,6 @@
 ﻿using AvecADeskApi.DTOs.Board;
 using AvecADeskApi.Interfaces;
+using AvecADeskApi.Services.Trello;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -12,10 +13,12 @@ namespace AvecADeskApi.Controllers
     public class BoardController : ControllerBase
     {
         private readonly IBoardRepository _boardRepository;
+        private readonly TrelloSyncQueue _trelloQueue;
 
-        public BoardController(IBoardRepository boardRepository)
+        public BoardController(IBoardRepository boardRepository, TrelloSyncQueue trelloQueue)
         {
             _boardRepository = boardRepository;
+            _trelloQueue = trelloQueue;
         }
 
         [HttpPost]
@@ -35,6 +38,7 @@ namespace AvecADeskApi.Controllers
                 request.BoardName,
                 userId
             );
+            _trelloQueue.LocalBoardChanged(boardId);
 
             return Ok(new
             {
@@ -83,6 +87,7 @@ namespace AvecADeskApi.Controllers
                 request.BoardName,
                 userId
             );
+            _trelloQueue.LocalBoardRenamed(boardId);
 
             return Ok(new
             {
