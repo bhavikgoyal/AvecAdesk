@@ -2,6 +2,7 @@ namespace AvecADeskApi.Model.Course;
 
 public class CourseUpdateRequest
 {
+    public int InstituteId { get; set; }
     public string CourseName { get; set; } = string.Empty;
     public string? CourseCategory { get; set; }
     public string? Description { get; set; }
