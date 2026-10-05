@@ -52,7 +52,7 @@ public class InstituteContactController : ControllerBase
         }
     }
 
-    [HttpPut("{contactId:int}")]
+    [HttpPost("{contactId:int}")]
     public async Task<IActionResult> UpdateContact(int instituteId, int contactId, [FromBody] InstituteContactUpsertRequest request)
     {
         try
