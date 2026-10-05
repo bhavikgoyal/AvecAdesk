@@ -48,12 +48,12 @@ public class CoursesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetCoursesByScrappingId([FromQuery] int? scrappingId)
+    public async Task<IActionResult> GetCoursesByScrappingId([FromQuery] int? scrappingId, [FromQuery] string? campus)
     {
         try
         {
 
-            var courses = await _courseRepository.GetCoursesByINSTITUTEScrappingAsync(scrappingId);
+            var courses = await _courseRepository.GetCoursesByINSTITUTEScrappingAsync(scrappingId, campus);
             var gstPercentage = _configuration.GetValue<decimal>("GST:Percentage");
 
             return Ok(new

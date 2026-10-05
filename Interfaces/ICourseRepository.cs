@@ -5,7 +5,7 @@ namespace AvecADeskApi.Interfaces;
 public interface ICourseRepository
 {
     Task<List<CourseResponse>> GetCoursesByInstituteAsync(int? instituteId);
-    Task<List<InstituteScrappingCourseResponse>> GetCoursesByINSTITUTEScrappingAsync(int? scrappingId);
+    Task<List<InstituteScrappingCourseResponse>> GetCoursesByINSTITUTEScrappingAsync(int? scrappingId, string? campus);
     Task<CourseResponse?> GetCourseByIdAsync(int courseId);
     Task<List<CourseListResponse>> GetCoursesAsync();
     Task<int> CreateCourseAsync(CourseCreateRequest request, string? programLogoPath);

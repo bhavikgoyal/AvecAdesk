@@ -33,13 +33,17 @@ public class CourseRepository : ICourseRepository
             throw;
         }
     }
-    public async Task<List<InstituteScrappingCourseResponse>> GetCoursesByINSTITUTEScrappingAsync(int? scrappingId)
+    public async Task<List<InstituteScrappingCourseResponse>> GetCoursesByINSTITUTEScrappingAsync(int? scrappingId, string? campus)
     {
         try
         {
             return await _db.ExecuteReaderListAsync(
                 "sp_GetCoursesByINSTITUTEScrapping",
-                cmd => cmd.Parameters.AddWithValue("@ScrappingId", (object?)scrappingId ?? DBNull.Value),
+                cmd =>
+                {
+                    cmd.Parameters.AddWithValue("@ScrappingId", (object?)scrappingId ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@Campus", (object?)campus ?? DBNull.Value);
+                },
                 MapInstituteScrappingCourse);
         }
         catch (Exception ex)
@@ -137,6 +141,7 @@ public class CourseRepository : ICourseRepository
             await _db.ExecuteNonQueryAsync("sp_UpdateCourse", cmd =>
             {
                 cmd.Parameters.AddWithValue("@CourseId", courseId);
+                cmd.Parameters.AddWithValue("@InstituteId", request.InstituteId);
                 cmd.Parameters.AddWithValue("@CourseName", request.CourseName);
                 cmd.Parameters.AddWithValue("@Category", request.CourseCategory ?? (object)DBNull.Value);
                 cmd.Parameters.AddWithValue("@Description", (object?)request.Description ?? DBNull.Value);
