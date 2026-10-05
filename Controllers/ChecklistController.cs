@@ -148,7 +148,7 @@ namespace AvecADeskApi.Controllers
         //    }
         //}
 
-        [HttpPatch("item/toggle/{checklistItemId:int}")]
+        [HttpPost("item/toggle/{checklistItemId:int}")]
             public async Task<IActionResult> ToggleItem(int checklistItemId, [FromBody] UpdateChecklistItemStatusRequest request)
             {
                 try
