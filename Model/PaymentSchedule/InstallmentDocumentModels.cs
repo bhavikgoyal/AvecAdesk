@@ -28,7 +28,7 @@ public class SendInstallmentConfirmationEmailResponse
 public class InstallmentConfirmationInfo
 {
     public int StudentPaymentInstallmentId { get; set; }
-    public int InstallmentNo { get; set; }
+    public string? InstallmentNo { get; set; }
     public DateTime DueDate { get; set; }
     public decimal FeesAmount { get; set; }
     public string? InstallmentImage { get; set; }
