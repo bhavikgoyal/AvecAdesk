@@ -155,7 +155,7 @@ namespace AvecADeskApi.Controllers
         }
 
         
-        [HttpPatch("move")]
+        [HttpPost("move")]
         public async Task<IActionResult> MoveCard([FromBody] MoveCardRequest request)
         {
             if (request == null || request.CardID <= 0)

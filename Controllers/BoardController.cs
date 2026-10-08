@@ -69,7 +69,7 @@ namespace AvecADeskApi.Controllers
             );
         }
 
-        [HttpPut("{boardId:int}")]
+        [HttpPost("{boardId:int}")]
         public async Task<IActionResult> UpdateBoardName(int boardId, [FromBody] UpdateBoardNameRequest request)
         {
             if (!ModelState.IsValid)
