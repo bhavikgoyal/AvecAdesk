@@ -14,18 +14,21 @@ namespace AvecADeskApi.Repositories.TaskRepo
         private readonly ILabelRepository _labelRepo;
         private readonly ICardCoverRepository _coverRepo;
         private readonly ICardAttachmentRepository _attachmentRepo;
+        private readonly ICardMemberRepository _memberRepo;
         public CardRepository(
             SqlDbHelper db,
             LogHelper logHelper,
             ILabelRepository labelRepo,
             ICardCoverRepository coverRepo,
-            ICardAttachmentRepository attachmentRepo)
+            ICardAttachmentRepository attachmentRepo,
+            ICardMemberRepository memberRepo)
         {
             _db = db;
             _logHelper = logHelper;
             _labelRepo = labelRepo;
             _coverRepo = coverRepo;
             _attachmentRepo = attachmentRepo;
+            _memberRepo = memberRepo;
         }
 
         // Cover optional hai - cover load fail ho to bhi board load hona chahiye
@@ -62,6 +65,23 @@ namespace AvecADeskApi.Repositories.TaskRepo
             catch (Exception ex)
             {
                 _logHelper.LogError($"{nameof(CardRepository)}.{nameof(AttachCoversAsync)}.AttachmentCounts", ex);
+            }
+
+            // Card members
+            try
+            {
+                var membersByCard = await _memberRepo.GetByCardIdsAsync(cards.Select(c => c.CardID));
+                foreach (var card in cards)
+                {
+                    if (membersByCard.TryGetValue(card.CardID, out var cardMembers))
+                    {
+                        card.Members = cardMembers;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logHelper.LogError($"{nameof(CardRepository)}.{nameof(AttachCoversAsync)}.Members", ex);
             }
         }
 

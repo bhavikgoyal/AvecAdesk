@@ -34,6 +34,7 @@ namespace AvecADeskApi.DTOs.Card
         public List<AvecADeskApi.DTOs.Label.LabelResponse> Labels { get; set; } = new();
         public CardCoverResponse? Cover { get; set; }
         public int AttachmentCount { get; set; }
+        public List<CardMemberResponse> Members { get; set; } = new();
     }
 
 

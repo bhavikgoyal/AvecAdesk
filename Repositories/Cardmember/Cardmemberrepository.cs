@@ -41,6 +41,39 @@ namespace AvecADeskApi.Repositories
             }
         }
 
+        public async Task<Dictionary<int, List<CardMemberResponse>>> GetByCardIdsAsync(IEnumerable<int> cardIds)
+        {
+            var idList = cardIds.Distinct().ToList();
+            if (idList.Count == 0) return new Dictionary<int, List<CardMemberResponse>>();
+
+            try
+            {
+                var csv = string.Join(",", idList);
+
+                var flat = await _db.ExecuteReaderListAsync(
+                    "dbo.SP_GetCardMembersByCardIds",
+                    cmd => cmd.Parameters.AddWithValue("@CardIDs", csv),
+                    reader => new CardMemberResponse
+                    {
+                        CardLabelID = reader.GetInt32(reader.GetOrdinal("CardLabelID")),
+                        CardID = reader.GetInt32(reader.GetOrdinal("CardID")),
+                        UserID = reader.GetInt32(reader.GetOrdinal("UserID")),
+                        UserName = reader["UserName"] as string,
+                        FirstName = reader["FirstName"] as string,
+                        LastName = reader["LastName"] as string,
+                    });
+
+                return flat
+                    .GroupBy(m => m.CardID)
+                    .ToDictionary(g => g.Key, g => g.ToList());
+            }
+            catch (Exception ex)
+            {
+                _logHelper.LogError($"{nameof(CardMemberRepository)}.{nameof(GetByCardIdsAsync)}", ex);
+                throw;
+            }
+        }
+
         public async Task AddCardMemberAsync(int cardId, int userId)
         {
             try
