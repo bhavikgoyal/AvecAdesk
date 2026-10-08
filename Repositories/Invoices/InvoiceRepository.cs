@@ -445,6 +445,9 @@ public class InvoiceRepository : IInvoiceRepository
        : null,
             TotalAmount = r.GetDecimal(r.GetOrdinal("TotalAmount")),
             Status = r.GetString(r.GetOrdinal("Status")),
+            InvoiceMonthYear = HasColumn(r, "InvoiceMonthYear") && !r.IsDBNull(r.GetOrdinal("InvoiceMonthYear"))
+                ? r.GetString(r.GetOrdinal("InvoiceMonthYear"))
+                : null,
             PdfPath = r.IsDBNull(r.GetOrdinal("PdfPath")) ? null : r.GetString(r.GetOrdinal("PdfPath")),
             CreatedAt = r.GetDateTime(r.GetOrdinal("CreatedAt")),
             ApprovedByUserId = r.IsDBNull(r.GetOrdinal("ApprovedByUserId")) ? null : r.GetInt32(r.GetOrdinal("ApprovedByUserId")),

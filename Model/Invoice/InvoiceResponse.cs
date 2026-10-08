@@ -9,6 +9,7 @@ public class InvoiceResponse
     public string? InstituteAddress { get; set; }
     public decimal TotalAmount { get; set; }
     public string Status { get; set; } = string.Empty;
+    public string? InvoiceMonthYear { get; set; }
     public string? PdfPath { get; set; }
     public DateTime CreatedAt { get; set; }
     public int? ApprovedByUserId { get; set; }

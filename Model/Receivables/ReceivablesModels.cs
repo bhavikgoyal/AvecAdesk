@@ -86,7 +86,7 @@ public class StudentPaymentInstallmentResponse
 public class StudentCommissionInstallmentDetailResponse
 {
     public int StudentPaymentInstallmentId { get; set; }
-    public int InstallmentNo { get; set; }
+    public string? InstallmentNo { get; set; }
     public DateTime DueDate { get; set; }
     public string PaymentStatus { get; set; } = string.Empty;
     public DateTime? PaidDate { get; set; }
