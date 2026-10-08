@@ -202,7 +202,8 @@ public class ReceivablesRepository : IReceivablesRepository
     private static StudentCommissionInstallmentDetailResponse MapStudentCommissionInstallmentDetail(SqlDataReader r) => new()
     {
         StudentPaymentInstallmentId = r.GetInt32(r.GetOrdinal("StudentPaymentInstallmentId")),
-        InstallmentNo = r.GetInt32(r.GetOrdinal("InstallmentNo")),
+        InstallmentNo = r.IsDBNull(r.GetOrdinal("InstallmentNo"))
+         ? null : r.GetString(r.GetOrdinal("InstallmentNo")),
         DueDate = r.GetDateTime(r.GetOrdinal("DueDate")),
         PaymentStatus = r.GetString(r.GetOrdinal("PaymentStatus")),
         PaidDate = r.IsDBNull(r.GetOrdinal("PaidDate")) ? null : r.GetDateTime(r.GetOrdinal("PaidDate")),

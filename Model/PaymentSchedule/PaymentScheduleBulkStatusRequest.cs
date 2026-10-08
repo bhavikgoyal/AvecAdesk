@@ -10,6 +10,8 @@ public class UpdateStudentPaymentScheduleRequest
     public int NoOfInstallments { get; set; }
     public string Frequency { get; set; } = string.Empty;
     public DateTime FirstDueDate { get; set; }
+    public string? FullName { get; set; }
+    public string? Email { get; set; }
     public string? Phone { get; set; }
     public string? FolderNo { get; set; }
     public string? LeadNo { get; set; }

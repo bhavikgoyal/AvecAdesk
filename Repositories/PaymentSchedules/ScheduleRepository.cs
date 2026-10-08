@@ -472,6 +472,8 @@ public class ScheduleRepository : IScheduleRepository
             command.Parameters.AddWithValue("@NoOfInstallments", request.NoOfInstallments);
             command.Parameters.AddWithValue("@Frequency", request.Frequency);
             command.Parameters.AddWithValue("@FirstDueDate", request.FirstDueDate);
+            command.Parameters.AddWithValue("@FullName", (object?)request.FullName ?? DBNull.Value);
+            command.Parameters.AddWithValue("@Email", (object?)request.Email ?? DBNull.Value);
             command.Parameters.AddWithValue("@Phone", (object?)request.Phone ?? DBNull.Value);
             command.Parameters.AddWithValue("@FolderNo", (object?)request.FolderNo ?? DBNull.Value);
             command.Parameters.AddWithValue("@LeadNo", (object?)request.LeadNo ?? DBNull.Value);
