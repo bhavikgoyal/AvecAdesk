@@ -96,6 +96,7 @@ public class StudentRepository : IStudentRepository
                 cmd.Parameters.AddWithValue("@Agent", (object?)request.Agent ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@LeadNo", (object?)request.LeadNo ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@Campus", (object?)request.Campus ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@InitialPayment", (object?)request.InitialPayment ?? DBNull.Value);
                 cmd.Parameters.Add(studentIdParam);
             });
 
@@ -133,6 +134,7 @@ public class StudentRepository : IStudentRepository
                 cmd.Parameters.AddWithValue("@ServiceType", (object?)request.ServiceType ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@Agent", (object?)request.Agent ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@LeadNo", (object?)request.LeadNo ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@InitialPayment", (object?)request.InitialPayment ?? DBNull.Value);
                 cmd.Parameters.Add(rowsAffectedParam);
             });
 
@@ -290,6 +292,9 @@ public class StudentRepository : IStudentRepository
             : null,
             OSHCFee = ColumnExists(reader, "OSHCFee") && !reader.IsDBNull(reader.GetOrdinal("OSHCFee"))
             ? reader.GetDecimal(reader.GetOrdinal("OSHCFee"))
+            : null,
+            InitialPayment = ColumnExists(reader, "InitialPayment") && !reader.IsDBNull(reader.GetOrdinal("InitialPayment"))
+            ? reader.GetDecimal(reader.GetOrdinal("InitialPayment"))
             : null,
             CoeVoe = reader["CoeVoe"]?.ToString(),
             ServiceType = reader["ServiceType"]?.ToString(),

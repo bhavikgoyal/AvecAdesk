@@ -18,4 +18,5 @@ public class StudentUpdateRequest
     public string? ServiceType { get; set; }
     public string? Agent { get; set; }
     public string? LeadNo { get; set; }
+    public decimal? InitialPayment { get; set; }
 }
