@@ -410,14 +410,28 @@ public class InvoiceRepository : IInvoiceRepository
                     InvoiceId = r.GetInt32(r.GetOrdinal("InvoiceId")),
                     StudentId = r.GetInt32(r.GetOrdinal("StudentId")),
                     CricosCode = HasColumn(r, "CricosCode") && !r.IsDBNull(r.GetOrdinal("CricosCode"))
-                   ? r.GetString(r.GetOrdinal("CricosCode"))
-                   : null,
+                    ? r.GetString(r.GetOrdinal("CricosCode")) : null,
                     StudentName = HasColumn(r, "StudentName") && !r.IsDBNull(r.GetOrdinal("StudentName"))
-                    ? r.GetString(r.GetOrdinal("StudentName"))
-                    : null,
-                    Description = r.IsDBNull(r.GetOrdinal("Description")) ? null : r.GetString(r.GetOrdinal("Description")),
+                    ? r.GetString(r.GetOrdinal("StudentName")) : null,
+                    EnrollmentNo = HasColumn(r, "EnrollmentNo") && !r.IsDBNull(r.GetOrdinal("EnrollmentNo"))
+                    ? r.GetString(r.GetOrdinal("EnrollmentNo")) : null,
+                    Description = r.IsDBNull(r.GetOrdinal("Description"))
+                    ? null  : r.GetString(r.GetOrdinal("Description")),
                     Amount = r.GetDecimal(r.GetOrdinal("Amount")),
-                    BonusAmount = r.IsDBNull(r.GetOrdinal("BonusAmount")) ? 0 : r.GetDecimal(r.GetOrdinal("BonusAmount"))
+                    BonusAmount = HasColumn(r, "BonusAmount") && !r.IsDBNull(r.GetOrdinal("BonusAmount"))
+                    ? r.GetDecimal(r.GetOrdinal("BonusAmount")) : 0,
+                    FeesAmount = HasColumn(r, "FeesAmount") && !r.IsDBNull(r.GetOrdinal("FeesAmount"))
+                    ? r.GetDecimal(r.GetOrdinal("FeesAmount")) : 0,
+                    CommissionPercentage = HasColumn(r, "CommissionPercentage") && !r.IsDBNull(r.GetOrdinal("CommissionPercentage"))
+                    ? r.GetDecimal(r.GetOrdinal("CommissionPercentage")): 0,
+                    CommissionAmount = HasColumn(r, "CommissionAmount") && !r.IsDBNull(r.GetOrdinal("CommissionAmount"))
+                    ? r.GetDecimal(r.GetOrdinal("CommissionAmount")) : 0,
+                    GSTAmount = HasColumn(r, "GSTAmount") && !r.IsDBNull(r.GetOrdinal("GSTAmount"))
+                    ? r.GetDecimal(r.GetOrdinal("GSTAmount")) : 0,
+                    Address = HasColumn(r, "Address") && !r.IsDBNull(r.GetOrdinal("Address"))
+                    ? r.GetString(r.GetOrdinal("Address")) : null,
+                    ZipCode = HasColumn(r, "ZipCode") && !r.IsDBNull(r.GetOrdinal("ZipCode"))
+                    ? r.GetString(r.GetOrdinal("ZipCode")) : null,
                 });
         }
         catch (Exception ex)
@@ -443,6 +457,18 @@ public class InvoiceRepository : IInvoiceRepository
             InstituteAddress = HasColumn(r, "InstituteAddress") && !r.IsDBNull(r.GetOrdinal("InstituteAddress"))
        ? r.GetString(r.GetOrdinal("InstituteAddress"))
        : null,
+            Address = HasColumn(r, "Address") && !r.IsDBNull(r.GetOrdinal("Address"))
+                ? r.GetString(r.GetOrdinal("Address"))
+                : null,
+            City = HasColumn(r, "City") && !r.IsDBNull(r.GetOrdinal("City"))
+                ? r.GetString(r.GetOrdinal("City"))
+                : null,
+            State = HasColumn(r, "State") && !r.IsDBNull(r.GetOrdinal("State"))
+                ? r.GetString(r.GetOrdinal("State"))
+                : null,
+            ZipCode = HasColumn(r, "ZipCode") && !r.IsDBNull(r.GetOrdinal("ZipCode"))
+                ? r.GetString(r.GetOrdinal("ZipCode"))
+                : null,
             TotalAmount = r.GetDecimal(r.GetOrdinal("TotalAmount")),
             Status = r.GetString(r.GetOrdinal("Status")),
             InvoiceMonthYear = HasColumn(r, "InvoiceMonthYear") && !r.IsDBNull(r.GetOrdinal("InvoiceMonthYear"))
