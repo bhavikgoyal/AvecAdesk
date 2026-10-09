@@ -107,7 +107,7 @@ namespace AvecADeskApi.Repositories.CardComment
                     {
                         ActivityID = reader.GetInt32(reader.GetOrdinal("ActivityID")),
                         UserID = reader["UserID"] is DBNull ? null : reader.GetInt32(reader.GetOrdinal("UserID")),
-                        DisplayName = BuildDisplayName(
+                        DisplayName = TrelloMemberName(reader) ?? BuildDisplayName(
                             reader["FirstName"] as string,
                             reader["LastName"] as string,
                             reader["UserName"] as string),
@@ -146,6 +146,16 @@ namespace AvecADeskApi.Repositories.CardComment
                 _logHelper.LogError($"{nameof(CardCommentRepository)}.{nameof(LogActivityAsync)}", ex);
                 throw;
             }
+        }
+
+        private static string? TrelloMemberName(SqlDataReader reader)
+        {
+            for (var i = 0; i < reader.FieldCount; i++)
+            {
+                if (reader.GetName(i) == "TrelloMemberName")
+                    return reader.IsDBNull(i) || string.IsNullOrWhiteSpace(reader.GetString(i)) ? null : reader.GetString(i);
+            }
+            return null;
         }
 
         private static CardCommentResponse MapComment(SqlDataReader reader)

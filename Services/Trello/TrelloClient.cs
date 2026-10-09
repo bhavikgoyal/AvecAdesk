@@ -107,7 +107,7 @@ public class TrelloClient
         SendAsync<List<TrelloList>>(HttpMethod.Get, $"boards/{Uri.EscapeDataString(boardId)}/lists?filter=open&fields=name,closed,pos", null, ct);
 
     public Task<List<TrelloCard>> GetCardsAsync(string boardId, CancellationToken ct = default) =>
-        SendAsync<List<TrelloCard>>(HttpMethod.Get, $"boards/{Uri.EscapeDataString(boardId)}/cards/open?fields=name,desc,due,idList,closed,pos", null, ct);
+        SendAsync<List<TrelloCard>>(HttpMethod.Get, $"boards/{Uri.EscapeDataString(boardId)}/cards/open?fields=name,desc,due,start,idList,closed,pos,idLabels,cover", null, ct);
 
     public Task<TrelloList> CreateListAsync(string boardId, string name, CancellationToken ct = default) =>
         SendAsync<TrelloList>(HttpMethod.Post, "lists", new Dictionary<string, object?>
@@ -130,6 +130,110 @@ public class TrelloClient
     /// <summary>Only the keys present in <paramref name="fields"/> are changed; a null value clears the field (e.g. due).</summary>
     public Task<TrelloCard> UpdateCardAsync(string cardId, Dictionary<string, object?> fields, CancellationToken ct = default) =>
         SendAsync<TrelloCard>(HttpMethod.Put, $"cards/{Uri.EscapeDataString(cardId)}", fields, ct);
+
+    public Task<List<TrelloLabel>> GetBoardLabelsAsync(string boardId, CancellationToken ct = default) =>
+        SendAsync<List<TrelloLabel>>(HttpMethod.Get, $"boards/{Uri.EscapeDataString(boardId)}/labels?fields=name,color&limit=1000", null, ct);
+
+    /// <summary><paramref name="color"/> null = a label without color.</summary>
+    public Task<TrelloLabel> CreateLabelAsync(string boardId, string name, string? color, CancellationToken ct = default) =>
+        SendAsync<TrelloLabel>(HttpMethod.Post, "labels", new Dictionary<string, object?>
+        {
+            ["idBoard"] = boardId,
+            ["name"] = name,
+            ["color"] = color ?? "null",
+        }, ct);
+
+    public Task<TrelloLabel> UpdateLabelAsync(string labelId, string name, string? color, CancellationToken ct = default) =>
+        SendAsync<TrelloLabel>(HttpMethod.Put, $"labels/{Uri.EscapeDataString(labelId)}", new Dictionary<string, object?>
+        {
+            ["name"] = name,
+            ["color"] = color ?? "null",
+        }, ct);
+
+    public Task DeleteLabelAsync(string labelId, CancellationToken ct = default) =>
+        DeleteAsync($"labels/{Uri.EscapeDataString(labelId)}", ct);
+
+    public Task<List<TrelloChecklist>> GetBoardChecklistsAsync(string boardId, CancellationToken ct = default) =>
+        SendAsync<List<TrelloChecklist>>(HttpMethod.Get,
+            $"boards/{Uri.EscapeDataString(boardId)}/checklists?fields=name,idCard,pos&checkItems=all&checkItem_fields=name,state,pos", null, ct);
+
+    public Task<TrelloChecklist> CreateChecklistAsync(string cardId, string name, CancellationToken ct = default) =>
+        SendAsync<TrelloChecklist>(HttpMethod.Post, "checklists", new Dictionary<string, object?>
+        {
+            ["idCard"] = cardId,
+            ["name"] = name,
+            ["pos"] = "bottom",
+        }, ct);
+
+    public Task DeleteChecklistAsync(string checklistId, CancellationToken ct = default) =>
+        DeleteAsync($"checklists/{Uri.EscapeDataString(checklistId)}", ct);
+
+    public Task<TrelloCheckItem> CreateCheckItemAsync(string checklistId, string name, bool complete, CancellationToken ct = default) =>
+        SendAsync<TrelloCheckItem>(HttpMethod.Post, $"checklists/{Uri.EscapeDataString(checklistId)}/checkItems", new Dictionary<string, object?>
+        {
+            ["name"] = name,
+            ["pos"] = "bottom",
+            ["checked"] = complete,
+        }, ct);
+
+    public Task<TrelloCheckItem> UpdateCheckItemAsync(string cardId, string checkItemId, string name, bool complete, CancellationToken ct = default) =>
+        SendAsync<TrelloCheckItem>(HttpMethod.Put,
+            $"cards/{Uri.EscapeDataString(cardId)}/checkItem/{Uri.EscapeDataString(checkItemId)}", new Dictionary<string, object?>
+            {
+                ["name"] = name,
+                ["state"] = complete ? "complete" : "incomplete",
+            }, ct);
+
+    public Task DeleteCheckItemAsync(string checklistId, string checkItemId, CancellationToken ct = default) =>
+        DeleteAsync($"checklists/{Uri.EscapeDataString(checklistId)}/checkItems/{Uri.EscapeDataString(checkItemId)}", ct);
+
+
+    /// <summary>Newest first. <paramref name="before"/> is an action ID, used to page further back.</summary>
+    public Task<List<TrelloCommentAction>> GetBoardCommentsAsync(string boardId, string? before, int limit, CancellationToken ct = default)
+    {
+        var path = $"boards/{Uri.EscapeDataString(boardId)}/actions?filter=commentCard&limit={limit}" +
+                   "&fields=data,date,idMemberCreator&memberCreator_fields=fullName,username";
+        if (!string.IsNullOrEmpty(before)) path += $"&before={Uri.EscapeDataString(before)}";
+        return SendAsync<List<TrelloCommentAction>>(HttpMethod.Get, path, null, ct);
+    }
+
+    /// <summary>Newest first. <paramref name="since"/> = an action ID; only newer actions are returned.</summary>
+    public Task<List<TrelloActivityAction>> GetBoardActivityAsync(string boardId, IEnumerable<string> types, string? since, string? before, int limit, CancellationToken ct = default)
+    {
+        var path = $"boards/{Uri.EscapeDataString(boardId)}/actions?filter={Uri.EscapeDataString(string.Join(',', types))}&limit={limit}" +
+                   "&fields=type,data,date,idMemberCreator&memberCreator_fields=fullName,username&member=true&member_fields=fullName,username";
+        if (!string.IsNullOrEmpty(since)) path += $"&since={Uri.EscapeDataString(since)}";
+        if (!string.IsNullOrEmpty(before)) path += $"&before={Uri.EscapeDataString(before)}";
+        return SendAsync<List<TrelloActivityAction>>(HttpMethod.Get, path, null, ct);
+    }
+
+    public Task<TrelloCommentAction> AddCommentAsync(string cardId, string text, CancellationToken ct = default) =>
+        SendAsync<TrelloCommentAction>(HttpMethod.Post, $"cards/{Uri.EscapeDataString(cardId)}/actions/comments", new Dictionary<string, object?>
+        {
+            ["text"] = text,
+        }, ct);
+
+    /// <summary>Trello only lets the comment's author edit it.</summary>
+    public Task<TrelloCommentAction> UpdateCommentAsync(string commentActionId, string text, CancellationToken ct = default) =>
+        SendAsync<TrelloCommentAction>(HttpMethod.Put, $"actions/{Uri.EscapeDataString(commentActionId)}", new Dictionary<string, object?>
+        {
+            ["text"] = text,
+        }, ct);
+
+    public Task DeleteCommentAsync(string commentActionId, CancellationToken ct = default) =>
+        DeleteAsync($"actions/{Uri.EscapeDataString(commentActionId)}", ct);
+
+    private async Task DeleteAsync(string path, CancellationToken ct)
+    {
+        try
+        {
+            await SendAsync<JsonElement>(HttpMethod.Delete, path, null, ct);
+        }
+        catch (JsonException)
+        {
+            // Trello may answer a delete with an empty body.
+        }
+    }
 
     private async Task<T> SendAsync<T>(HttpMethod method, string path, object? body, CancellationToken ct)
     {

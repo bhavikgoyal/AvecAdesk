@@ -26,6 +26,8 @@ public class InstituteScrappingResponse
     public string? ProgramDescription { get; set; }
     public string? ProgramLogo { get; set; }
     public string? AddmissionRequirements { get; set; }
+    public string? ZipCode { get; set; }
+    public string? Address { get; set; }
     public bool? IsScrap { get; set; }
     public bool TopColleged { get; set; }
     public DateTime? CreatedAt { get; set; }

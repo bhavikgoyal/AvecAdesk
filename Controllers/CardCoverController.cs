@@ -1,6 +1,7 @@
 using AvecADeskApi.DTOs.Card;
 using AvecADeskApi.Interfaces;
 using AvecADeskApi.LOG;
+using AvecADeskApi.Services.Trello;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -20,12 +21,14 @@ namespace AvecADeskApi.Controllers
         private readonly ICardCoverRepository _repo;
         private readonly LogHelper _logHelper;
         private readonly IWebHostEnvironment _env;
+        private readonly TrelloSyncQueue _trelloQueue;
 
-        public CardCoverController(ICardCoverRepository repo, LogHelper logHelper, IWebHostEnvironment env)
+        public CardCoverController(ICardCoverRepository repo, LogHelper logHelper, IWebHostEnvironment env, TrelloSyncQueue trelloQueue)
         {
             _repo = repo;
             _logHelper = logHelper;
             _env = env;
+            _trelloQueue = trelloQueue;
         }
 
         [HttpGet("colors")]
@@ -83,6 +86,7 @@ namespace AvecADeskApi.Controllers
             try
             {
                 var cover = await _repo.SaveAsync(request, GetCurrentUserId());
+                _trelloQueue.LocalCardChanged(request.CardID);
                 return Ok(cover);
             }
             catch (Exception ex)
@@ -143,6 +147,7 @@ namespace AvecADeskApi.Controllers
             try
             {
                 await _repo.RemoveAsync(cardId);
+                _trelloQueue.LocalCardChanged(cardId);
                 return Ok(new { message = "Cover removed successfully." });
             }
             catch (Exception ex)

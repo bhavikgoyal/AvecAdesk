@@ -200,6 +200,8 @@ public class InstituteScrappingRepository : IInstituteScrappingRepository
         cmd.Parameters.AddWithValue("@ProgramDescription", (object?)request.ProgramDescription ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@ProgramLogo", (object?)request.ProgramLogo ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@AddmissionRequirements", (object?)request.AddmissionRequirements ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@ZipCode", (object?)request.ZipCode ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@Address", (object?)request.Address ?? DBNull.Value);
     }
 
     private static InstituteScrappingResponse MapRow(SqlDataReader reader)
@@ -230,6 +232,8 @@ public class InstituteScrappingRepository : IInstituteScrappingRepository
             ProgramDescription = ReadString(reader, "ProgramDescription"),
             ProgramLogo = ReadString(reader, "ProgramLogo"),
             AddmissionRequirements = ReadString(reader, "AddmissionRequirements"),
+            ZipCode = ReadString(reader, "ZipCode"),
+            Address = ReadString(reader, "Address"),
             IsScrap = ReadBoolean(reader, "IsScrap"),
             TopColleged = ReadBoolean(reader, "TopColleged") ?? false,
             CreatedAt = ReadDateTime(reader, "CreatedAt"),

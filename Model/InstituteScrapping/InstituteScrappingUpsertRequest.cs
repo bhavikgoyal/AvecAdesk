@@ -24,4 +24,6 @@ public class InstituteScrappingUpsertRequest
     public string? ProgramDescription { get; set; }
     public string? ProgramLogo { get; set; }
     public string? AddmissionRequirements { get; set; }
+    public string? ZipCode { get; set; }
+    public string? Address { get; set; }
 }

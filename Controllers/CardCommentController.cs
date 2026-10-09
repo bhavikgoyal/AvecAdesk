@@ -1,6 +1,8 @@
 using AvecADeskApi.DTOs.Card;
+using AvecADeskApi.DTOs.Trello;
 using AvecADeskApi.Interfaces;
 using AvecADeskApi.LOG;
+using AvecADeskApi.Services.Trello;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -29,11 +31,13 @@ namespace AvecADeskApi.Controllers
 
         private readonly ICardCommentRepository _repo;
         private readonly LogHelper _logHelper;
+        private readonly TrelloChangeTracker _trello;
 
-        public CardCommentController(ICardCommentRepository repo, LogHelper logHelper)
+        public CardCommentController(ICardCommentRepository repo, LogHelper logHelper, TrelloChangeTracker trello)
         {
             _repo = repo;
             _logHelper = logHelper;
+            _trello = trello;
         }
 
         [HttpGet("card/{cardId:int}")]
@@ -112,6 +116,7 @@ namespace AvecADeskApi.Controllers
             {
                 var comment = await _repo.CreateAsync(request.CardID, userId.Value, request.CommentText.Trim());
                 if (comment != null) comment.CanEdit = true;
+                _trello.CardChanged(request.CardID);
                 return Ok(comment);
             }
             catch (Exception ex)
@@ -136,6 +141,7 @@ namespace AvecADeskApi.Controllers
                 var comment = await _repo.UpdateAsync(commentId, userId.Value, request.CommentText.Trim());
                 if (comment == null) return NotFound(new { message = "Comment not found." });
                 comment.CanEdit = true;
+                _trello.CardChanged(comment.CardID);
                 return Ok(comment);
             }
             catch (Exception ex)
@@ -155,8 +161,10 @@ namespace AvecADeskApi.Controllers
 
             try
             {
+                var trelloRef = await _trello.GetRefAsync(TrelloEntityTypes.Comment, commentId);
                 var deleted = await _repo.DeleteAsync(commentId, userId.Value);
                 if (!deleted) return NotFound(new { message = "Comment not found or you can only delete your own comment." });
+                await _trello.DeletedAsync(TrelloEntityTypes.Comment, trelloRef);
                 return Ok(new { message = "Comment deleted successfully." });
             }
             catch (Exception ex)
