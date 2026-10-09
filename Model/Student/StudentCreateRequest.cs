@@ -22,5 +22,6 @@ public class StudentCreateRequest
     public string? Agent { get; set; }
     public string? LeadNo { get; set; }
     public string? Campus { get; set; }
+    public decimal? InitialPayment { get; set; }
 
 }
