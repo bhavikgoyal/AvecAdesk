@@ -1,6 +1,7 @@
 using AvecADeskApi.DTOs.Label;
 using AvecADeskApi.Interfaces;
 using AvecADeskApi.LOG;
+using AvecADeskApi.Services.Trello;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
@@ -18,11 +19,13 @@ namespace AvecADeskApi.Controllers
 
         private readonly ILabelRepository _repo;
         private readonly LogHelper _logHelper;
+        private readonly TrelloSyncQueue _trelloQueue;
 
-        public LabelController(ILabelRepository repo, LogHelper logHelper)
+        public LabelController(ILabelRepository repo, LogHelper logHelper, TrelloSyncQueue trelloQueue)
         {
             _repo = repo;
             _logHelper = logHelper;
+            _trelloQueue = trelloQueue;
         }
 
         [HttpGet("card/{cardId:int}")]
@@ -60,6 +63,7 @@ namespace AvecADeskApi.Controllers
                     Color = string.IsNullOrWhiteSpace(request.Color) ? null : request.Color.Trim(),
                 });
 
+                _trelloQueue.LocalCardChanged(request.CardID);
                 return Ok(created);
             }
             catch (Exception ex)
@@ -101,6 +105,7 @@ namespace AvecADeskApi.Controllers
             try
             {
                 var created = await _repo.CreateBoardLabelAsync(request, GetCurrentUserId());
+                _trelloQueue.LocalCardChanged(request.CardID);
                 return Ok(created);
             }
             catch (SqlException ex) when (ex.Number == DuplicateLabelError)
@@ -130,6 +135,7 @@ namespace AvecADeskApi.Controllers
             {
                 var updated = await _repo.UpdateBoardLabelAsync(boardLabelId, request);
                 if (updated == null) return NotFound(new { message = "Label not found." });
+                if (updated.BoardID is int boardId) _trelloQueue.LocalBoardChanged(boardId);
                 return Ok(updated);
             }
             catch (SqlException ex) when (ex.Number == DuplicateLabelError)
@@ -170,6 +176,7 @@ namespace AvecADeskApi.Controllers
             try
             {
                 var label = await _repo.SetCardBoardLabelAsync(request);
+                _trelloQueue.LocalCardChanged(request.CardID);
                 return Ok(label);
             }
             catch (SqlException ex) when (ex.Number == DuplicateLabelError)

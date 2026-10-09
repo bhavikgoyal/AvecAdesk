@@ -1,6 +1,8 @@
 ﻿using AvecADeskApi.DTOs;
+using AvecADeskApi.DTOs.Trello;
 using AvecADeskApi.Interfaces;
 using AvecADeskApi.Model.Cardlist;
+using AvecADeskApi.Services.Trello;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,11 +16,13 @@ namespace AvecADeskApi.Controllers
         {
             private readonly IChecklistRepository _repo;
             private readonly ILogger<ChecklistController> _logger;
+            private readonly TrelloChangeTracker _trello;
 
-            public ChecklistController(IChecklistRepository repo, ILogger<ChecklistController> logger)
+            public ChecklistController(IChecklistRepository repo, ILogger<ChecklistController> logger, TrelloChangeTracker trello)
             {
                 _repo = repo;
                 _logger = logger;
+                _trello = trello;
             }
 
            
@@ -47,6 +51,7 @@ namespace AvecADeskApi.Controllers
                 try
                 {
                     var id = await _repo.CreateChecklistAsync(request);
+                    _trello.CardChanged(request.CardID);
                     return Ok(new { message = "Checklist created successfully", checklistId = id });
                 }
                 catch (Exception ex)
@@ -62,8 +67,10 @@ namespace AvecADeskApi.Controllers
             {
                 try
                 {
+                    var trelloRef = await _trello.GetRefAsync(TrelloEntityTypes.Checklist, checklistId);
                     var deleted = await _repo.DeleteChecklistAsync(checklistId);
                     if (!deleted) return NotFound(new { message = "Checklist not found." });
+                    await _trello.DeletedAsync(TrelloEntityTypes.Checklist, trelloRef);
                     return Ok(new { message = "Checklist deleted successfully." });
                 }
                 catch (Exception ex)
@@ -121,6 +128,7 @@ namespace AvecADeskApi.Controllers
             try
             {
                 var id = await _repo.CreateChecklistItemAsync(request);
+                await _trello.ChangedAsync(TrelloEntityTypes.Checklist, request.ChecklistID);
                 return Ok(new { message = "Item created successfully", checklistItemId = id });
             }
             catch (Exception ex)
@@ -155,6 +163,7 @@ namespace AvecADeskApi.Controllers
                 {
                     var updated = await _repo.UpdateChecklistItemStatusAsync(checklistItemId, request.IsCompleted);
                     if (!updated) return NotFound(new { message = "Checklist item not found." });
+                    await _trello.ChangedAsync(TrelloEntityTypes.CheckItem, checklistItemId);
                     return Ok(new { message = "Status updated successfully." });
                 }
                 catch (Exception ex)
@@ -170,8 +179,10 @@ namespace AvecADeskApi.Controllers
         {
             try
             {
+                var trelloRef = await _trello.GetRefAsync(TrelloEntityTypes.CheckItem, checklistItemId);
                 var deleted = await _repo.DeleteChecklistItemAsync(checklistItemId);
                 if (!deleted) return NotFound(new { message = "Checklist item not found." });
+                await _trello.DeletedAsync(TrelloEntityTypes.CheckItem, trelloRef);
                 return Ok(new { message = "Item deleted successfully." });
             }
             catch (Exception ex)
@@ -191,6 +202,7 @@ namespace AvecADeskApi.Controllers
             {
                 var updated = await _repo.UpdateChecklistItemNameAsync(checklistItemId, request.ItemName);
                 if (!updated) return NotFound(new { message = "Checklist item not found." });
+                await _trello.ChangedAsync(TrelloEntityTypes.CheckItem, checklistItemId);
                 return Ok(new { message = "Item updated successfully." });
             }
             catch (Exception ex)

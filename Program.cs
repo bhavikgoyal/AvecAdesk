@@ -216,6 +216,7 @@ builder.Services.AddScoped<AvecADeskApi.Services.Trello.TrelloClient>();
 builder.Services.AddScoped<ITrelloSyncRepository, AvecADeskApi.Repositories.Trello.TrelloSyncRepository>();
 builder.Services.AddScoped<AvecADeskApi.Services.Trello.TrelloSyncService>();
 builder.Services.AddScoped<AvecADeskApi.Services.Trello.TrelloAutoSyncService>();
+builder.Services.AddScoped<AvecADeskApi.Services.Trello.TrelloChangeTracker>();
 builder.Services.AddSingleton<AvecADeskApi.Services.Trello.TrelloSyncQueue>();
 builder.Services.AddHostedService<AvecADeskApi.Services.Trello.TrelloSyncWorker>();
 

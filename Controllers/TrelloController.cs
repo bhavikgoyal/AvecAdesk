@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AvecADeskApi.Controllers
 {
-    /// <summary>Read-only health check for the automatic Trello sync (no UI uses it).</summary>
+    /// <summary>Health check for the automatic Trello sync, plus an on-demand sync for an opened card.</summary>
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
@@ -14,13 +14,24 @@ namespace AvecADeskApi.Controllers
     {
         private readonly TrelloClient _trello;
         private readonly ITrelloSyncRepository _repo;
+        private readonly TrelloSyncQueue _queue;
         private readonly IConfiguration _configuration;
 
-        public TrelloController(TrelloClient trello, ITrelloSyncRepository repo, IConfiguration configuration)
+        public TrelloController(TrelloClient trello, ITrelloSyncRepository repo, TrelloSyncQueue queue, IConfiguration configuration)
         {
             _trello = trello;
             _repo = repo;
+            _queue = queue;
             _configuration = configuration;
+        }
+
+        /// <summary>Queues a sync of the card's board; the result shows up on the next checklist/comment load.</summary>
+        [HttpPost("sync/card/{cardId:int}")]
+        public IActionResult SyncCard(int cardId)
+        {
+            if (cardId <= 0) return BadRequest(new { message = "Valid CardID is required." });
+            _queue.LocalCardChanged(cardId);
+            return Accepted(new { queued = TrelloSyncWorker.IsAutoSyncEnabled(_configuration) && _trello.IsConfigured });
         }
 
         [HttpGet("status")]
