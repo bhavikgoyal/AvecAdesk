@@ -46,6 +46,7 @@ public class StudentPaymentScheduleDetailResponse
     public decimal? MaterialFee { get; set; }
     public decimal? TuitionFee { get; set; }
     public decimal? OSHCFee { get; set; }
+    public decimal? InitialPayment { get; set; }
     public string? FullName { get; set; }
     public string? Email { get; set; }
     public string? Phone { get; set; }
