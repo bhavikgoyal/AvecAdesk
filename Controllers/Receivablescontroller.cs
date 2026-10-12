@@ -155,6 +155,21 @@ public class ReceivablesController : ControllerBase
         }
     }
 
+    [HttpGet("commission-receivable-report")]
+    public async Task<IActionResult> GetCommissionReceivableReport([FromQuery] string reportType = "All")
+    {
+        try
+        {
+            return Ok(await _receivablesRepository.GetCommissionReceivableReportAsync(
+                string.IsNullOrWhiteSpace(reportType) ? "All" : reportType));
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(GetCommissionReceivableReport), ex);
+            return StatusCode(500, "An error occurred while fetching the commission receivable report.");
+        }
+    }
+
     [HttpGet("settled-statuses")]
     public async Task<IActionResult> GetSettledStatuses()
     {
