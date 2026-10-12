@@ -1,16 +1,14 @@
 ﻿namespace AvecADeskApi.Model.Reminder;
 
-// ---------- Contract expiry ----------
-
 public class ContractExpiryTaskResult
 {
-    public string SourceType { get; set; } = string.Empty; // ContractExpiry_Institute | ContractExpiry_Student
+    public string SourceType { get; set; } = string.Empty; 
     public int SourceReferenceId { get; set; }
     public string CardTitle { get; set; } = string.Empty;
     public DateTime? DueDate { get; set; }
     public int? CardID { get; set; }
     public int AssignedUserID { get; set; }
-    public string Action { get; set; } = string.Empty; // WillCreate | AlreadyExists | Created
+    public string Action { get; set; } = string.Empty; 
 }
 
 public class ContractExpiryTaskRunResponse
@@ -21,7 +19,6 @@ public class ContractExpiryTaskRunResponse
     public List<ContractExpiryTaskResult> Tasks { get; set; } = [];
 }
 
-// ---------- Invoice due ----------
 
 public class InvoiceDueTaskResult
 {

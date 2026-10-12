@@ -33,7 +33,6 @@ public class StudentResponse
 
 public class StudentPaymentScheduleDetailResponse
 {
-    // Student
     public int StudentId { get; set; }
 
     public int InstituteId { get; set; }
@@ -58,15 +57,12 @@ public class StudentPaymentScheduleDetailResponse
     public string? LeadNo { get; set; }
     public DateTime? CourseStartDate { get; set; }
     public DateTime? CourseEndDate { get; set; }
-
-    // Payment Schedule
     public int ScheduleId { get; set; }
     public DateTime FirstDueDate { get; set; }
     public decimal TotalCourseFee { get; set; }
     public int NoOfInstallments { get; set; }
     public string? Frequency { get; set; }
 
-    // Commission
     public int? CommissionId { get; set; }
     public decimal? CommissionPercentage { get; set; }
     public decimal? GSTPercentage { get; set; }
@@ -77,9 +73,7 @@ public class StudentPaymentScheduleDetailResponse
     public decimal? GSTAmount { get; set; }
     public decimal? BonusAmount { get; set; }
     public string? Remark { get; set; }
-    // Student Payment List
     public List<StudentPaymentItem> StudentPaymentList { get; set; } = new();
-    // Commission History
     public List<CommissionHistoryItem> CommissionHistory { get; set; } = new();
 }
 

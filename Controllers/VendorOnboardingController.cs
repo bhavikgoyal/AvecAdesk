@@ -44,9 +44,7 @@ public class VendorOnboardingController : ControllerBase
         _logHelper = logHelper;
     }
 
-    /// <summary>
-    /// Returns the active Vendor agreement template (BodyHtml) for the declaration step.
-    /// </summary>
+
     [HttpGet("declaration-template")]
     public async Task<IActionResult> GetDeclarationTemplate()
     {
@@ -417,7 +415,6 @@ public class VendorOnboardingController : ControllerBase
                 return expired;
 
             var existing = await _repository.GetOnboardingAsync(vendorId);
-            // var uploadedDocuments = existing?.UploadedDocuments ?? new Dictionary<string, string>();
             var uploadedDocuments = existing?.UploadedDocuments ?? new Dictionary<string, VendorDocumentResponse>();
             var savedDocuments = new List<object>();
             var uploadsFolder = Path.Combine(_environment.ContentRootPath, "uploads", "vendor-documents", vendorId.ToString());

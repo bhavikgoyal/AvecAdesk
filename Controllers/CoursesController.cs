@@ -204,13 +204,4 @@ public class CoursesController : ControllerBase
             return StatusCode(500, "An error occurred while deleting the course.");
         }
     }
-
-    private int? GetCurrentUserId()
-    {
-        var claim = User.FindFirst(ClaimTypes.NameIdentifier) ?? User.FindFirst("sub");
-        if (claim != null && int.TryParse(claim.Value, out var userId))
-            return userId;
-
-        return null;
-    }
 }

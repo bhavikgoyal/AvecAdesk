@@ -67,9 +67,7 @@ public class VendorOnboardingDataResponse
     public string? AccountNumber { get; set; }
     public string? SwiftCode { get; set; }
     public string? BankCountry { get; set; }
-
-   // public Dictionary<string, string> UploadedDocuments { get; set; } = new();
-   public Dictionary<string, VendorDocumentResponse> UploadedDocuments { get; set; } = new();
+    public Dictionary<string, VendorDocumentResponse> UploadedDocuments { get; set; } = new();
     public List<string> DeclarationItems { get; set; } = new();
     public string? AuthorizedSignatoryName { get; set; }
     public string? Signature { get; set; }

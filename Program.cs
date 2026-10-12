@@ -1,7 +1,6 @@
 using AvecADeskApi.Helper;
 using AvecADeskApi.Helpers;
 using AvecADeskApi.Hubs;
-using AvecADeskApi.Hubs;
 using AvecADeskApi.Interfaces;
 using AvecADeskApi.IRepository;
 using AvecADeskApi.LOG;
@@ -31,7 +30,6 @@ using AvecADeskApi.Repositories.Boards;
 using AvecADeskApi.Repositories.Lists;
 using AvecADeskApi.Repositories.Uploads;
 using AvecADeskApi.Repositories.UserActivity;
-//using AvecADeskApi.Repositories.EmployeeWorkHours;
 using AvecADeskApi.Repositories.UserPassword;
 using AvecADeskApi.Repositories.UserRoles;
 using AvecADeskApi.Repositories.Vendors;
@@ -117,18 +115,7 @@ builder.Services.AddCors(options =>
     });
 });
 
-//builder.Services.AddCors(options =>
-//{
-//    options.AddPolicy("VendorPortal", policy =>
-//    {
-//        policy.WithOrigins(
-//                "https://demovavec.apphub.co.in",
-//                "https://demoavec.apphub.co.in")
-//            .AllowAnyHeader()
-//            .AllowAnyMethod()
-//            .AllowCredentials();
-//    });
-//});
+
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<SqlDbHelper>();
 builder.Services.AddSingleton<LogHelper>();
@@ -225,17 +212,9 @@ builder.Services.AddScoped<JwtTokenGenerator>();
 
 var app = builder.Build();
 
-
-//if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
-//{
     app.UseSwagger();
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "AvecADesk API v1"));
-//}
 
-//if (!app.Environment.IsDevelopment())
-//{
-//    app.UseHttpsRedirection();
-//}
 var wwwroot = Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
 Directory.CreateDirectory(Path.Combine(wwwroot, "uploads"));
 app.UseCors("VendorPortal");

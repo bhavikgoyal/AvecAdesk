@@ -7,11 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AvecADeskApi.Controllers
 {
-    /// <summary>
-    /// Callback URL for Trello webhooks (Trello:WebhookCallbackUrl must point here).
-    /// The payload is only used as a hint for which board changed - the worker re-reads
-    /// everything from the Trello API - so a forged call can at most trigger an extra sync.
-    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     [AllowAnonymous]
@@ -31,7 +26,6 @@ namespace AvecADeskApi.Controllers
             _configuration = configuration;
         }
 
-        /// <summary>Trello sends HEAD when the webhook is created to check the URL is reachable.</summary>
         [HttpHead]
         [HttpGet]
         public IActionResult Verify() => Ok();
@@ -66,10 +60,6 @@ namespace AvecADeskApi.Controllers
             return Ok();
         }
 
-        /// <summary>
-        /// Checked only when Trello:ApiSecret is set: X-Trello-Webhook must be
-        /// base64(HMAC-SHA1(secret, body + callbackURL)).
-        /// </summary>
         private bool IsSignatureValid(string body)
         {
             var secret = _configuration["Trello:ApiSecret"];
@@ -82,7 +72,6 @@ namespace AvecADeskApi.Controllers
             var headerBytes = Encoding.UTF8.GetBytes(header);
             using var hmac = new HMACSHA1(Encoding.UTF8.GetBytes(secret));
 
-            // Trello hashes non-ASCII text as single bytes (Latin-1), so accept either encoding.
             foreach (var encoding in new[] { Encoding.UTF8, Encoding.Latin1 })
             {
                 var expected = Convert.ToBase64String(hmac.ComputeHash(encoding.GetBytes(body + callbackUrl)));

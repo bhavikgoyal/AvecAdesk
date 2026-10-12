@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AvecADeskApi.Controllers
 {
-    /// <summary>Health check for the automatic Trello sync, plus an on-demand sync for an opened card.</summary>
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
@@ -25,7 +24,6 @@ namespace AvecADeskApi.Controllers
             _configuration = configuration;
         }
 
-        /// <summary>Queues a sync of the card's board; the result shows up on the next checklist/comment load.</summary>
         [HttpPost("sync/card/{cardId:int}")]
         public IActionResult SyncCard(int cardId)
         {

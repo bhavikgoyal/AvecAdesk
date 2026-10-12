@@ -21,7 +21,6 @@ public interface IScheduleRepository
     Task<InstallmentConfirmationInfo?> GetInstallmentConfirmationInfoAsync(int studentPaymentInstallmentId);
     Task<bool> ConfirmInstallmentByStudentAsync(int studentPaymentInstallmentId);
 
-    //Task<PaymentScheduleSummaryResponse> GetPaymentSummaryAsync();
-    //Task<PaymentScheduleBulkStatusResult> BulkUpdatePaymentScheduleStatusAsync(PaymentScheduleBulkStatusRequest request);
+
 }
 

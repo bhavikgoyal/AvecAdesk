@@ -207,7 +207,7 @@ namespace AvecADeskApi.Controllers
                 {
                     VendorId = vendorId,
                     StudentId = studentId
-                });  // Notification Signal
+                });  
 
                 var student = await _repo.GetByIdAsync(studentId);
                 if (student != null && !string.IsNullOrWhiteSpace(student.Email))
