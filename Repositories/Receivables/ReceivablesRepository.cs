@@ -266,6 +266,51 @@ public class ReceivablesRepository : IReceivablesRepository
         }
     }
 
+    public async Task<List<CommissionReceivableReportRow>> GetCommissionReceivableReportAsync(string reportType)
+    {
+        try
+        {
+            return await _db.ExecuteReaderListAsync("SP_StudentCommissionDetail_ReceivableReport",
+                cmd => cmd.Parameters.AddWithValue("@ReportType", reportType),
+                MapCommissionReceivableReport);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(ReceivablesRepository)}.{nameof(GetCommissionReceivableReportAsync)}", ex);
+            throw;
+        }
+    }
+
+    private static CommissionReceivableReportRow MapCommissionReceivableReport(SqlDataReader r) => new()
+    {
+        ScrappingId = ReadInt(r, "ScrappingId"),
+        CollegeName = ColumnExists(r, "CollegeName") && !r.IsDBNull(r.GetOrdinal("CollegeName"))
+            ? r.GetString(r.GetOrdinal("CollegeName"))
+            : "Unknown",
+        ReportMonth = Convert.ToDateTime(r.GetValue(r.GetOrdinal("ReportMonth"))),
+        MonthName = ColumnExists(r, "MonthName") && !r.IsDBNull(r.GetOrdinal("MonthName"))
+            ? r.GetString(r.GetOrdinal("MonthName"))
+            : null,
+        ReportYear = ReadInt(r, "ReportYear"),
+        TotalDueAmount = ReadDecimal(r, "TotalDueAmount"),
+        TotalOverDueAmount = ReadDecimal(r, "TotalOverDueAmount"),
+        TotalPendingAmount = ReadDecimal(r, "TotalPendingAmount"),
+        TotalReceivedAmount = ReadDecimal(r, "TotalReceivedAmount"),
+        Amount = ReadDecimal(r, "Amount"),
+        DueRecords = ReadInt(r, "DueRecords"),
+        ReceivedRecords = ReadInt(r, "ReceivedRecords")
+    };
+
+    private static decimal ReadDecimal(SqlDataReader r, string column) =>
+        ColumnExists(r, column) && !r.IsDBNull(r.GetOrdinal(column))
+            ? Convert.ToDecimal(r.GetValue(r.GetOrdinal(column)))
+            : 0m;
+
+    private static int ReadInt(SqlDataReader r, string column) =>
+        ColumnExists(r, column) && !r.IsDBNull(r.GetOrdinal(column))
+            ? Convert.ToInt32(r.GetValue(r.GetOrdinal(column)))
+            : 0;
+
     private static AnticipatedReceivablesGridRow MapAnticipatedReceivablesGrid(SqlDataReader r) => new()
     {
         ScheduleId = r.GetInt32(r.GetOrdinal("ScheduleId")),

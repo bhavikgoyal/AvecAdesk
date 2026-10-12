@@ -97,10 +97,6 @@ public class StudentCommissionInstallmentDetailResponse
     public DateTime CreatedOn { get; set; }
 }
 
-/// <summary>
-/// Flat row for Anticipated Receivables Excel grid (college × month).
-/// Status values: Paid | Overdue | Anticipated
-/// </summary>
 public class AnticipatedReceivablesGridRow
 {
     public int ScheduleId { get; set; }
@@ -117,7 +113,22 @@ public class AnticipatedReceivablesGridRow
     public string? Notes { get; set; }
 }
 
-// Common filter object used by the controller to pass query params down
+public class CommissionReceivableReportRow
+{
+    public int ScrappingId { get; set; }
+    public string CollegeName { get; set; } = string.Empty;
+    public DateTime ReportMonth { get; set; }
+    public string? MonthName { get; set; }
+    public int ReportYear { get; set; }
+    public decimal TotalDueAmount { get; set; }
+    public decimal TotalOverDueAmount { get; set; }
+    public decimal TotalPendingAmount { get; set; }
+    public decimal TotalReceivedAmount { get; set; }
+    public decimal Amount { get; set; }
+    public int DueRecords { get; set; }
+    public int ReceivedRecords { get; set; }
+}
+
 public class ReceivablesFilter
 {
     public DateTime? FromDate { get; set; }

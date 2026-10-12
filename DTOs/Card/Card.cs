@@ -28,7 +28,6 @@ namespace AvecADeskApi.DTOs.Card
         public int? CPID { get; set; }
         public string? PriorityName { get; set; }
         public string? SheetType { get; set; }
-        // public string? TrelloID { get; set; }
         public int ChecklistTotal { get; set; }
         public int ChecklistCompleted { get; set; }
         public List<AvecADeskApi.DTOs.Label.LabelResponse> Labels { get; set; } = new();
@@ -90,7 +89,6 @@ namespace AvecADeskApi.DTOs.Card
     {
         public int CardID { get; set; }
         public int ListID { get; set; }
-        /// <summary>0-based index in the destination list.</summary>
         public int Position { get; set; }
     }
 

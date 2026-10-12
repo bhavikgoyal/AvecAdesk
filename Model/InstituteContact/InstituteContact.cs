@@ -13,7 +13,6 @@
         public string? Address { get; set; }
         public string? Notes { get; set; }
 
-        //public static InstituteContactDto Empty(int instituteId) => new() { InstituteId = instituteId };
     }
 
     public class InstituteContactUpsertRequest

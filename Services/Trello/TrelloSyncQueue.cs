@@ -5,7 +5,6 @@ namespace AvecADeskApi.Services.Trello;
 
 public enum TrelloJobKind
 {
-    /// <summary>Link/create boards that exist on only one side.</summary>
     Discover,
     LocalBoardChanged,
     LocalCardChanged,
@@ -18,11 +17,6 @@ public readonly record struct TrelloSyncJob(TrelloJobKind Kind, int LocalId = 0,
     public string Key => $"{Kind}:{LocalId}:{TrelloId}";
 }
 
-/// <summary>
-/// In-memory queue between the API (controllers, Trello webhook) and <see cref="TrelloSyncWorker"/>.
-/// A job that is already waiting is not queued twice, so a burst of edits on one board
-/// results in a single sync.
-/// </summary>
 public class TrelloSyncQueue
 {
     private readonly Channel<TrelloSyncJob> _channel =
@@ -61,6 +55,5 @@ public class TrelloSyncQueue
             Enqueue(new TrelloSyncJob(TrelloJobKind.TrelloBoardChanged, TrelloId: trelloBoardId));
     }
 
-    /// <summary>Called when the worker picks a job up; later changes queue it again.</summary>
     public void MarkStarted(TrelloSyncJob job) => _pending.TryRemove(job.Key, out _);
 }

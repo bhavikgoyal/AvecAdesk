@@ -142,9 +142,6 @@ public class InstituteScrappingController : ControllerBase
             if (string.IsNullOrWhiteSpace(request.InstituteName))
                 return BadRequest("Institute name is required.");
 
-            //if (string.IsNullOrWhiteSpace(request.ProgramName))
-            //    return BadRequest("Program name is required.");
-
             var result = await _repository.ManualCreateAsync(request);
             return Ok(result);
         }

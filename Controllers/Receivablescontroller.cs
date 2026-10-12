@@ -20,7 +20,6 @@ public class ReceivablesController : ControllerBase
         _logHelper = logHelper;
     }
 
-    // GET api/receivables/summary
     [HttpGet("summary")]
     public async Task<IActionResult> GetSummary([FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate,
         [FromQuery] int? instituteId, [FromQuery] int? studentId)
@@ -37,7 +36,6 @@ public class ReceivablesController : ControllerBase
         }
     }
 
-    // GET api/receivables/anticipated
     [HttpGet("anticipated")]
     public async Task<IActionResult> GetAnticipated([FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate,
         [FromQuery] int? instituteId, [FromQuery] int? studentId)
@@ -82,7 +80,6 @@ public class ReceivablesController : ControllerBase
         }
     }
 
-    // GET api/receivables/overdue
     [HttpGet("overdue")]
     public async Task<IActionResult> GetOverdue([FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate,
         [FromQuery] int? instituteId, [FromQuery] int? studentId)
@@ -99,7 +96,6 @@ public class ReceivablesController : ControllerBase
         }
     }
 
-    // GET api/receivables/received
     [HttpGet("received")]
     public async Task<IActionResult> GetReceived([FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate,
         [FromQuery] int? instituteId, [FromQuery] int? studentId)
@@ -125,7 +121,6 @@ public class ReceivablesController : ControllerBase
             StudentId = studentId
         };
 
-    // GET api/receivables/received-invoices
     [HttpGet("received-invoices")]
     public async Task<IActionResult> GetReceivedInvoices()
     {
@@ -140,8 +135,7 @@ public class ReceivablesController : ControllerBase
         }
     }
 
-    // GET api/receivables/anticipated-receivables
-    // 24-month college grid source (Paid / Overdue / Anticipated)
+
     [HttpGet("anticipated-receivables")]
     public async Task<IActionResult> GetAnticipatedReceivablesGrid(
         [FromQuery] DateTime? fromDate,
@@ -161,7 +155,21 @@ public class ReceivablesController : ControllerBase
         }
     }
 
-    // GET api/receivables/settled-statuses
+    [HttpGet("commission-receivable-report")]
+    public async Task<IActionResult> GetCommissionReceivableReport([FromQuery] string reportType = "All")
+    {
+        try
+        {
+            return Ok(await _receivablesRepository.GetCommissionReceivableReportAsync(
+                string.IsNullOrWhiteSpace(reportType) ? "All" : reportType));
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(GetCommissionReceivableReport), ex);
+            return StatusCode(500, "An error occurred while fetching the commission receivable report.");
+        }
+    }
+
     [HttpGet("settled-statuses")]
     public async Task<IActionResult> GetSettledStatuses()
     {

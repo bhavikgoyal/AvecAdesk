@@ -205,12 +205,12 @@ public class CoursesController : ControllerBase
         }
     }
 
-    private int? GetCurrentUserId()
-    {
+      private int? GetCurrentUserId()
+      {
         var claim = User.FindFirst(ClaimTypes.NameIdentifier) ?? User.FindFirst("sub");
         if (claim != null && int.TryParse(claim.Value, out var userId))
-            return userId;
+          return userId;
 
         return null;
-    }
+      }
 }

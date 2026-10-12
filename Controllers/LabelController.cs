@@ -14,7 +14,6 @@ namespace AvecADeskApi.Controllers
     [Authorize]
     public class LabelController : ControllerBase
     {
-        /// <summary>THROW number used by the board label SPs for duplicate names.</summary>
         private const int DuplicateLabelError = 50010;
 
         private readonly ILabelRepository _repo;

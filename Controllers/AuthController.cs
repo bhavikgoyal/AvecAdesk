@@ -31,7 +31,6 @@ namespace AvecADeskApi.Controllers
             _configuration = configuration;
         }
 
-        // POST api/auth/login
         [AllowAnonymous]
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequestDTO request)
@@ -45,7 +44,6 @@ namespace AvecADeskApi.Controllers
                 if (user == null)
                     return Unauthorized("Invalid credentials.");
 
-                //var token = _tokenGenerator.GenerateToken(user.UserId, user.UserName);
                 var token = _tokenGenerator.GenerateToken(user.UserId, user.UserName, role: user.UserRoleName);
                 return Ok(new
                 {
@@ -60,7 +58,6 @@ namespace AvecADeskApi.Controllers
             }
         }
 
-        // POST api/auth/vendor-login
         [AllowAnonymous]
         [HttpPost("vendor-login")]
         public async Task<IActionResult> VendorLogin([FromBody] VendorLoginDTO request)
@@ -95,7 +92,6 @@ namespace AvecADeskApi.Controllers
             }
         }
 
-        // POST api/auth/send-otp
         [AllowAnonymous]
         [HttpPost("send-otp")]
         public async Task<IActionResult> SendOtp([FromBody] OTPRequestDTO request)
@@ -119,7 +115,6 @@ namespace AvecADeskApi.Controllers
             }
         }
 
-        // POST api/auth/verify-otp
         [AllowAnonymous]
         [HttpPost("verify-otp")]
         public async Task<IActionResult> VerifyOtp([FromBody] OTPVerifyDTO request)
@@ -149,7 +144,6 @@ namespace AvecADeskApi.Controllers
             }
         }
 
-        // POST api/auth/refresh-token
         [AllowAnonymous]
         [HttpPost("refresh-token")]
         public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequestDTO request)
@@ -184,7 +178,6 @@ namespace AvecADeskApi.Controllers
             }
         }
 
-        // POST api/auth/register
         [AllowAnonymous]
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] StudentRegisterRequest request)
@@ -234,7 +227,6 @@ namespace AvecADeskApi.Controllers
             }
         }
 
-        // POST api/auth/verify-email
         [AllowAnonymous]
         [HttpPost("verify-email")]
         public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailRequest request)
@@ -302,7 +294,6 @@ namespace AvecADeskApi.Controllers
             }
         }
 
-        // POST api/auth/forgot-password
         [AllowAnonymous]
         [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequestDTO request)
@@ -348,7 +339,6 @@ namespace AvecADeskApi.Controllers
             }
         }
 
-        // POST api/auth/reset-password
         [AllowAnonymous]
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequestDTO request)
