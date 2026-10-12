@@ -19,6 +19,7 @@ public class MonthlyPaidInstallmentRow
     public decimal PaidAmount { get; set; }
     public DateTime? PaidDate { get; set; }
     public string PaymentStatus { get; set; } = string.Empty;
+    public string CommissionStatus { get; set; } = string.Empty;
     public int? CommissionDetailId { get; set; }
     public decimal CommissionAmount { get; set; }
     public decimal GSTAmount { get; set; }
