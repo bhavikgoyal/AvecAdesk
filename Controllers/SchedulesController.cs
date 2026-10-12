@@ -33,22 +33,6 @@ public class SchedulesController : ControllerBase
         _confirmationService = confirmationService;
         _logHelper = logHelper;
     }
-    //[HttpGet("summary")]
-    //public async Task<IActionResult> GetPaymentSummary()
-    //{
-    //    try
-    //    {
-    //        var summary = await _scheduleRepository.GetPaymentSummaryAsync();
-    //        var students = await _studentRepository.GetStudentsAsync(null);
-    //        summary.ActiveStudents = students.Count(student => student.IsActive);
-    //        return Ok(summary);
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        _logHelper.LogError(nameof(GetPaymentSummary), ex);
-    //        return StatusCode(500, "An error occurred while fetching payment summary.");
-    //    }
-    //}
 
     [HttpGet]
     public async Task<IActionResult> GetPaymentSchedules([FromQuery] int? studentId)

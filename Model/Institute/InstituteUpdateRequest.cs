@@ -3,7 +3,6 @@ namespace AvecADeskApi.Model.Institute;
 public class InstituteUpdateRequest
 {
     public int VendorId { get; set; }
-    //public int? LinkedScrappingId { get; set; }
     public string InstituteName { get; set; } = string.Empty;
     public string? WebsiteUrl { get; set; }
     public string? LogoUrl { get; set; }

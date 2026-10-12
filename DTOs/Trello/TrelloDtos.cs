@@ -136,7 +136,6 @@ namespace AvecADeskApi.DTOs.Trello
         public string? NewValue { get; set; }
         public DateTime CreatedAtUtc { get; set; }
         public string TrelloActivityId { get; set; } = string.Empty;
-        /// <summary>Done by the token account, so it may be an AiDesk change pushed to Trello.</summary>
         public bool EchoOfAiDesk { get; set; }
         public string? EchoDescription { get; set; }
         public string? EchoNewValue { get; set; }

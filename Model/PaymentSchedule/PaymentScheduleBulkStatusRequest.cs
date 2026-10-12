@@ -16,7 +16,6 @@ public class UpdateStudentPaymentScheduleRequest
     public string? FolderNo { get; set; }
     public string? LeadNo { get; set; }
 
-    // Bonus
     public decimal? Bonus { get; set; }
     public string? BonusType { get; set; }
     public string? BonusOption { get; set; }

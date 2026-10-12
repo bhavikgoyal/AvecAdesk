@@ -15,7 +15,6 @@ namespace AvecADeskApi.Controllers
         private const long MaxFileBytes = 25_000_000;
         private const string UploadFolder = "card-attachments";
 
-        // Server par execute ho sakne wali files block
         private static readonly string[] BlockedExtensions =
         {
             ".exe", ".dll", ".bat", ".cmd", ".com", ".msi", ".ps1", ".vbs", ".js", ".jse",
