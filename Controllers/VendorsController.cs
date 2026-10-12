@@ -286,6 +286,7 @@ public class VendorsController : ControllerBase
                 return NotFound("Vendor not found");
 
             var uploadedByUserId = 15;//GetCurrentUserId();
+
             if (uploadedByUserId == null)
                 return Unauthorized("User ID not found in token. Please login again to get a new token.");
 
