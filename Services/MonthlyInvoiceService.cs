@@ -49,26 +49,39 @@ public class MonthlyInvoiceService
             Month = targetMonth
         };
 
-        var paidRows = await _invoiceRepository.GetPaidInstallmentsForMonthAsync(targetYear, targetMonth,instituteId, campus);
+        var paidRows = await _invoiceRepository.GetInstallmentsForMonthPreviewAsync(targetYear, targetMonth, instituteId, campus);
 
-        // Keep only the rows the user actually checked, if a selection was sent.
         if (commissionDetailIds is { Count: > 0 })
         {
             var selectedSet = commissionDetailIds.ToHashSet();
-
             paidRows = paidRows.Where(r => r.CommissionDetailId.HasValue && selectedSet.Contains(r.CommissionDetailId.Value)).ToList();
+        }
+        else if (installmentIds is { Count: > 0 })
+        {
+            var selectedInstallments = installmentIds.ToHashSet();
+            paidRows = paidRows.Where(r => selectedInstallments.Contains(r.StudentPaymentInstallmentId)).ToList();
+        }
+        else
+        {
+            paidRows = await _invoiceRepository.GetPaidInstallmentsForMonthAsync(targetYear, targetMonth, instituteId, campus);
         }
         if (paidRows.Count == 0)
         {
-            result.Message = $"No paid student installments found for {targetMonth:D2}/{targetYear} that still need invoicing.";
+            result.Message = "No received installments were found for the selected rows.";
             return result;
         }
+
+        var dueDates = paidRows.Select(r => r.DueDate).OrderBy(d => d).ToList();
+        targetYear = dueDates[0].Year;
+        targetMonth = dueDates[0].Month;
+        result.Year = targetYear;
+        result.Month = targetMonth;
 
         var adminEmail = _configuration["MonthlyInvoice:AdminEmail"]
             ?? _configuration["Email:FromAddress"]
             ?? "bosco1852023@gmail.com";
 
-        var invoiceDate = new DateTime(targetYear, targetMonth, DateTime.DaysInMonth(targetYear, targetMonth));
+        var invoiceDate = DateTime.Today;
         var groups = paidRows.GroupBy(r => r.InstituteId).OrderBy(g => g.Key);
 
         foreach (var group in groups)
@@ -102,9 +115,12 @@ public class MonthlyInvoiceService
             if (invoice is null || invoice.InvoiceId <= 0)
                 continue;
 
+            var periodLabel = string.IsNullOrWhiteSpace(invoice.InvoiceMonthYear)
+                ? $"{targetMonth:D2}/{targetYear}"
+                : invoice.InvoiceMonthYear;
             var html = _documentService.BuildHtml(invoice, instituteName, lines, invoiceDate);
             var pdfBytes = _documentService.BuildPdfBytes(invoice, instituteName, lines, invoiceDate);
-            var fileName = $"{invoice.InvoiceNumber}_{targetYear}-{targetMonth:D2}.pdf";
+            var fileName = $"{invoice.InvoiceNumber}_{periodLabel.Replace(' ', '-').Replace(',', '-')}.pdf";
 
             var relativeDir = Path.Combine("uploads", "invoices");
             var absoluteDir = Path.Combine(_env.WebRootPath ?? Path.Combine(_env.ContentRootPath, "wwwroot"), relativeDir);
@@ -116,7 +132,7 @@ public class MonthlyInvoiceService
             var emailSent = false;
             try
             {
-                var subject = $"Monthly Tax Invoice {invoice.InvoiceNumber} — {instituteName} ({targetMonth:D2}/{targetYear})";
+                var subject = $"Monthly Tax Invoice {invoice.InvoiceNumber} — {instituteName} ({periodLabel})";
                 await _emailSender.SendWithAttachmentAsync(
                     adminEmail,
                     subject,
@@ -147,7 +163,7 @@ public class MonthlyInvoiceService
 
         result.Message = result.Invoices.Count == 0
             ? "No invoices were created."
-            : $"Created {result.Invoices.Count} invoice(s) for {targetMonth:D2}/{targetYear} and emailed admin ({adminEmail}).";
+            : $"Created {result.Invoices.Count} invoice(s) and emailed admin ({adminEmail}).";
 
         return result;
     }

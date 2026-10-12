@@ -271,6 +271,24 @@ public class SchedulesController : ControllerBase
         }
     }
 
+    [HttpPost("ClearInstallmentDocument")]
+    public async Task<IActionResult> ClearInstallmentDocument([FromBody] SendInstallmentConfirmationEmailRequest request)
+    {
+        try
+        {
+            if (request.StudentPaymentInstallmentId <= 0)
+                return BadRequest("Installment ID is required.");
+
+            await _scheduleRepository.ClearInstallmentDocumentAsync(request.StudentPaymentInstallmentId);
+            return Ok(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(ClearInstallmentDocument), ex);
+            return StatusCode(500, "An error occurred while removing the document.");
+        }
+    }
+
     [HttpPost("SendInstallmentConfirmationEmail")]
     public async Task<IActionResult> SendInstallmentConfirmationEmail([FromBody] SendInstallmentConfirmationEmailRequest request)
     {

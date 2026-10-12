@@ -51,4 +51,6 @@ public class StudentCommissionDetailUpdateRequest
     public decimal InvoiceAmount { get; set; }
 
     public string CommissionStatus { get; set; } = string.Empty;
+
+    public DateTime? ReceivedDate { get; set; }
 }

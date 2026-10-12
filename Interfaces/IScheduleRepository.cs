@@ -18,6 +18,7 @@ public interface IScheduleRepository
 
     Task<List<Model.PaymentSchedule.StudentCourseCompleteResponse>> GetStudentCourseCompleteListAsync();
     Task<string> SaveInstallmentDocumentAsync(int studentPaymentInstallmentId, string fileBase64, string fileName);
+    Task ClearInstallmentDocumentAsync(int studentPaymentInstallmentId);
     Task<InstallmentConfirmationInfo?> GetInstallmentConfirmationInfoAsync(int studentPaymentInstallmentId);
     Task<bool> ConfirmInstallmentByStudentAsync(int studentPaymentInstallmentId);
 

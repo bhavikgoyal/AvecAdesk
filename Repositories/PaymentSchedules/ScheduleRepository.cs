@@ -611,6 +611,23 @@ public class ScheduleRepository : IScheduleRepository
         }
     }
 
+    public async Task ClearInstallmentDocumentAsync(int studentPaymentInstallmentId)
+    {
+        try
+        {
+            await _db.ExecuteNonQueryAsync("sp_UpdateInstallmentImage", cmd =>
+            {
+                cmd.Parameters.AddWithValue("@StudentPaymentInstallmentId", studentPaymentInstallmentId);
+                cmd.Parameters.AddWithValue("@InstallmentImage", DBNull.Value);
+            });
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(ScheduleRepository)}.{nameof(ClearInstallmentDocumentAsync)}", ex);
+            throw;
+        }
+    }
+
     public async Task<InstallmentConfirmationInfo?> GetInstallmentConfirmationInfoAsync(int studentPaymentInstallmentId)
     {
         try

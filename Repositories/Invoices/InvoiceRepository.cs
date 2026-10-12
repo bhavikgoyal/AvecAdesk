@@ -501,13 +501,14 @@ public class InvoiceRepository : IInvoiceRepository
         PaidAmount = r.GetDecimal(r.GetOrdinal("PaidAmount")),
         PaidDate = r.IsDBNull(r.GetOrdinal("PaidDate")) ? null : r.GetDateTime(r.GetOrdinal("PaidDate")),
         PaymentStatus = r["PaymentStatus"]?.ToString() ?? string.Empty,
+        CommissionStatus = HasColumn(r, "CommissionStatus") ? (r["CommissionStatus"]?.ToString() ?? string.Empty) : string.Empty,
         CommissionDetailId = r.IsDBNull(r.GetOrdinal("CommissionDetailId")) ? null : r.GetInt32(r.GetOrdinal("CommissionDetailId")),
         CommissionAmount = r.GetDecimal(r.GetOrdinal("CommissionAmount")),
         GSTAmount = r.GetDecimal(r.GetOrdinal("GSTAmount")),
         BonusAmount = r.GetDecimal(r.GetOrdinal("BonusAmount")),
         InvoiceAmount = r.GetDecimal(r.GetOrdinal("InvoiceAmount")),
         GSTPercentage = r.GetDecimal(r.GetOrdinal("GSTPercentage")),
-        IsBonus =  r.GetBoolean(r.GetOrdinal("IsBonus")),
+        IsBonus = HasColumn(r, "IsBonus") && !r.IsDBNull(r.GetOrdinal("IsBonus")) && Convert.ToBoolean(r["IsBonus"]),
     };
     private static bool HasColumn(SqlDataReader reader, string column)
     {
