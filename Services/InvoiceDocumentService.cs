@@ -92,7 +92,7 @@ public class InvoiceDocumentService
         var gstPct = lines.FirstOrDefault()?.GSTPercentage ?? 10m;
         var commissionTotal = lines.Sum(x => x.CommissionAmount + x.BonusAmount);
         var gstTotal = lines.Sum(x => x.GSTAmount);
-        var grandTotal = lines.Sum(x => x.InvoiceAmount);
+        var grandTotal = lines.Sum(x => x.InvoiceAmount + x.BonusAmount);
         var inWords = AmountToWords(grandTotal);
         var dateText = invoiceDate.ToString("dd-MM-yyyy", CultureInfo.InvariantCulture);
 
@@ -187,7 +187,7 @@ public class InvoiceDocumentService
                                     c.Item().Text($"Campus: {line.Campus}");
                                 c.Item().Text($"Fees: {FormatMoney(line.FeesAmount)}");
                             });
-                            table.Cell().Element(BodyCell).AlignRight().Text(FormatMoney(line.InvoiceAmount));
+                            table.Cell().Element(BodyCell).AlignRight().Text(FormatMoney(line.InvoiceAmount + line.BonusAmount));
                         }
                     });
 

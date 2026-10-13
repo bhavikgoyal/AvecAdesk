@@ -107,6 +107,7 @@ public class CommissionHistoryItem
     public decimal GSTAmount { get; set; }
     public decimal BonusAmount { get; set; }
     public bool IsBonus { get; set; }
+    public bool IsInvoicedUpdate { get; set; }
     public decimal InvoiceAmount { get; set; }
     public string? InvoiceNo { get; set; }
     public DateTime? ReceivedDate { get; set; }

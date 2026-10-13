@@ -383,6 +383,7 @@ public class StudentRepository : IStudentRepository
             GSTAmount = reader.GetDecimal(reader.GetOrdinal("GSTAmount")),
             BonusAmount = reader.GetDecimal(reader.GetOrdinal("BonusAmount")),
             IsBonus = reader["IsBonus"] != DBNull.Value && Convert.ToBoolean(reader["IsBonus"]),
+            IsInvoicedUpdate = ColumnExists(reader, "IsInvoicedUpdate") && reader["IsInvoicedUpdate"] != DBNull.Value && Convert.ToBoolean(reader["IsInvoicedUpdate"]),
             InvoiceAmount = reader.GetDecimal(reader.GetOrdinal("InvoiceAmount")),
 
             InvoiceNo = reader["InvoiceNo"]?.ToString(),

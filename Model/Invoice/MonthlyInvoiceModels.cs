@@ -39,6 +39,7 @@ public class MonthlyInvoiceGenerateRequest
     public List<int>? CommissionDetailId { get; set; }
     public List<decimal>? BonusAmount { get; set; }
     public List<decimal>? InvoiceAmounts { get; set; }
+    public string? InvoiceNumber { get; set; }
 }
 
 public class MonthlyInvoiceGenerateResult
