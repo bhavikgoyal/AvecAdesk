@@ -4,6 +4,7 @@ using AvecADeskApi.Model.Invoice;
 using AvecADeskApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using QuestPDF.Helpers;
 using QuestPDF.Fluent;
 using QuestPDF.Infrastructure;
@@ -68,13 +69,50 @@ public class InvoicesController : ControllerBase
                 request?.CommissionDetailId,
                 request?.BonusAmount,
                 request?.InvoiceAmounts,
+                request?.InvoiceNumber,
                 cancellationToken);
             return Ok(result);
+        }
+        catch (SqlException ex) when (ex.Number == 50010)
+        {
+            return BadRequest(ex.Message);
         }
         catch (Exception ex)
         {
             _logHelper.LogError(nameof(GenerateMonthlyInvoice), ex);
             return StatusCode(500, "An error occurred while generating the monthly invoice.");
+        }
+    }
+
+    [HttpGet("next-number")]
+    public async Task<IActionResult> GetNextInvoiceNumber()
+    {
+        try
+        {
+            var invoiceNumber = await _invoiceRepository.GetNextInvoiceNumberAsync();
+            return Ok(new { invoiceNumber });
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(GetNextInvoiceNumber), ex);
+            return StatusCode(500, "An error occurred while fetching the next invoice number.");
+        }
+    }
+
+    [HttpGet("number-exists")]
+    public async Task<IActionResult> InvoiceNumberExists([FromQuery] string? invoiceNumber)
+    {
+        if (string.IsNullOrWhiteSpace(invoiceNumber))
+            return BadRequest("Invoice number is required.");
+        try
+        {
+            var exists = await _invoiceRepository.IsInvoiceNumberTakenAsync(invoiceNumber);
+            return Ok(new { exists });
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(InvoiceNumberExists), ex);
+            return StatusCode(500, "An error occurred while checking the invoice number.");
         }
     }
 

@@ -14,7 +14,9 @@ public interface IInvoiceRepository
     Task<List<MonthlyPaidInstallmentRow>> GetPaidInstallmentsForMonthAsync(int year, int month, int? instituteId = null, string? campus = null);
     Task<List<MonthlyPaidInstallmentRow>> GetInstallmentsForMonthPreviewAsync(int year, int month, int? instituteId = null, string? campus = null);
     Task<InvoiceResponse?> GenerateMonthlyPaidStudentInvoiceAsync(int year, int month, int instituteId, string? campus = null, List<int>? installmentIds = null, List<int>? commissionDetailIds = null,
-    List<decimal>? bonusAmounts = null, List<decimal>? invoiceAmounts = null);
+    List<decimal>? bonusAmounts = null, List<decimal>? invoiceAmounts = null, string? invoiceNumber = null);
+    Task<string> GetNextInvoiceNumberAsync();
+    Task<bool> IsInvoiceNumberTakenAsync(string invoiceNumber);
     Task UpdateInvoicePdfPathAsync(int invoiceId, string pdfPath);
     Task<List<InvoiceLineItemResponse>> GetInvoiceLineItemsAsync(int invoiceId);
     Task<(bool Success, string Message, InvoiceResponse? Invoice)> UpdateInvoiceLineItemAmountsAsync(

@@ -207,7 +207,7 @@ public class InvoiceRepository : IInvoiceRepository
         }
     }
 
-    public async Task<InvoiceResponse?> GenerateMonthlyPaidStudentInvoiceAsync(int year,int month,int instituteId, string? campus = null, List<int>? installmentIds = null,List<int>? commissionDetailIds = null, List<decimal>? bonusAmounts = null, List<decimal>? invoiceAmounts = null)
+    public async Task<InvoiceResponse?> GenerateMonthlyPaidStudentInvoiceAsync(int year,int month,int instituteId, string? campus = null, List<int>? installmentIds = null,List<int>? commissionDetailIds = null, List<decimal>? bonusAmounts = null, List<decimal>? invoiceAmounts = null, string? invoiceNumber = null)
     {
         try
         {
@@ -235,12 +235,43 @@ public class InvoiceRepository : IInvoiceRepository
                     cmd.Parameters.AddWithValue( "@BonusAmounts",(object?)bonusAmountsCsv?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@InvoiceAmounts",(object?)invoiceAmountsCsv ?? DBNull.Value);
                     cmd.Parameters.Add(invoiceIdParam);
+                    cmd.Parameters.AddWithValue("@InvoiceNumberInput",
+                        string.IsNullOrWhiteSpace(invoiceNumber) ? DBNull.Value : invoiceNumber.Trim());
                 },
                 MapInvoice);
         }
         catch (Exception ex)
         {
             _logHelper.LogError($"{nameof(InvoiceRepository)}.{nameof(GenerateMonthlyPaidStudentInvoiceAsync)}", ex);
+            throw;
+        }
+    }
+
+    public async Task<string> GetNextInvoiceNumberAsync()
+    {
+        try
+        {
+            var result = await _db.ExecuteScalarAsync("sp_GetNextInvoiceNumber", _ => { });
+            return result == null || result == DBNull.Value ? string.Empty : result.ToString() ?? string.Empty;
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(InvoiceRepository)}.{nameof(GetNextInvoiceNumberAsync)}", ex);
+            throw;
+        }
+    }
+
+    public async Task<bool> IsInvoiceNumberTakenAsync(string invoiceNumber)
+    {
+        try
+        {
+            var result = await _db.ExecuteScalarAsync("sp_CheckInvoiceNumberExists",
+                cmd => cmd.Parameters.AddWithValue("@InvoiceNumber", invoiceNumber.Trim()));
+            return result != null && result != DBNull.Value && Convert.ToBoolean(result);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(InvoiceRepository)}.{nameof(IsInvoiceNumberTakenAsync)}", ex);
             throw;
         }
     }
@@ -428,6 +459,8 @@ public class InvoiceRepository : IInvoiceRepository
                     ? r.GetDecimal(r.GetOrdinal("CommissionAmount")) : 0,
                     GSTAmount = HasColumn(r, "GSTAmount") && !r.IsDBNull(r.GetOrdinal("GSTAmount"))
                     ? r.GetDecimal(r.GetOrdinal("GSTAmount")) : 0,
+                    IsInvoicedUpdate = HasColumn(r, "IsInvoicedUpdate") && !r.IsDBNull(r.GetOrdinal("IsInvoicedUpdate"))
+                    && Convert.ToBoolean(r["IsInvoicedUpdate"]),
                     Address = HasColumn(r, "Address") && !r.IsDBNull(r.GetOrdinal("Address"))
                     ? r.GetString(r.GetOrdinal("Address")) : null,
                     ZipCode = HasColumn(r, "ZipCode") && !r.IsDBNull(r.GetOrdinal("ZipCode"))

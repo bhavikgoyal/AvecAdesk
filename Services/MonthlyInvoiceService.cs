@@ -34,12 +34,11 @@ public class MonthlyInvoiceService
     public async Task<List<MonthlyPaidInstallmentRow>> GetPaidStudentsAsync( int? year = null, int? month = null, int? instituteId = null, string? campus = null)
     {
         var (targetYear, targetMonth) = ResolvePeriod(year, month);
-        // Preview list: all installments due in the month (Paid + Pending, etc.)
         return await _invoiceRepository.GetInstallmentsForMonthPreviewAsync( targetYear, targetMonth, instituteId, campus);
     }
 
     
-    public async Task<MonthlyInvoiceGenerateResult> GenerateAndSendAsync(int? year = null,int? month = null,int? instituteId = null,string? campus = null,List<int>? installmentIds = null, List<int>? commissionDetailIds = null, List<decimal>? bonusAmounts = null, List<decimal>? invoiceAmounts = null, CancellationToken cancellationToken = default)
+    public async Task<MonthlyInvoiceGenerateResult> GenerateAndSendAsync(int? year = null,int? month = null,int? instituteId = null,string? campus = null,List<int>? installmentIds = null, List<int>? commissionDetailIds = null, List<decimal>? bonusAmounts = null, List<decimal>? invoiceAmounts = null, string? invoiceNumber = null, CancellationToken cancellationToken = default)
     {
         var (targetYear, targetMonth) = ResolvePeriod(year, month);
 
@@ -111,7 +110,9 @@ public class MonthlyInvoiceService
                 groupInstallmentIds,
                 groupCommissionDetailIds,
                 groupBonusAmounts,
-                invoiceAmounts);
+                invoiceAmounts,
+                invoiceNumber);
+            invoiceNumber = null;
             if (invoice is null || invoice.InvoiceId <= 0)
                 continue;
 

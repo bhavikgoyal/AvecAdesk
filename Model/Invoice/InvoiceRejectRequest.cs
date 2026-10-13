@@ -20,6 +20,7 @@ public class InvoiceLineItemResponse
     public decimal CommissionPercentage { get; set; }
     public decimal CommissionAmount { get; set; }
     public decimal GSTAmount { get; set; }
+    public bool IsInvoicedUpdate { get; set; }
     public string? Address { get; set; }
     public string? ZipCode { get; set; }
 }
