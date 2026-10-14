@@ -65,6 +65,7 @@ public class InstituteScrappingCourseResponse
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }
     public string? Campus { get; set; }
+    public string? Level { get; set; }
     public decimal? EnrollmentFee { get; set; }
     public decimal? MaterialFee { get; set; }
     public decimal? TuitionFee { get; set; }
