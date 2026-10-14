@@ -398,6 +398,9 @@ public class CourseRepository : ICourseRepository
             Campus = HasColumn(reader, "Campus") && !reader.IsDBNull(reader.GetOrdinal("Campus"))
                 ? reader.GetString(reader.GetOrdinal("Campus"))
                 : null,
+            Level = HasColumn(reader, "Level") && !reader.IsDBNull(reader.GetOrdinal("Level"))
+                ? reader.GetString(reader.GetOrdinal("Level"))
+                : null,
             EnrollmentFee = reader.IsDBNull(reader.GetOrdinal("EnrollmentFee"))
             ? null
             : reader.GetDecimal(reader.GetOrdinal("EnrollmentFee")),
