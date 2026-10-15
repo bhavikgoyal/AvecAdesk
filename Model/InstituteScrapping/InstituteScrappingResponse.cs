@@ -31,6 +31,7 @@ public class InstituteScrappingResponse
     public bool? IsScrap { get; set; }
     public bool TopColleged { get; set; }
     public DateTime? CreatedAt { get; set; }
+    public List<InstituteCampusItem> Campuses { get; set; } = new();
 }
 public class InstituteNameResponse
 {
