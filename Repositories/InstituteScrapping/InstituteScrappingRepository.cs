@@ -4,6 +4,7 @@ using AvecADeskApi.LOG;
 using AvecADeskApi.Model.InstituteScrapping;
 using Microsoft.Data.SqlClient;
 using System.Data;
+using System.Text.Json;
 
 namespace AvecADeskApi.Repositories.InstituteScrapping;
 
@@ -102,6 +103,7 @@ public class InstituteScrappingRepository : IInstituteScrappingRepository
             await _db.ExecuteNonQueryAsync("sp_ManualCreateInstituteScrapping", cmd =>
             {
                 AddUpsertParameters(cmd, request);
+                AddCampusesParameter(cmd, request);
                 cmd.Parameters.AddWithValue("@VendorId", (object?)vendorId ?? DBNull.Value);
                 cmd.Parameters.Add(scrappingIdParam);
                 cmd.Parameters.Add(courseIdParam);
@@ -146,6 +148,7 @@ public class InstituteScrappingRepository : IInstituteScrappingRepository
             {
                 cmd.Parameters.AddWithValue("@ScrappingId", scrappingId);
                 AddUpsertParameters(cmd, request);
+                AddCampusesParameter(cmd, request);
                 cmd.Parameters.Add(rowsParam);
             });
             return (int)rowsParam.Value > 0;
@@ -204,6 +207,22 @@ public class InstituteScrappingRepository : IInstituteScrappingRepository
         cmd.Parameters.AddWithValue("@Address", (object?)request.Address ?? DBNull.Value);
     }
 
+    private static void AddCampusesParameter(SqlCommand cmd, InstituteScrappingUpsertRequest request)
+    {
+        var json = request.Campuses == null ? null : JsonSerializer.Serialize(request.Campuses);
+        cmd.Parameters.Add("@CampusesJson", SqlDbType.NVarChar, -1).Value = (object?)json ?? DBNull.Value;
+    }
+
+    private static List<InstituteCampusItem> ReadCampuses(SqlDataReader reader)
+    {
+        var json = ReadString(reader, "CampusesJson");
+        if (string.IsNullOrWhiteSpace(json))
+            return new List<InstituteCampusItem>();
+
+        return JsonSerializer.Deserialize<List<InstituteCampusItem>>(
+            json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<InstituteCampusItem>();
+    }
+
     private static InstituteScrappingResponse MapRow(SqlDataReader reader)
     {
         return new InstituteScrappingResponse
@@ -237,6 +256,7 @@ public class InstituteScrappingRepository : IInstituteScrappingRepository
             IsScrap = ReadBoolean(reader, "IsScrap"),
             TopColleged = ReadBoolean(reader, "TopColleged") ?? false,
             CreatedAt = ReadDateTime(reader, "CreatedAt"),
+            Campuses = ReadCampuses(reader),
         };
     }
 
