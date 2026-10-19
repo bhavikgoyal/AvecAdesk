@@ -11,4 +11,6 @@ public interface IStudentRepository
     Task<bool> UpdateStudentAsync(int studentId, StudentUpdateRequest request);
     Task<bool> UpdateStudentEnrolmentStatusAsync(int studentId, string enrolmentStatus);
     Task<StudentPaymentScheduleDetailResponse?> GetStudentPaymentDetailByIdAsync(int studentId);
+    Task<StudentCancelDetailResponse?> GetStudentCancelDetailAsync(int studentId);
+    Task<bool> SaveStudentCancelDetailAsync(int studentId, StudentCancelDetailRequest request, int? userId);
 }

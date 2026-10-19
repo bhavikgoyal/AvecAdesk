@@ -156,12 +156,13 @@ public class ReceivablesController : ControllerBase
     }
 
     [HttpGet("commission-receivable-report")]
-    public async Task<IActionResult> GetCommissionReceivableReport([FromQuery] string reportType = "All")
+    public async Task<IActionResult> GetCommissionReceivableReport([FromQuery] string reportType = "All",[FromQuery] int? studentId = null)
     {
         try
         {
             return Ok(await _receivablesRepository.GetCommissionReceivableReportAsync(
-                string.IsNullOrWhiteSpace(reportType) ? "All" : reportType));
+                string.IsNullOrWhiteSpace(reportType) ? "All" : reportType,
+                studentId is > 0 ? studentId : null));
         }
         catch (Exception ex)
         {

@@ -169,6 +169,55 @@ public class StudentRepository : IStudentRepository
         }
     }
 
+    public async Task<StudentCancelDetailResponse?> GetStudentCancelDetailAsync(int studentId)
+    {
+        try
+        {
+            return await _db.ExecuteReaderSingleAsync( "sp_GetStudentCancelDetail",
+                cmd => cmd.Parameters.AddWithValue("@StudentId", studentId),
+                reader => new StudentCancelDetailResponse
+                {
+                    StudentId = reader.GetInt32(reader.GetOrdinal("StudentId")),
+                    IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
+                    CancelDate = reader.IsDBNull(reader.GetOrdinal("CancelDate")) ? null : reader.GetDateTime(reader.GetOrdinal("CancelDate")),
+                    CancelReason = reader.IsDBNull(reader.GetOrdinal("CancelReason")) ? null : reader.GetString(reader.GetOrdinal("CancelReason")),
+                    ActiveDate = reader.IsDBNull(reader.GetOrdinal("ActiveDate")) ? null : reader.GetDateTime(reader.GetOrdinal("ActiveDate")),
+                    UpdatedAt = reader.IsDBNull(reader.GetOrdinal("UpdatedAt")) ? null : reader.GetDateTime(reader.GetOrdinal("UpdatedAt")),
+                });
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(StudentRepository)}.{nameof(GetStudentCancelDetailAsync)}", ex);
+            throw;
+        }
+    }
+
+    public async Task<bool> SaveStudentCancelDetailAsync(int studentId, StudentCancelDetailRequest request, int? userId)
+    {
+        try
+        {
+            var rowsAffectedParam = new SqlParameter("@RowsAffected", SqlDbType.Int) { Direction = ParameterDirection.Output };
+
+            await _db.ExecuteNonQueryAsync("sp_SaveStudentCancelDetail", cmd =>
+            {
+                cmd.Parameters.AddWithValue("@StudentId", studentId);
+                cmd.Parameters.AddWithValue("@IsActive", request.IsActive);
+                cmd.Parameters.Add("@CancelDate", SqlDbType.Date).Value = (object?)request.CancelDate?.Date ?? DBNull.Value;
+                cmd.Parameters.Add("@CancelReason", SqlDbType.NVarChar, 1000).Value = (object?)request.CancelReason ?? DBNull.Value;
+                cmd.Parameters.Add("@ActiveDate", SqlDbType.Date).Value = (object?)request.ActiveDate?.Date ?? DBNull.Value;
+                cmd.Parameters.AddWithValue("@CreatedByUserId", (object?)userId ?? DBNull.Value);
+                cmd.Parameters.Add(rowsAffectedParam);
+            });
+
+            return (int)rowsAffectedParam.Value > 0;
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(StudentRepository)}.{nameof(SaveStudentCancelDetailAsync)}", ex);
+            throw;
+        }
+    }
+
     private static StudentResponse MapStudent(SqlDataReader reader)
     {
         return new StudentResponse

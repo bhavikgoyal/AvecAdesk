@@ -266,12 +266,16 @@ public class ReceivablesRepository : IReceivablesRepository
         }
     }
 
-    public async Task<List<CommissionReceivableReportRow>> GetCommissionReceivableReportAsync(string reportType)
+    public async Task<List<CommissionReceivableReportRow>> GetCommissionReceivableReportAsync(string reportType, int? studentId = null)
     {
         try
         {
             return await _db.ExecuteReaderListAsync("SP_StudentCommissionDetail_ReceivableReport",
-                cmd => cmd.Parameters.AddWithValue("@ReportType", reportType),
+                cmd =>
+                {
+                    cmd.Parameters.AddWithValue("@ReportType", reportType);
+                    cmd.Parameters.AddWithValue("@StudentId", (object?)studentId ?? DBNull.Value);
+                },
                 MapCommissionReceivableReport);
         }
         catch (Exception ex)

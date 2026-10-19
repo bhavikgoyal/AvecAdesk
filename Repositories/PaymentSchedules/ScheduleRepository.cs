@@ -42,31 +42,56 @@ public class ScheduleRepository : IScheduleRepository
             throw;
         }
     }
+    public async Task<List<StudentCancelListResponse>> GetStudentCancelListAsync()
+    {
+        try
+        {
+            return await _db.ExecuteReaderListAsync("sp_GetStudentCancelList",
+                cmd => { },  reader =>
+                {
+                    var row = new StudentCancelListResponse();
+                    FillStudentCourseComplete(row, reader);
+                    row.CancelDate = reader.IsDBNull(reader.GetOrdinal("CancelDate")) ? null : reader.GetDateTime(reader.GetOrdinal("CancelDate"));
+                    row.CancelReason = reader.IsDBNull(reader.GetOrdinal("CancelReason")) ? null : reader.GetString(reader.GetOrdinal("CancelReason"));
+                    return row;
+                });
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(ScheduleRepository)}.{nameof(GetStudentCancelListAsync)}", ex);
+            throw;
+        }
+    }
+
     private StudentCourseCompleteResponse MapStudentCourseComplete(SqlDataReader reader)
     {
-        return new StudentCourseCompleteResponse
-        {
-            ScheduleId = reader.GetInt32(reader.GetOrdinal("ScheduleId")),
-            StudentId = reader.GetInt32(reader.GetOrdinal("StudentId")),
-            StudentName = reader["StudentName"]?.ToString() ?? string.Empty,
-            StudentCreatedAt = reader.GetDateTime(reader.GetOrdinal("StudentCreatedAt")),
-            CourseStartDate = reader.IsDBNull(reader.GetOrdinal("CourseStartDate")) ? null : reader.GetDateTime(reader.GetOrdinal("CourseStartDate")),
-            CourseEndDate = reader.IsDBNull(reader.GetOrdinal("CourseEndDate")) ? null : reader.GetDateTime(reader.GetOrdinal("CourseEndDate")),
-            InstituteName = reader["InstituteName"]?.ToString() ?? string.Empty,
-            CourseName = reader["CourseName"]?.ToString() ?? string.Empty,
-            TotalCourseFee = reader.GetDecimal(reader.GetOrdinal("TotalCourseFee")),
-            NoOfInstallments = reader.GetInt32(reader.GetOrdinal("NoOfInstallments")),
-            Frequency = reader["Frequency"]?.ToString() ?? string.Empty,
-            FirstDueDate = reader.GetDateTime(reader.GetOrdinal("FirstDueDate")),
-            TotalInstallments = reader.GetInt32(reader.GetOrdinal("TotalInstallments")),
-            PaidInstallments = reader.GetInt32(reader.GetOrdinal("PaidInstallments")),
-            PendingInstallments = reader.GetInt32(reader.GetOrdinal("PendingInstallments")),
-            CollectedAmount = reader.GetDecimal(reader.GetOrdinal("CollectedAmount")),
-            BalanceAmount = reader.GetDecimal(reader.GetOrdinal("BalanceAmount")),
-            InstallmentAmount = reader.IsDBNull(reader.GetOrdinal("InstallmentAmount")) ? 0 : reader.GetDecimal(reader.GetOrdinal("InstallmentAmount")),
-            NextDueDate = reader.IsDBNull(reader.GetOrdinal("NextDueDate")) ? null : reader.GetDateTime(reader.GetOrdinal("NextDueDate")),
-            PaymentStatus = reader["PaymentStatus"]?.ToString() ?? string.Empty
-        };
+        var row = new StudentCourseCompleteResponse();
+        FillStudentCourseComplete(row, reader);
+        return row;
+    }
+
+    private static void FillStudentCourseComplete(StudentCourseCompleteResponse row, SqlDataReader reader)
+    {
+        row.ScheduleId = reader.GetInt32(reader.GetOrdinal("ScheduleId"));
+        row.StudentId = reader.GetInt32(reader.GetOrdinal("StudentId"));
+        row.StudentName = reader["StudentName"]?.ToString() ?? string.Empty;
+        row.StudentCreatedAt = reader.GetDateTime(reader.GetOrdinal("StudentCreatedAt"));
+        row.CourseStartDate = reader.IsDBNull(reader.GetOrdinal("CourseStartDate")) ? null : reader.GetDateTime(reader.GetOrdinal("CourseStartDate"));
+        row.CourseEndDate = reader.IsDBNull(reader.GetOrdinal("CourseEndDate")) ? null : reader.GetDateTime(reader.GetOrdinal("CourseEndDate"));
+        row.InstituteName = reader["InstituteName"]?.ToString() ?? string.Empty;
+        row.CourseName = reader["CourseName"]?.ToString() ?? string.Empty;
+        row.TotalCourseFee = reader.GetDecimal(reader.GetOrdinal("TotalCourseFee"));
+        row.NoOfInstallments = reader.GetInt32(reader.GetOrdinal("NoOfInstallments"));
+        row.Frequency = reader["Frequency"]?.ToString() ?? string.Empty;
+        row.FirstDueDate = reader.GetDateTime(reader.GetOrdinal("FirstDueDate"));
+        row.TotalInstallments = reader.GetInt32(reader.GetOrdinal("TotalInstallments"));
+        row.PaidInstallments = reader.GetInt32(reader.GetOrdinal("PaidInstallments"));
+        row.PendingInstallments = reader.GetInt32(reader.GetOrdinal("PendingInstallments"));
+        row.CollectedAmount = reader.GetDecimal(reader.GetOrdinal("CollectedAmount"));
+        row.BalanceAmount = reader.GetDecimal(reader.GetOrdinal("BalanceAmount"));
+        row.InstallmentAmount = reader.IsDBNull(reader.GetOrdinal("InstallmentAmount")) ? 0 : reader.GetDecimal(reader.GetOrdinal("InstallmentAmount"));
+        row.NextDueDate = reader.IsDBNull(reader.GetOrdinal("NextDueDate")) ? null : reader.GetDateTime(reader.GetOrdinal("NextDueDate"));
+        row.PaymentStatus = reader["PaymentStatus"]?.ToString() ?? string.Empty;
     }
     public async Task<List<PaymentScheduleResponse>> GetPaymentSchedulesAsync(int? studentId)
     {

@@ -25,3 +25,9 @@ public class StudentCourseCompleteResponse
     public DateTime? NextDueDate { get; set; }
     public string PaymentStatus { get; set; } = string.Empty;
 }
+
+public class StudentCancelListResponse : StudentCourseCompleteResponse
+{
+    public DateTime? CancelDate { get; set; }
+    public string? CancelReason { get; set; }
+}
