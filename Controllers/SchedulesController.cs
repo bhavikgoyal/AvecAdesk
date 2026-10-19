@@ -232,6 +232,19 @@ public class SchedulesController : ControllerBase
             return StatusCode(500, "An error occurred while fetching student course complete list.");
         }
     }
+    [HttpGet("GetStudentCancelList")]
+    public async Task<IActionResult> GetStudentCancelList()
+    {
+        try
+        {
+            return Ok(await _scheduleRepository.GetStudentCancelListAsync());
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(GetStudentCancelList), ex);
+            return StatusCode(500, "An error occurred while fetching the cancelled student list.");
+        }
+    }
     [HttpPost("UpdateStudentPaymentSchedule")]
     public async Task<IActionResult> UpdateStudentPaymentSchedule([FromBody] UpdateStudentPaymentScheduleRequest request)
     {

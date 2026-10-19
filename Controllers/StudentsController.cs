@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.StaticFiles;
 using System.IO;
 using System;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -140,6 +141,65 @@ public class StudentsController : ControllerBase
             return StatusCode(500, "An error occurred while updating enrolment status.");
         }
     }
+    [Authorize]
+    [HttpGet("{studentId:int}/cancel-detail")]
+    public async Task<IActionResult> GetCancelDetail(int studentId)
+    {
+        try
+        {
+            var detail = await _studentRepository.GetStudentCancelDetailAsync(studentId);
+            if (detail == null)
+                return NotFound("Student not found");
+
+            return Ok(detail);
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(GetCancelDetail), ex);
+            return StatusCode(500, "An error occurred while fetching cancel details.");
+        }
+    }
+
+    [Authorize]
+    [HttpPost("{studentId:int}/cancel-detail")]
+    public async Task<IActionResult> SaveCancelDetail(int studentId, [FromBody] StudentCancelDetailRequest request)
+    {
+        try
+        {
+            if (!request.IsActive && request.CancelDate == null)
+                return BadRequest("Cancel date is required when the student is inactive.");
+
+            if (!request.IsActive && string.IsNullOrWhiteSpace(request.CancelReason))
+                return BadRequest("Reason is required when the student is inactive.");
+
+            if (!request.IsActive && request.CancelDate!.Value.Date > DateTime.Today)
+                return BadRequest("Cancel date cannot be in the future.");
+
+            if (request.CancelReason?.Length > 1000)
+                return BadRequest("Reason cannot be longer than 1000 characters.");
+
+            var saved = await _studentRepository.SaveStudentCancelDetailAsync(studentId, request, GetCurrentUserId());
+            if (!saved)
+                return NotFound("Student not found");
+
+            return Ok(await _studentRepository.GetStudentCancelDetailAsync(studentId));
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError(nameof(SaveCancelDetail), ex);
+            return StatusCode(500, "An error occurred while saving cancel details.");
+        }
+    }
+
+    private int? GetCurrentUserId()
+    {
+        var claim = User.FindFirst(ClaimTypes.NameIdentifier) ?? User.FindFirst("sub");
+        if (claim != null && int.TryParse(claim.Value, out var userId))
+            return userId;
+
+        return null;
+    }
+
     [HttpGet("GetStudentPaymentDetail/{studentId}")]
     public async Task<IActionResult> GetStudentPaymentDetail(int studentId)
     {
