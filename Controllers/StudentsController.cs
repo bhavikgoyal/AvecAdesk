@@ -172,7 +172,8 @@ public class StudentsController : ControllerBase
             if (!request.IsActive && string.IsNullOrWhiteSpace(request.CancelReason))
                 return BadRequest("Reason is required when the student is inactive.");
 
-            if (!request.IsActive && request.CancelDate!.Value.Date > DateTime.Today)
+            // Compare with today's date in India, not the server clock's timezone.
+            if (!request.IsActive && request.CancelDate!.Value.Date > IndiaToday())
                 return BadRequest("Cancel date cannot be in the future.");
 
             if (request.CancelReason?.Length > 1000)
@@ -190,7 +191,16 @@ public class StudentsController : ControllerBase
             return StatusCode(500, "An error occurred while saving cancel details.");
         }
     }
+    private static DateTime IndiaToday()
+    {
+        foreach (var id in new[] { "India Standard Time", "Asia/Kolkata" })
+        {
+            if (TimeZoneInfo.TryFindSystemTimeZoneById(id, out var tz))
+                return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, tz).Date;
+        }
 
+        return DateTime.UtcNow.AddHours(5).AddMinutes(30).Date;
+    }
     private int? GetCurrentUserId()
     {
         var claim = User.FindFirst(ClaimTypes.NameIdentifier) ?? User.FindFirst("sub");

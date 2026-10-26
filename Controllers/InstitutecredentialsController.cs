@@ -79,7 +79,7 @@ public class InstituteCredentialsController : ControllerBase
         }
     }
 
-    [HttpDelete("{credentialId:int}")]
+    [HttpPost("{credentialId:int}/delete")]
     public async Task<IActionResult> DeleteCredential(int instituteId, int credentialId)
     {
         try
