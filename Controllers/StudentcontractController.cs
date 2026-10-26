@@ -76,7 +76,7 @@ public class StudentContractController : ControllerBase
         }
     }
 
-    [HttpDelete("{contractId:int}")]
+    [HttpPost("{contractId:int}/delete")]
     public async Task<IActionResult> DeleteContract(int studentId, int contractId)
     {
         try

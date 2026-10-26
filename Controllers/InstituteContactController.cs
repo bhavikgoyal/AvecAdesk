@@ -73,7 +73,7 @@ public class InstituteContactController : ControllerBase
         }
     }
 
-    [HttpDelete("{contactId:int}")]
+    [HttpPost("{contactId:int}/delete")]
     public async Task<IActionResult> DeleteContact(int instituteId, int contactId)
     {
         try

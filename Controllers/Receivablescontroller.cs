@@ -97,8 +97,7 @@ public class ReceivablesController : ControllerBase
     }
 
     [HttpGet("received")]
-    public async Task<IActionResult> GetReceived([FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate,
-        [FromQuery] int? instituteId, [FromQuery] int? studentId)
+    public async Task<IActionResult> GetReceived([FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate,[FromQuery] int? instituteId, [FromQuery] int? studentId)
     {
         try
         {
@@ -137,11 +136,7 @@ public class ReceivablesController : ControllerBase
 
 
     [HttpGet("anticipated-receivables")]
-    public async Task<IActionResult> GetAnticipatedReceivablesGrid(
-        [FromQuery] DateTime? fromDate,
-        [FromQuery] DateTime? toDate,
-        [FromQuery] int? instituteId,
-        [FromQuery] int? studentId)
+    public async Task<IActionResult> GetAnticipatedReceivablesGrid([FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate, [FromQuery] int? instituteId, [FromQuery] int? studentId)
     {
         try
         {
