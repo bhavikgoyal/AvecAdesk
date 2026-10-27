@@ -139,6 +139,26 @@ public class InstituteScrappingRepository : IInstituteScrappingRepository
         return records;
     }
 
+    public async Task MergeCampusesAsync(int scrappingId, IReadOnlyList<InstituteCampusItem> campuses)
+    {
+        if (campuses.Count == 0)
+            return;
+
+        try
+        {
+            await _db.ExecuteNonQueryAsync("sp_MergeInstituteCampuses", cmd =>
+            {
+                cmd.Parameters.AddWithValue("@ScrappingId", scrappingId);
+                cmd.Parameters.Add("@CampusesJson", SqlDbType.NVarChar, -1).Value = JsonSerializer.Serialize(campuses);
+            });
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(InstituteScrappingRepository)}.{nameof(MergeCampusesAsync)}", ex);
+            throw;
+        }
+    }
+
     public async Task<bool> UpdateAsync(int scrappingId, InstituteScrappingUpsertRequest request)
     {
         try

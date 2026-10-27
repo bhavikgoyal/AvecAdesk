@@ -465,6 +465,8 @@ public class InvoiceRepository : IInvoiceRepository
                     ? r.GetString(r.GetOrdinal("Address")) : null,
                     ZipCode = HasColumn(r, "ZipCode") && !r.IsDBNull(r.GetOrdinal("ZipCode"))
                     ? r.GetString(r.GetOrdinal("ZipCode")) : null,
+                    Campus = HasColumn(r, "Campus") && !r.IsDBNull(r.GetOrdinal("Campus"))
+                    ? r.GetString(r.GetOrdinal("Campus")) : null,
                 });
         }
         catch (Exception ex)
@@ -488,8 +490,8 @@ public class InvoiceRepository : IInvoiceRepository
                 ? r.GetString(instituteNameOrdinal)
                 : string.Empty,
             InstituteAddress = HasColumn(r, "InstituteAddress") && !r.IsDBNull(r.GetOrdinal("InstituteAddress"))
-       ? r.GetString(r.GetOrdinal("InstituteAddress"))
-       : null,
+           ? r.GetString(r.GetOrdinal("InstituteAddress"))
+           : null,
             Address = HasColumn(r, "Address") && !r.IsDBNull(r.GetOrdinal("Address"))
                 ? r.GetString(r.GetOrdinal("Address"))
                 : null,

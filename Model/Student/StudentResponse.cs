@@ -69,6 +69,7 @@ public class StudentPaymentScheduleDetailResponse
     public string? BonusType { get; set; }
     public string? BonusOption { get; set; }
     public DateTime? DueDate { get; set; }
+    public int? DueDays { get; set; }
     public decimal? CommissionAmount { get; set; }
     public decimal? GSTAmount { get; set; }
     public decimal? BonusAmount { get; set; }

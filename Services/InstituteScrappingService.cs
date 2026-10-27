@@ -93,9 +93,18 @@ public class InstituteScrappingService : IInstituteScrappingService
             AddmissionRequirements = program.AddmissionRequirements,
         }).ToList();
 
-        // SP creates 1 INSTITUTEScrapping row + N Courses rows (InstituteId = ScrappingId).
         var records = await _repository.CreateManyAsync(upsertRequests);
         var coursesInserted = upsertRequests.Count;
+
+        var scrappingId = records.FirstOrDefault()?.ScrappingId;
+        if (scrappingId is > 0)
+        {
+            var campuses = BuildCampuses(institute, extractedPrograms, sharedCountry, sharedCity);
+            await _repository.MergeCampusesAsync(scrappingId.Value, campuses);
+ var refreshed = await _repository.GetByIdAsync(scrappingId.Value);
+            if (refreshed != null)
+                records = records.Select(_ => refreshed).ToList();
+        }
 
         return new InstituteScrappingRunResponse
         {
@@ -127,7 +136,17 @@ public class InstituteScrappingService : IInstituteScrappingService
                 "city": "",
                 "about": "",
                 "countryRanking": "",
-                "scholarshipsDetails": ""
+                "scholarshipsDetails": "",
+                "campuses": [
+                  {
+                    "campus": "",
+                    "address": "",
+                    "city": "",
+                    "state": "",
+                    "zipCode": "",
+                    "country": ""
+                  }
+                ]
               },
               "programs": [
                 {
@@ -151,6 +170,7 @@ public class InstituteScrappingService : IInstituteScrappingService
             Rules:
             - institute fields come from homepage/about pages: logo URL (full https URL if visible), country ranking, general about text, country, city, scholarships.
             - institute.logo must be a full image URL if found in the text (header logo, og:image, etc.).
+            - institute.campuses lists every campus / location of the institute (from contact, campus, locations, footer pages) with its street address, city, state, postcode (zipCode) and country exactly as written. Use one entry per campus. campus is the campus name (e.g. "Sydney", "Melbourne CBD"); if only a city is given, use the city as the campus name.
             - institute.about must contain ALL About Us / institute overview text from the website — the complete description, not a summary.
             - programs[].programDescription must contain ALL program/course-specific description text (overview, what you will learn, course details, etc.) — the complete text, not a summary.
             - programs[].programLogo must be the full https URL of the program/course image or logo if found on the program page.
@@ -301,6 +321,62 @@ public class InstituteScrappingService : IInstituteScrappingService
         return merged;
     }
 
+    private static List<InstituteCampusItem> BuildCampuses(
+        ChatGptInstituteRecord? institute,
+        IReadOnlyList<ChatGptProgramRecord> programs,
+        string? defaultCountry,
+        string? defaultCity)
+    {
+        var byName = new Dictionary<string, InstituteCampusItem>(StringComparer.OrdinalIgnoreCase);
+        var ordered = new List<InstituteCampusItem>();
+
+        void Add(string? campus, string? address, string? city, string? state, string? zipCode, string? country)
+        {
+            var name = FirstNonEmpty(campus, city);
+            if (name is null)
+                return;
+
+            if (byName.TryGetValue(name, out var existing))
+            {
+                existing.Address ??= FirstNonEmpty(address);
+                existing.City ??= FirstNonEmpty(city);
+                existing.State ??= FirstNonEmpty(state);
+                existing.ZipCode ??= FirstNonEmpty(zipCode);
+                existing.Country ??= FirstNonEmpty(country);
+                return;
+            }
+
+            var item = new InstituteCampusItem
+            {
+                Campus = name,
+                Address = FirstNonEmpty(address),
+                City = FirstNonEmpty(city),
+                State = FirstNonEmpty(state),
+                ZipCode = FirstNonEmpty(zipCode),
+                Country = FirstNonEmpty(country, defaultCountry),
+            };
+            byName[name] = item;
+            ordered.Add(item);
+        }
+
+        foreach (var campus in institute?.Campuses ?? new List<ChatGptCampusRecord>())
+            Add(campus.Campus, campus.Address, campus.City, campus.State, campus.ZipCode, campus.Country);
+
+        // Course pages often list several campuses in one field, e.g. "Sydney, Melbourne".
+        foreach (var program in programs)
+        {
+            var names = (program.Campus ?? string.Empty)
+                .Split(new[] { ',', ';', '|' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            foreach (var name in names)
+                Add(name, null, null, program.State, null, defaultCountry);
+        }
+
+        if (ordered.Count == 0 && !string.IsNullOrWhiteSpace(defaultCity))
+            Add(defaultCity, null, defaultCity, null, null, defaultCountry);
+
+        return ordered;
+    }
+
     private static string NormalizeProgramKey(string value)
     {
         return value.Trim().TrimEnd('/').ToLowerInvariant();
@@ -396,6 +472,17 @@ public class InstituteScrappingService : IInstituteScrappingService
         public string? About { get; set; }
         public string? CountryRanking { get; set; }
         public string? ScholarshipsDetails { get; set; }
+        public List<ChatGptCampusRecord>? Campuses { get; set; }
+    }
+
+    private sealed class ChatGptCampusRecord
+    {
+        public string? Campus { get; set; }
+        public string? Address { get; set; }
+        public string? City { get; set; }
+        public string? State { get; set; }
+        public string? ZipCode { get; set; }
+        public string? Country { get; set; }
     }
 
     private sealed class ChatGptProgramRecord

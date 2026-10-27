@@ -10,6 +10,7 @@ public interface IInstituteScrappingRepository
     Task<int> CreateAsync(InstituteScrappingUpsertRequest request);
     Task<InstituteScrappingManualCreateResult> ManualCreateAsync(InstituteScrappingUpsertRequest request, int? vendorId = null);
     Task<List<InstituteScrappingResponse>> CreateManyAsync(IEnumerable<InstituteScrappingUpsertRequest> requests);
+    Task MergeCampusesAsync(int scrappingId, IReadOnlyList<InstituteCampusItem> campuses);
     Task<bool> UpdateAsync(int scrappingId, InstituteScrappingUpsertRequest request);
     Task<bool> DeleteAsync(int scrappingId);
 }
