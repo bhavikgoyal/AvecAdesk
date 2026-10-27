@@ -20,6 +20,7 @@ public class UpdateStudentPaymentScheduleRequest
     public string? BonusType { get; set; }
     public string? BonusOption { get; set; }
     public DateTime? DueDate { get; set; }
+    public int? DueDays { get; set; }
     public List<StudentPaymentInstallmentUpdateRequest> PaymentList { get; set; } = [];
 
     public List<StudentCommissionDetailUpdateRequest> CommissionHistory { get; set; } = [];

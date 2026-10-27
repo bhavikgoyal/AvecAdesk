@@ -19,9 +19,7 @@ public interface IInvoiceRepository
     Task<bool> IsInvoiceNumberTakenAsync(string invoiceNumber);
     Task UpdateInvoicePdfPathAsync(int invoiceId, string pdfPath);
     Task<List<InvoiceLineItemResponse>> GetInvoiceLineItemsAsync(int invoiceId);
-    Task<(bool Success, string Message, InvoiceResponse? Invoice)> UpdateInvoiceLineItemAmountsAsync(
-    int invoiceId,
-    List<InvoiceLineItemAmountUpdateRequest> items);
+    Task<(bool Success, string Message, InvoiceResponse? Invoice)> UpdateInvoiceLineItemAmountsAsync(int invoiceId,List<InvoiceLineItemAmountUpdateRequest> items);
     Task<(bool Success, string Message)> UpdateInstallmentFeesAndInvoiceAmountsAsync(List<InstallmentAmountUpdateRequest> items);
     Task<decimal> GetNextMonthInvoiceTotalAsync();
     Task<(bool Success, string Message)>InsertBonusInstallmentAndCommissionAsync(List<BonusInstallmentRequest> items);

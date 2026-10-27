@@ -23,4 +23,5 @@ public class InvoiceLineItemResponse
     public bool IsInvoicedUpdate { get; set; }
     public string? Address { get; set; }
     public string? ZipCode { get; set; }
+    public string? Campus { get; set; }
 }

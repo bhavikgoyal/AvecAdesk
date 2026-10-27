@@ -368,6 +368,10 @@ public class StudentRepository : IStudentRepository
             ? null
             : reader.GetDateTime(reader.GetOrdinal("DueDate")),
 
+            DueDays = ColumnExists(reader, "DueDays") && !reader.IsDBNull(reader.GetOrdinal("DueDays"))
+            ? reader.GetInt32(reader.GetOrdinal("DueDays"))
+            : null,
+
             CommissionAmount = reader.IsDBNull(reader.GetOrdinal("CommissionAmount"))
             ? null
             : reader.GetDecimal(reader.GetOrdinal("CommissionAmount")),
