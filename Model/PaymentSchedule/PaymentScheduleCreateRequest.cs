@@ -33,6 +33,7 @@ public class StudentCommissionCreateRequest
     public decimal GSTAmount { get; set; }
     public DateTime? DueDate { get; set; }
     public int? DueDays { get; set; }
+    public string? CommissionType { get; set; }
 }
 public class StudentCommissionDetailCreateRequest
 {

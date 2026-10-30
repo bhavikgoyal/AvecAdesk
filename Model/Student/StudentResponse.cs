@@ -65,6 +65,8 @@ public class StudentPaymentScheduleDetailResponse
 
     public int? CommissionId { get; set; }
     public decimal? CommissionPercentage { get; set; }
+    public string? CommissionType { get; set; }
+    public decimal? StudentCommissionAmount { get; set; }
     public decimal? GSTPercentage { get; set; }
     public string? BonusType { get; set; }
     public string? BonusOption { get; set; }
