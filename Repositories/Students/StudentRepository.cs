@@ -357,6 +357,14 @@ public class StudentRepository : IStudentRepository
                 ? null
                 : reader.GetDecimal(reader.GetOrdinal("CommissionPercentage")),
 
+            CommissionType = ColumnExists(reader, "CommissionType")
+                ? reader["CommissionType"]?.ToString()
+                : null,
+
+            StudentCommissionAmount = ColumnExists(reader, "StudentCommissionAmount") && !reader.IsDBNull(reader.GetOrdinal("StudentCommissionAmount"))
+                ? reader.GetDecimal(reader.GetOrdinal("StudentCommissionAmount"))
+                : null,
+
             GSTPercentage = reader.IsDBNull(reader.GetOrdinal("GSTPercentage"))
                 ? null
                 : reader.GetDecimal(reader.GetOrdinal("GSTPercentage")),

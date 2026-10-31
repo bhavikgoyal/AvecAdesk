@@ -223,6 +223,7 @@ public class ScheduleRepository : IScheduleRepository
                 cmd.Parameters.AddWithValue("@BonusOption", (object?)request.BonusOption ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@DueDate", (object?)request.DueDate ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@DueDays", (object?)request.DueDays ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@CommissionType", (object?)request.CommissionType ?? DBNull.Value);
 
                 cmd.Parameters.Add(commissionIdParam);
             });
@@ -508,6 +509,10 @@ public class ScheduleRepository : IScheduleRepository
             command.Parameters.AddWithValue("@BonusOption", (object?)request.BonusOption ?? DBNull.Value);
             command.Parameters.AddWithValue("@DueDate", (object?)request.DueDate ?? DBNull.Value);
             command.Parameters.AddWithValue("@DueDays", (object?)request.DueDays ?? DBNull.Value);
+            command.Parameters.AddWithValue("@CommissionPercentage", (object?)request.CommissionPercentage ?? DBNull.Value);
+            command.Parameters.AddWithValue("@CommissionType", (object?)request.CommissionType ?? DBNull.Value);
+            command.Parameters.AddWithValue("@CommissionAmount", (object?)request.CommissionAmount ?? DBNull.Value);
+            command.Parameters.AddWithValue("@GSTAmount", (object?)request.GSTAmount ?? DBNull.Value);
 
             var paymentList = request.PaymentList ?? new List<StudentPaymentInstallmentUpdateRequest>();
             try
