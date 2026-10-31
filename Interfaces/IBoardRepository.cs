@@ -4,6 +4,7 @@
     {
         Task<int> CreateBoardAsync(string boardName, int createdByUserId);
         Task<List<(int BoardID, string BoardName)>> GetBoardsByUserIdAsync(int userId);
+        Task<List<(int BoardID, string BoardName)>> GetAllBoardsAsync();
         Task<bool> UpdateBoardNameAsync(int boardId, string boardName, int userId);
     }
 }

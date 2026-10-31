@@ -69,6 +69,20 @@ namespace AvecADeskApi.Controllers
             );
         }
 
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAllBoards()
+        {
+            var boards = await _boardRepository.GetAllBoardsAsync();
+
+            return Ok(
+                boards.Select(b => new
+                {
+                    BoardID = b.BoardID,
+                    BoardName = b.BoardName
+                })
+            );
+        }
+
         [HttpPost("{boardId:int}")]
         public async Task<IActionResult> UpdateBoardName(int boardId, [FromBody] UpdateBoardNameRequest request)
         {
