@@ -33,7 +33,16 @@ namespace AvecADeskApi.Repositories.Boards
                     cmd.Parameters.Add(newBoardIdParam);
                 });
 
-                return (int)newBoardIdParam.Value;
+                var newBoardId = (int)newBoardIdParam.Value;
+
+                // The board list only shows boards with an access row, so the creator gets one straight away.
+                await _db.ExecuteNonQueryAsync("dbo.sp_GrantUserBoardAccess", cmd =>
+                {
+                    cmd.Parameters.AddWithValue("@UserId", createdByUserId);
+                    cmd.Parameters.AddWithValue("@BoardId", newBoardId);
+                });
+
+                return newBoardId;
             }
             catch (Exception ex)
             {
@@ -70,6 +79,27 @@ namespace AvecADeskApi.Repositories.Boards
                     ex
                 );
 
+                throw;
+            }
+        }
+
+        public async Task<List<(int BoardID, string BoardName)>> GetAllBoardsAsync()
+        {
+            try
+            {
+                return await _db.ExecuteReaderListAsync(
+                    "dbo.sp_Boards_GetAll",
+                    _ => { },
+                    reader =>
+                    (
+                        reader.GetInt32(reader.GetOrdinal("BoardID")),
+                        reader.GetString(reader.GetOrdinal("BoardName"))
+                    )
+                );
+            }
+            catch (Exception ex)
+            {
+                _logHelper.LogError($"{nameof(BoardRepository)}.{nameof(GetAllBoardsAsync)}", ex);
                 throw;
             }
         }

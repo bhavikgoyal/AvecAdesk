@@ -57,6 +57,9 @@ namespace AvecADeskApi.Controllers
 
                 var userId = await _membersRepository.CreateUserAsync(request);
 
+                if (request.BoardIds != null && userId > 0)
+                    await _membersRepository.SaveUserBoardAccessAsync(userId, request.BoardIds);
+
                 return Ok(new
                 {
                     Message = "User created successfully",
@@ -85,6 +88,9 @@ namespace AvecADeskApi.Controllers
                 {
                     return NotFound(new { Message = "User not found" });
                 }
+
+                if (request.BoardIds != null)
+                    await _membersRepository.SaveUserBoardAccessAsync(request.UserId, request.BoardIds);
 
                 return Ok(new
                 {
@@ -124,6 +130,22 @@ namespace AvecADeskApi.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, "An error occurred while processing the request.");
+            }
+        }
+
+        [HttpGet("{userId:int}/board-access")]
+        public async Task<IActionResult> GetBoardAccess(int userId)
+        {
+            if (userId <= 0)
+                return BadRequest(new { Message = "Invalid user id" });
+
+            try
+            {
+                return Ok(await _membersRepository.GetUserBoardAccessAsync(userId));
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { Message = "An error occurred while loading board access." });
             }
         }
 

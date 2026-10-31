@@ -13,6 +13,23 @@ public class AccountingPaymentReminderTaskResult
     public string AssignedTo { get; set; } = string.Empty;
 }
 
+public class DuesTodoItemResponse
+{
+    public string ItemName { get; set; } = string.Empty;
+    public DateTime? CardDate { get; set; }
+    public DateTime? DueDate { get; set; }
+    public bool IsOverdue { get; set; }
+    public int DaysLeft { get; set; }
+    public int PendingUsers { get; set; }
+    public string AssignedTo { get; set; } = string.Empty;
+}
+
+public class DismissDuesTodoRequest
+{
+    public string ItemName { get; set; } = string.Empty;
+    public DateTime? CardDate { get; set; }
+}
+
 public class AccountingPaymentReminderRunResponse
 {
     public int CreatedCount { get; set; }

@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using AvecADeskApi.Interfaces;
 using AvecADeskApi.LOG;
 using AvecADeskApi.Model.Reminder;
@@ -16,6 +17,8 @@ public class RemindersController : ControllerBase
     private readonly AccountingPaymentReminderService _accountingPaymentReminderService;
     private readonly ContractExpiryReminderService _contractExpiryReminderService;
     private readonly InvoiceDueReminderService _invoiceDueReminderService;
+    private readonly IStudentFeeTodoReminderRepository _studentFeeTodoReminderRepository;
+    private readonly IConfiguration _configuration;
     private readonly LogHelper _logHelper;
 
     public RemindersController(
@@ -23,13 +26,41 @@ public class RemindersController : ControllerBase
         AccountingPaymentReminderService accountingPaymentReminderService,
         ContractExpiryReminderService contractExpiryReminderService,
          InvoiceDueReminderService invoiceDueReminderService,
+        IStudentFeeTodoReminderRepository studentFeeTodoReminderRepository,
+        IConfiguration configuration,
         LogHelper logHelper)
     {
         _reminderRepository = reminderRepository;
         _accountingPaymentReminderService = accountingPaymentReminderService;
         _contractExpiryReminderService = contractExpiryReminderService;
         _invoiceDueReminderService = invoiceDueReminderService;
+        _studentFeeTodoReminderRepository = studentFeeTodoReminderRepository;
+        _configuration = configuration;
         _logHelper = logHelper;
+    }
+
+    [HttpPost("dues-todo/dismiss")]
+    public async Task<IActionResult> DismissDuesTodo([FromBody] DismissDuesTodoRequest request)
+    {
+        if (request == null || string.IsNullOrWhiteSpace(request.ItemName) || request.CardDate == null)
+            return BadRequest("ItemName and CardDate are required.");
+
+        var userId = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : (int?)null;
+        try
+        {
+            await _studentFeeTodoReminderRepository.DismissDuesTodoItemAsync(request.ItemName, request.CardDate.Value, userId);
+            return Ok(new { Success = true });
+        }
+        catch (Exception ex) { _logHelper.LogError(nameof(DismissDuesTodo), ex); return StatusCode(500, "An error occurred while hiding the task."); }
+    }
+
+    [HttpGet("dues-todo")]
+    public async Task<IActionResult> GetDuesTodo([FromQuery] string? scope = null)
+    {
+        var daysBefore = _configuration.GetValue("StudentFeeTodoReminder:DaysBefore", 7);
+        var normalizedScope = string.Equals(scope, "all", StringComparison.OrdinalIgnoreCase) ? "all" : "previous";
+        try { return Ok(await _studentFeeTodoReminderRepository.GetDuesTodoItemsAsync(daysBefore, normalizedScope)); }
+        catch (Exception ex) { _logHelper.LogError(nameof(GetDuesTodo), ex); return StatusCode(500, "An error occurred while fetching dues to do."); }
     }
 
     [HttpGet("rules")]

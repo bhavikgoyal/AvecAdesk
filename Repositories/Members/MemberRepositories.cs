@@ -260,5 +260,50 @@ namespace AvecADeskApi.Repositories.Members
                 throw;
             }
         }
+
+        public async Task<List<UserBoardAccessResponse>> GetUserBoardAccessAsync(int userId)
+        {
+            try
+            {
+                return await _db.ExecuteReaderListAsync("dbo.sp_GetUserBoardAccess",
+                    cmd => cmd.Parameters.AddWithValue("@UserId", userId),
+                    MapBoardAccess);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "GetUserBoardAccessAsync failed for UserId:{UserId}", userId);
+                throw;
+            }
+        }
+
+        public async Task<List<UserBoardAccessResponse>> SaveUserBoardAccessAsync(int userId, IEnumerable<int> boardIds)
+        {
+            try
+            {
+                var ids = string.Join(",", boardIds.Where(id => id > 0).Distinct());
+                return await _db.ExecuteReaderListAsync("dbo.sp_SaveUserBoardAccess",
+                    cmd =>
+                    {
+                        cmd.Parameters.AddWithValue("@UserId", userId);
+                        cmd.Parameters.AddWithValue("@BoardIds", ids);
+                    },
+                    MapBoardAccess);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "SaveUserBoardAccessAsync failed for UserId:{UserId}", userId);
+                throw;
+            }
+        }
+
+        private static UserBoardAccessResponse MapBoardAccess(SqlDataReader reader) => new()
+        {
+            UserBoardAccessId = reader.GetInt32(reader.GetOrdinal("UserBoardAccessId")),
+            UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
+            BoardId = reader.GetInt32(reader.GetOrdinal("BoardId")),
+            BoardName = reader["BoardName"] as string ?? string.Empty,
+            IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
+            AccessGrantedOn = reader.GetDateTime(reader.GetOrdinal("AccessGrantedOn"))
+        };
     }
 }

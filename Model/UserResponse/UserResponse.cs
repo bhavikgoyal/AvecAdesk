@@ -16,6 +16,18 @@
         public bool IsActive { get; set; }
         public DateTime? CreatedOn { get; set; }
         public string? AvatarBase64 { get; set; }
+        // Null means "leave board access as it is"; an empty list removes every board.
+        public List<int>? BoardIds { get; set; }
+    }
+
+    public class UserBoardAccessResponse
+    {
+        public int UserBoardAccessId { get; set; }
+        public int UserId { get; set; }
+        public int BoardId { get; set; }
+        public string BoardName { get; set; } = string.Empty;
+        public bool IsActive { get; set; }
+        public DateTime AccessGrantedOn { get; set; }
     }
 
     public class MemberResignResponse

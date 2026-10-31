@@ -13,4 +13,8 @@ public interface IMembersRepository
     Task<UserResponse?> GetUserByUserNameAsync(string userName);
 
     Task<bool> ResignMemberAsync(int userId, DateTime resignDate);
+
+    Task<List<UserBoardAccessResponse>> GetUserBoardAccessAsync(int userId);
+
+    Task<List<UserBoardAccessResponse>> SaveUserBoardAccessAsync(int userId, IEnumerable<int> boardIds);
 }

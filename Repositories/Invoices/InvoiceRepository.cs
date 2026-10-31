@@ -490,8 +490,8 @@ public class InvoiceRepository : IInvoiceRepository
                 ? r.GetString(instituteNameOrdinal)
                 : string.Empty,
             InstituteAddress = HasColumn(r, "InstituteAddress") && !r.IsDBNull(r.GetOrdinal("InstituteAddress"))
-           ? r.GetString(r.GetOrdinal("InstituteAddress"))
-           : null,
+                ? r.GetString(r.GetOrdinal("InstituteAddress"))
+                : null,
             Address = HasColumn(r, "Address") && !r.IsDBNull(r.GetOrdinal("Address"))
                 ? r.GetString(r.GetOrdinal("Address"))
                 : null,
