@@ -1,19 +1,17 @@
-﻿using System.Net;
-using System.Net.Mail;
-using AvecADeskApi.Interfaces;
-using Microsoft.Extensions.Configuration;
+﻿using AvecADeskApi.Interfaces;
+using AvecADeskApi.Model.MailHistory;
 
 namespace AvecADeskApi.Services
 {
     public class EmailService : IEmailService
     {
-        private readonly IConfiguration _configuration;
-        private readonly EmailTemplateSenderService _templateSender; 
+        private readonly IEmailSender _emailSender;
+        private readonly EmailTemplateSenderService _templateSender;
 
-        public EmailService(IConfiguration configuration, EmailTemplateSenderService templateSender) 
+        public EmailService(IEmailSender emailSender, EmailTemplateSenderService templateSender)
         {
-            _configuration = configuration;
-            _templateSender = templateSender; 
+            _emailSender = emailSender;
+            _templateSender = templateSender;
         }
 
         public async Task SendVerificationEmailAsync(string email, string verificationCode)
@@ -30,29 +28,7 @@ namespace AvecADeskApi.Services
             if (sentViaTemplate)
                 return;
 
-           
-            var smtpClient = new SmtpClient(
-                _configuration["Email:SmtpHost"],
-                Convert.ToInt32(_configuration["Email:SmtpPort"]))
-            {
-                Credentials = new NetworkCredential(
-                    _configuration["Email:Username"],
-                    _configuration["Email:Password"]),
-
-                EnableSsl = Convert.ToBoolean(_configuration["Email:EnableSsl"])
-            };
-
-            var message = new MailMessage
-            {
-                From = new MailAddress(
-                    _configuration["Email:FromAddress"]!,
-                    _configuration["Email:FromName"]),
-
-                Subject = "Verify Your Email",
-
-                IsBodyHtml = true,
-
-                Body = $@"
+            await _emailSender.SendAsync(email, "Verify Your Email", $@"
                     <h2>Welcome to AVEC ADesk</h2>
                     <p>Thank you for registering with AVEC ADesk.</p>
                     <p>Your verification code is:</p>
@@ -61,11 +37,7 @@ namespace AvecADeskApi.Services
                     <p>If you did not create this account, you can safely ignore this email.</p>
                     <br/>
                     <p>Regards,</p>
-                    <p><strong>AVEC ADesk Team</strong></p>"
-            };
-
-            message.To.Add(email);
-            await smtpClient.SendMailAsync(message);
+                    <p><strong>AVEC ADesk Team</strong></p>", mailType: MailTypes.EmailVerification);
         }
 
         public async Task SendPasswordResetEmailAsync(string email, string resetLink)
@@ -81,29 +53,7 @@ namespace AvecADeskApi.Services
             if (sentViaTemplate)
                 return;
 
-           
-            var smtpClient = new SmtpClient(
-                _configuration["Email:SmtpHost"],
-                Convert.ToInt32(_configuration["Email:SmtpPort"]))
-            {
-                Credentials = new NetworkCredential(
-                    _configuration["Email:Username"],
-                    _configuration["Email:Password"]),
-
-                EnableSsl = Convert.ToBoolean(_configuration["Email:EnableSsl"])
-            };
-
-            var message = new MailMessage
-            {
-                From = new MailAddress(
-                    _configuration["Email:FromAddress"]!,
-                    _configuration["Email:FromName"]),
-
-                Subject = "Reset Your Password",
-
-                IsBodyHtml = true,
-
-                Body = $@"
+            await _emailSender.SendAsync(email, "Reset Your Password", $@"
                     <h2>AVEC ADesk - Password Reset</h2>
                     <p>We received a request to reset your password.</p>
                     <p>
@@ -117,11 +67,7 @@ namespace AvecADeskApi.Services
                     <p>If you did not request a password reset, you can safely ignore this email — your password will not be changed.</p>
                     <br/>
                     <p>Regards,</p>
-                    <p><strong>AVEC ADesk Team</strong></p>"
-            };
-
-            message.To.Add(email);
-            await smtpClient.SendMailAsync(message);
+                    <p><strong>AVEC ADesk Team</strong></p>", mailType: MailTypes.PasswordReset);
         }
     }
 }

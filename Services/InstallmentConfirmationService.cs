@@ -1,5 +1,6 @@
 ﻿using AvecADeskApi.Interfaces;
 using AvecADeskApi.LOG;
+using AvecADeskApi.Model.MailHistory;
 
 namespace AvecADeskApi.Services;
 
@@ -103,7 +104,8 @@ public class InstallmentConfirmationService
                 fileBytes,
                 fileName,
                 contentType,
-                cancellationToken);
+                cancellationToken,
+                mailType: MailTypes.InstallmentConfirmation);
         }
         catch (Exception ex)
         {

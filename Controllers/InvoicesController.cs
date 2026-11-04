@@ -32,10 +32,6 @@ public class InvoicesController : ControllerBase
         _logHelper = logHelper;
     }
 
-    /// <summary>
-    /// Preview all student installments due in the month (any status), filtered by institute + campus.
-    /// Invoice generation still uses Paid rows only.
-    /// </summary>
     [HttpGet("paid-students")]
     public async Task<IActionResult> GetPaidStudentsForInvoice( [FromQuery] int? year, [FromQuery] int? month, [FromQuery] int? instituteId, [FromQuery] string? campus)
     {
@@ -51,31 +47,19 @@ public class InvoicesController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Generate monthly tax invoice(s) for students with Paid installments in the given month,
-    /// insert Invoices + InvoiceItem rows, and email admin (bosco1852023@gmail.com by default).
-    /// </summary>
+   
     [HttpPost("generate-monthly")]
     public async Task<IActionResult> GenerateMonthlyInvoice([FromBody] MonthlyInvoiceGenerateRequest? request, CancellationToken cancellationToken)
     {
         try
         {
-            var result = await _monthlyInvoiceService.GenerateAndSendAsync(
-                request?.Year,
-                request?.Month,
-                request?.InstituteId,
-                request?.Campus,
-                request?.InstallmentIds,
-                request?.CommissionDetailId,
-                request?.BonusAmount,
-                request?.InvoiceAmounts,
-                request?.InvoiceNumber,
-                cancellationToken);
+            var result = await _monthlyInvoiceService.GenerateAndSendAsync(request?.Year,request?.Month,request?.InstituteId,request?.Campus,request?.InstallmentIds,
+                request?.CommissionDetailId,request?.BonusAmount,request?.InvoiceAmounts,request?.InvoiceNumber,cancellationToken);
             return Ok(result);
         }
         catch (SqlException ex) when (ex.Number == 50010)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(ex.Message); 
         }
         catch (Exception ex)
         {

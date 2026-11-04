@@ -171,6 +171,46 @@ public class StudentFeeTodoReminderRepository : IStudentFeeTodoReminderRepositor
         }
     }
 
+    public async Task<List<InvoiceFollowUpTaskResult>> CreateInvoiceFollowUpTasksAsync(
+        int daysAfterInvoice,
+        string assignRoleNames,
+        int createdUserId,
+        int boardId,
+        string listName,
+        bool previewOnly)
+    {
+        try
+        {
+            return await _db.ExecuteReaderListAsync(
+                "dbo.sp_CreateInvoiceFollowUpTasks",
+                cmd =>
+                {
+                    cmd.Parameters.AddWithValue("@DaysAfterInvoice", daysAfterInvoice);
+                    cmd.Parameters.AddWithValue("@AssignRoleNames", assignRoleNames);
+                    cmd.Parameters.AddWithValue("@CreatedUserID", createdUserId);
+                    cmd.Parameters.AddWithValue("@BoardID", boardId);
+                    cmd.Parameters.AddWithValue("@ListName", listName);
+                    cmd.Parameters.AddWithValue("@PreviewOnly", previewOnly);
+                },
+                reader => new InvoiceFollowUpTaskResult
+                {
+                    InvoiceId = reader.GetInt32(reader.GetOrdinal("InvoiceId")),
+                    CardID = reader["CardID"] is DBNull ? null : reader.GetInt32(reader.GetOrdinal("CardID")),
+                    InvoiceNumber = reader["InvoiceNumber"] as string ?? string.Empty,
+                    CollegeName = reader["CollegeName"] as string ?? string.Empty,
+                    InvoiceDate = reader.GetDateTime(reader.GetOrdinal("InvoiceDate")),
+                    TotalAmount = reader.GetDecimal(reader.GetOrdinal("TotalAmount")),
+                    ItemName = reader["ItemName"] as string ?? string.Empty,
+                    AssignedTo = reader["AssignedTo"] as string ?? string.Empty,
+                });
+        }
+        catch (Exception ex)
+        {
+            _logHelper.LogError($"{nameof(StudentFeeTodoReminderRepository)}.{nameof(CreateInvoiceFollowUpTasksAsync)}", ex);
+            throw;
+        }
+    }
+
     private static AccountingPaymentReminderTaskResult MapResult(SqlDataReader reader) => new()
     {
         StudentPaymentInstallmentId = reader.GetInt32(reader.GetOrdinal("StudentPaymentInstallmentId")),

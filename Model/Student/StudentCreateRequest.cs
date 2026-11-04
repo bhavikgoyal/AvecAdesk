@@ -19,7 +19,7 @@ public class StudentCreateRequest
     public decimal? OSHCFee { get; set; }
     public string? CoeVoe { get; set; }
     public string? ServiceType { get; set; }
-    public string? Agent { get; set; }
+    public int? AgentId { get; set; }
     public string? LeadNo { get; set; }
     public string? Campus { get; set; }
     public decimal? InitialPayment { get; set; }

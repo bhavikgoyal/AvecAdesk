@@ -16,7 +16,7 @@ public class StudentUpdateRequest
     public decimal? OSHCFee { get; set; }
     public string? CoeVoe { get; set; }
     public string? ServiceType { get; set; }
-    public string? Agent { get; set; }
+    public int? AgentId { get; set; }
     public string? LeadNo { get; set; }
     public decimal? InitialPayment { get; set; }
 }

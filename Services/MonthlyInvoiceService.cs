@@ -2,6 +2,7 @@
 using AvecADeskApi.Interfaces;
 using AvecADeskApi.LOG;
 using AvecADeskApi.Model.Invoice;
+using AvecADeskApi.Model.MailHistory;
 using Azure.Core;
 
 namespace AvecADeskApi.Services;
@@ -134,15 +135,16 @@ public class MonthlyInvoiceService
             try
             {
                 var subject = $"Monthly Tax Invoice {invoice.InvoiceNumber} — {instituteName} ({periodLabel})";
-                await _emailSender.SendWithAttachmentAsync(
+                var sendResult = await _emailSender.SendWithAttachmentAsync(
                     adminEmail,
                     subject,
                     html,
                     pdfBytes,
                     fileName,
                     "application/pdf",
-                    cancellationToken);
-                emailSent = true;
+                    cancellationToken,
+                    mailType: MailTypes.MonthlyInvoice);
+                emailSent = sendResult != MailSendResult.Skipped;
             }
             catch (Exception ex)
             {

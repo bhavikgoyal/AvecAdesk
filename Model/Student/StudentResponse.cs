@@ -53,6 +53,8 @@ public class StudentPaymentScheduleDetailResponse
     public string? Assignment { get; set; }
     public string? CoeVoe { get; set; }
     public string? ServiceType { get; set; }
+    public int? AgentId { get; set; }
+    /// <summary>Agent name (Agent.AgentName for AgentId).</summary>
     public string? Agent { get; set; }
     public string? LeadNo { get; set; }
     public DateTime? CourseStartDate { get; set; }
