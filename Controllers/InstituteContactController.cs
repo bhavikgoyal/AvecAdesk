@@ -8,7 +8,7 @@ namespace AvecADeskApi.Controllers;
 
 [Route("api/institutes/{instituteId:int}/contacts")]
 [ApiController]
-[Authorize]
+[Authorize(Roles = "Accounting,Admin,Super Admin")]
 public class InstituteContactController : ControllerBase
 {
     private readonly IInstituteContactRepository _repository;

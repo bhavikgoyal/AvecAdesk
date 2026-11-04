@@ -63,14 +63,23 @@ public class StudentFeeTodoReminderService
                 listName,
                 previewOnly: false);
 
+            var invoiceFollowUps = await _repository.CreateInvoiceFollowUpTasksAsync(
+                RequireInt(section, "InvoiceFollowUpDays"),
+                RequireString(section, "InvoiceFollowUpAssignRoles"),
+                createdUserId,
+                boardId,
+                listName,
+                previewOnly: false);
+
             var feeDate = DateTime.Today.AddDays(daysBefore);
             return new AccountingPaymentReminderRunResponse
             {
-                CreatedCount = upcoming.Count + invoices.Count + overdue.Count,
+                CreatedCount = upcoming.Count + invoices.Count + overdue.Count + invoiceFollowUps.Count,
                 FromDate = feeDate,
                 ToDate = feeDate,
                 Message = $"Added {upcoming.Count} student fee reminder(s) for fees due on {feeDate:dd-MMM-yyyy}, "
-                    + $"{invoices.Count} commission invoice reminder(s) and {overdue.Count} overdue fee reminder(s).",
+                    + $"{invoices.Count} commission invoice reminder(s), {overdue.Count} overdue fee reminder(s) "
+                    + $"and {invoiceFollowUps.Count} invoice payment follow-up(s).",
                 Tasks = [.. upcoming, .. invoices, .. overdue]
             };
         }

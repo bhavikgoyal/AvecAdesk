@@ -93,7 +93,7 @@ public class StudentRepository : IStudentRepository
                 cmd.Parameters.AddWithValue("@OSHCFee", (object?)request.OSHCFee ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@CoeVoe", (object?)request.CoeVoe ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@ServiceType", (object?)request.ServiceType ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("@Agent", (object?)request.Agent ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@AgentId", (object?)request.AgentId ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@LeadNo", (object?)request.LeadNo ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@Campus", (object?)request.Campus ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@InitialPayment", (object?)request.InitialPayment ?? DBNull.Value);
@@ -132,7 +132,7 @@ public class StudentRepository : IStudentRepository
                 cmd.Parameters.AddWithValue("@OSHCFee", (object?)request.OSHCFee ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@CoeVoe", (object?)request.CoeVoe ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@ServiceType", (object?)request.ServiceType ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("@Agent", (object?)request.Agent ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@AgentId", (object?)request.AgentId ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@LeadNo", (object?)request.LeadNo ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@InitialPayment", (object?)request.InitialPayment ?? DBNull.Value);
                 cmd.Parameters.Add(rowsAffectedParam);
@@ -347,7 +347,10 @@ public class StudentRepository : IStudentRepository
             : null,
             CoeVoe = reader["CoeVoe"]?.ToString(),
             ServiceType = reader["ServiceType"]?.ToString(),
-            Agent = reader["Agent"]?.ToString(),
+            AgentId = ColumnExists(reader, "AgentId") && !reader.IsDBNull(reader.GetOrdinal("AgentId"))
+                ? reader.GetInt32(reader.GetOrdinal("AgentId"))
+                : null,
+            Agent = ColumnExists(reader, "Agent") ? reader["Agent"]?.ToString() : null,
             LeadNo = reader["LeadNo"]?.ToString(),
             CommissionId = reader.IsDBNull(reader.GetOrdinal("CommissionId"))
                 ? null

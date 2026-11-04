@@ -13,6 +13,20 @@ public class AccountingPaymentReminderTaskResult
     public string AssignedTo { get; set; } = string.Empty;
 }
 
+public class InvoiceFollowUpTaskResult
+{
+    public int InvoiceId { get; set; }
+    public int? CardID { get; set; }
+    public string InvoiceNumber { get; set; } = string.Empty;
+    public string CollegeName { get; set; } = string.Empty;
+    public DateTime InvoiceDate { get; set; }
+    public decimal TotalAmount { get; set; }
+    /// <summary>Checklist item added to the "Overdue invoice collection" card.</summary>
+    public string ItemName { get; set; } = string.Empty;
+    /// <summary>Names of the card members (every Admin / Accounting user).</summary>
+    public string AssignedTo { get; set; } = string.Empty;
+}
+
 public class DuesTodoItemResponse
 {
     public string ItemName { get; set; } = string.Empty;

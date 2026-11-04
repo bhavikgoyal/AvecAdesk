@@ -39,4 +39,12 @@ public interface IStudentFeeTodoReminderRepository
         int boardId,
         string listName,
         bool previewOnly);
+
+    Task<List<InvoiceFollowUpTaskResult>> CreateInvoiceFollowUpTasksAsync(
+        int daysAfterInvoice,
+        string assignRoleNames,
+        int createdUserId,
+        int boardId,
+        string listName,
+        bool previewOnly);
 }

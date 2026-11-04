@@ -1,6 +1,7 @@
 using System.Net;
 using AvecADeskApi.Interfaces;
 using AvecADeskApi.LOG;
+using AvecADeskApi.Model.MailHistory;
 using AvecADeskApi.Model.Vendor;
 
 namespace AvecADeskApi.Services;
@@ -59,7 +60,7 @@ public class VendorRegistrationEmailService
 
         try
         {
-            await _emailSender.SendAsync(vendor.Email, subject, body, cancellationToken);
+            await _emailSender.SendAsync(vendor.Email, subject, body, cancellationToken, mailType: MailTypes.VendorOnboarding);
         }
         catch (Exception ex)
         {

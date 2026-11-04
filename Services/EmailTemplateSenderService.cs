@@ -38,7 +38,7 @@ public class EmailTemplateSenderService
             var subject = ReplacePlaceholders(template.Subject, variables);
             var body = ReplacePlaceholders(template.BodyHtml, variables);
 
-            await _emailSender.SendAsync(toEmail, subject, body, cancellationToken);
+            await _emailSender.SendAsync(toEmail, subject, body, cancellationToken, mailType: category);
             return true;
         }
         catch (Exception ex)
