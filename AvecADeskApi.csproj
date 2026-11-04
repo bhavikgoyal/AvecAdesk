@@ -24,6 +24,7 @@
 
 	<ItemGroup>
 	  <Folder Include="wwwroot\uploads\courselogo\" />
+	  <Folder Include="wwwroot\uploads\Mailsend\" />
 	</ItemGroup>
 
 </Project>
