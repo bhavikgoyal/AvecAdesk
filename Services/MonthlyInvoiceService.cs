@@ -91,8 +91,7 @@ public class MonthlyInvoiceService
             var groupInstituteId = group.Key;
             var instituteName = group.First().InstituteName;
             var lines = group.ToList();
-            // Only the ids belonging to this institute group, so the SP inserts exactly
-            // what's shown in the PDF/email for this group.
+          
             var groupInstallmentIds = lines.Select(x => x.StudentPaymentInstallmentId).ToList();
             var groupCommissionDetailIds = lines.Where(x => x.CommissionDetailId.HasValue) .Select(x => x.CommissionDetailId!.Value).Distinct().ToList();
 
@@ -121,7 +120,9 @@ public class MonthlyInvoiceService
                 ? $"{targetMonth:D2}/{targetYear}"
                 : invoice.InvoiceMonthYear;
             var html = _documentService.BuildHtml(invoice, instituteName, lines, invoiceDate);
-            var pdfBytes = _documentService.BuildPdfBytes(invoice, instituteName, lines, invoiceDate);
+            var lineItems = await _invoiceRepository.GetInvoiceLineItemsAsync(invoice.InvoiceId);
+
+            var pdfBytes = _documentService.BuildPdfBytes(invoice, instituteName, lines, invoiceDate, null, lineItems?.Cast<object>());
             var fileName = $"{invoice.InvoiceNumber}_{periodLabel.Replace(' ', '-').Replace(',', '-')}.pdf";
 
             var relativeDir = Path.Combine("uploads", "invoices");
