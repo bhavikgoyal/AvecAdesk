@@ -27,6 +27,8 @@ public class MonthlyPaidInstallmentRow
     public decimal InvoiceAmount { get; set; }
     public decimal GSTPercentage { get; set; }
     public bool IsBonus { get; set; }
+    public string CommissionType { get; set; } = string.Empty;
+    public string CricosCode { get; set; } = string.Empty;
 }
 
 public class MonthlyInvoiceGenerateRequest

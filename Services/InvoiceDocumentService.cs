@@ -76,7 +76,6 @@ public class InvoiceDocumentService
         return sb.ToString();
     }
 
-   
     private const string PdfFont = "Times New Roman";  
     private const float BorderW = 0.85f;
     private const float SrColPt = 45f;       
@@ -124,11 +123,7 @@ public class InvoiceDocumentService
         return string.Empty;
     }
 
-    private static List<string> BuildAddressLines(
-        object invoice,
-        IReadOnlyList<MonthlyPaidInstallmentRow> lines,
-        string? explicitAddress,
-        IEnumerable<object>? addressSources = null)  
+    private static List<string> BuildAddressLines(object invoice,IReadOnlyList<MonthlyPaidInstallmentRow> lines,string? explicitAddress,IEnumerable<object>? addressSources = null)  
     {
         if (!string.IsNullOrWhiteSpace(explicitAddress))
         {
@@ -167,16 +162,31 @@ public class InvoiceDocumentService
 
         return result;
     }
-    public byte[] BuildPdfBytes(InvoiceResponse invoice,string instituteName,IReadOnlyList<MonthlyPaidInstallmentRow> lines,DateTime invoiceDate, string? instituteAddress = null, IEnumerable<object>? addressSources = null)   // optional: "Street,\nCampus, Zip"
+
+
+    public byte[] BuildPdfBytes(InvoiceResponse invoice, string instituteName, IReadOnlyList<MonthlyPaidInstallmentRow> lines, DateTime invoiceDate, string? instituteAddress = null, IEnumerable<object>? addressSources = null)
     {
-        var commissionTotal = lines.Sum(x => x.CommissionAmount + x.BonusAmount);
+        var commissionTotal = lines.Sum(x => x.CommissionAmount);
+        var bonusTotal = lines.Sum(x => x.BonusAmount);
         var gstTotal = lines.Sum(x => x.GSTAmount);
-        var grandTotal = lines.Sum(x => x.InvoiceAmount + x.BonusAmount);
+        var grandTotal = commissionTotal + bonusTotal + gstTotal;
         var inWords = AmountToWords(grandTotal);
         var dateText = invoiceDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
-
         var addressLines = BuildAddressLines(invoice, lines, instituteAddress, addressSources);
-        var logoBytes = GetBrandLogo() ?? _logoBytes;  
+        var logoBytes = GetBrandLogo() ?? _logoBytes;
+
+        static bool IsPercentageType(MonthlyPaidInstallmentRow x) => (x.CommissionType ?? string.Empty).Trim().StartsWith("Percent", StringComparison.OrdinalIgnoreCase);
+
+        var studentGroups = lines
+            .GroupBy(x => new { x.StudentId, x.CourseId })
+            .Select(g => new
+            {
+                Items = g.ToList(),
+                First = g.First(),
+                Commission = g.Sum(x => x.CommissionAmount)
+            })
+            .OrderByDescending(x => x.Commission)
+            .ToList();
 
         return Document.Create(container =>
         {
@@ -188,7 +198,6 @@ public class InvoiceDocumentService
 
                 page.Content().Column(col =>
                 {
-                
                     col.Item().Row(row =>
                     {
                         if (logoBytes is not null)
@@ -206,39 +215,36 @@ public class InvoiceDocumentService
                     });
 
                     col.Item().PaddingTop(18).PaddingBottom(8).AlignCenter().Text("TAX INVOICE").Bold().FontSize(14);
-                    col.Item().Border(BorderW).BorderColor(Colors.Black) .Background(BoxFill).Row(row =>
+
+                    col.Item().Border(BorderW).BorderColor(Colors.Black).Background(BoxFill).Row(row =>
                     {
-                          
-                            row.RelativeItem().Padding(7).Column(left =>
-                            {
-                                left.Item().Text("To,").FontSize(11);
-                                left.Item().Text(instituteName).Bold().FontSize(11);
-                                foreach (var l in addressLines)
-                                    left.Item().Text(l).FontSize(11);
-                            });
+                        row.RelativeItem().Padding(7).Column(left =>
+                        {
+                            left.Item().Text("To,").FontSize(11);
+                            left.Item().Text(instituteName).Bold().FontSize(11);
 
-                            row.ConstantItem(AmountColPt)
-                                .BorderLeft(BorderW).BorderColor(Colors.Black)
-                                .PaddingVertical(7).PaddingHorizontal(8)
-                                .AlignRight()
-                                .Row(r =>
-                                {
-                                    r.AutoItem().Column(c =>
-                                    {
-                                        c.Item().Text("Date:").Bold().FontSize(11);
-                                        c.Item().Text("Invoice No:").Bold().FontSize(11);
-                                    });
-
-                                    r.AutoItem().PaddingLeft(6).Column(c =>
-                                    {
-                                        c.Item().Text(dateText).FontSize(11);
-                                        c.Item().Text(invoice.InvoiceNumber ?? string.Empty).FontSize(11);
-                                    });
-                                });
+                            foreach (var l in addressLines)
+                                left.Item().Text(l).FontSize(11);
                         });
 
+                        row.ConstantItem(AmountColPt).BorderLeft(BorderW).BorderColor(Colors.Black).PaddingVertical(7).PaddingHorizontal(8).AlignRight().Row(r =>
+                        {
+                            r.AutoItem().Column(c =>
+                            {
+                                c.Item().Text("Date:").Bold().FontSize(11);
+                                c.Item().Text("Invoice No:").Bold().FontSize(11);
+                            });
+
+                            r.AutoItem().PaddingLeft(6).Column(c =>
+                            {
+                                c.Item().Text(dateText).FontSize(11);
+                                c.Item().Text(invoice.InvoiceNumber ?? string.Empty).FontSize(11);
+                            });
+                        });
+                    });
+
                     col.Item().Height(8);
-                  
+
                     col.Item().Table(table =>
                     {
                         table.ColumnsDefinition(columns =>
@@ -250,47 +256,48 @@ public class InvoiceDocumentService
 
                         table.Header(header =>
                         {
-                            header.Cell().Element(c => GridCell(c, top: true, bottom: true))
-                                .PaddingVertical(5).AlignCenter().Text("Sr. No").Bold().FontSize(11);
-                            header.Cell().Element(c => GridCell(c, top: true, bottom: true))
-                                .PaddingVertical(5).AlignCenter().Text("PARTICULARS").Bold().FontSize(11);
-                            header.Cell().Element(c => GridCell(c, top: true, bottom: true, right: true))
-                                .PaddingVertical(5).AlignCenter().Text("AMOUNT (AUD$)").Bold().FontSize(11);
+                            header.Cell().Element(c => GridCell(c, top: true, bottom: true)).PaddingVertical(5).AlignCenter().Text("Sr. No").Bold().FontSize(11);
+                            header.Cell().Element(c => GridCell(c, top: true, bottom: true)).PaddingVertical(5).AlignCenter().Text("PARTICULARS").Bold().FontSize(11);
+                            header.Cell().Element(c => GridCell(c, top: true, bottom: true, right: true)).PaddingVertical(5).AlignCenter().Text("AMOUNT (AUD$)").Bold().FontSize(11);
                         });
 
                         table.Cell().Element(c => GridCell(c)).Text(string.Empty);
-                        table.Cell().Element(c => GridCell(c))
-                            .PaddingHorizontal(8).PaddingTop(8).PaddingBottom(14)
-                            .Text("Education Commission");
+                        table.Cell().Element(c => GridCell(c)).PaddingHorizontal(8).PaddingTop(8).PaddingBottom(14).Text("Education Commission");
                         table.Cell().Element(c => GridCell(c, right: true)).Text(string.Empty);
 
                         var sr = 1;
-                        foreach (var line in lines)
+
+                        foreach (var group in studentGroups)
                         {
-                            var rowAmount = line.CommissionAmount + line.BonusAmount;
-                            var pct = line.FeesAmount > 0
-                                ? Math.Round(line.CommissionAmount / line.FeesAmount * 100m, 2)
-                                : 0m;
+                            var first = group.First;
+                            var rowAmount = group.Commission;
+                            var percentageItems = group.Items.Where(IsPercentageType).ToList();
+                            var percentageFees = percentageItems.Sum(x => x.FeesAmount);
+                            var percentageCommission = percentageItems.Sum(x => x.CommissionAmount);
+                            var pct = percentageFees > 0 ? Math.Round(percentageCommission / percentageFees * 100m, 2) : 0m;
+                            var showFees = percentageItems.Count > 0 && percentageFees > 0;
+                            var cricosCode = group.Items.Select(x => x.CricosCode?.Trim()).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x));
 
-                            table.Cell().Element(c => GridCell(c))
-                                .PaddingVertical(4).AlignCenter().Text($"{sr++}.");
+                            table.Cell().Element(c => GridCell(c)).PaddingVertical(4).AlignCenter().Text($"{sr++}.");
 
-                            table.Cell().Element(c => GridCell(c))
-                                .PaddingHorizontal(8).PaddingVertical(4)
-                                .Column(c =>
+                            table.Cell().Element(c => GridCell(c)).PaddingHorizontal(8).PaddingVertical(4).Column(c =>
+                            {
+                                c.Item().Text($"Student Name: {first.FullName}");
+                                c.Item().Text($"Student Id: {first.StudentCode}");
+
+                                c.Item().Text(text =>
                                 {
-                                    c.Item().Text($"Student Name: {line.FullName}");
-                                    c.Item().Text($"Student Id: {line.StudentCode}");
-                                    c.Item().Text($"Course Details: {line.CourseName}");
-                                    if (line.FeesAmount > 0)
-                                        c.Item().Text(
-                                            $"Fees: $ {FormatMoney(line.FeesAmount)} * " +
-                                            $"{pct.ToString("0.##", CultureInfo.InvariantCulture)}/100");
+                                    text.Span($"Course Details: {first.CourseName}");
+
+                                    if (!string.IsNullOrWhiteSpace(cricosCode))
+                                        text.Span($" ({cricosCode})");
                                 });
 
-                            table.Cell().Element(c => GridCell(c, right: true))
-                                .PaddingVertical(4).PaddingRight(8)
-                                .AlignRight().Text(FormatMoney(rowAmount));
+                                if (showFees)
+                                    c.Item().Text($"Fees: $ {FormatMoney(percentageFees)} * {pct.ToString("0.##", CultureInfo.InvariantCulture)}/100");
+                            });
+
+                            table.Cell().Element(c => GridCell(c, right: true)).PaddingVertical(4).PaddingRight(8).AlignRight().Text(FormatMoney(rowAmount));
                         }
                     });
 
@@ -305,26 +312,25 @@ public class InvoiceDocumentService
 
                         void TotalRow(string label, decimal value)
                         {
-                            table.Cell().ColumnSpan(2).Element(c => GridCell(c, top: true))
-                                .PaddingVertical(4).PaddingRight(8)
-                                .AlignRight().Text(label).Bold().FontSize(11);
-                            table.Cell().Element(c => GridCell(c, top: true, right: true))
-                                .PaddingVertical(4).PaddingRight(8)
-                                .AlignRight().Text($"AUD {FormatMoney(value)}").Bold().FontSize(11);
+                            table.Cell().ColumnSpan(2).Element(c => GridCell(c, top: true)).PaddingVertical(4).PaddingRight(8).AlignRight().Text(label).Bold().FontSize(11);
+                            table.Cell().Element(c => GridCell(c, top: true, right: true)).PaddingVertical(4).PaddingRight(8).AlignRight().Text($"AUD {FormatMoney(value)}").Bold().FontSize(11);
                         }
 
                         TotalRow("TOTAL", commissionTotal);
-                        TotalRow("GST", gstTotal);
+
+                        if (bonusTotal > 0)
+                            TotalRow("BONUS", bonusTotal);
+
+                        if (gstTotal > 0)
+                            TotalRow("GST", gstTotal);
+
                         TotalRow("GRAND TOTAL", grandTotal);
 
-                        table.Cell().ColumnSpan(3)
-                            .Element(c => GridCell(c, top: true, bottom: true, right: true))
-                            .PaddingVertical(4).PaddingHorizontal(8)
-                            .Text(t =>
-                            {
-                                t.Span("In Words: ").Bold();
-                                t.Span($"{inWords} Only");
-                            });
+                        table.Cell().ColumnSpan(3).Element(c => GridCell(c, top: true, bottom: true, right: true)).PaddingVertical(4).PaddingHorizontal(8).Text(t =>
+                        {
+                            t.Span("In Words: ").Bold();
+                            t.Span($"{inWords} Only");
+                        });
                     });
 
                     col.Item().PaddingTop(24).ShowEntire().Column(bank =>
