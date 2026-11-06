@@ -467,6 +467,8 @@ public class InvoiceRepository : IInvoiceRepository
                     ? r.GetString(r.GetOrdinal("ZipCode")) : null,
                     Campus = HasColumn(r, "Campus") && !r.IsDBNull(r.GetOrdinal("Campus"))
                     ? r.GetString(r.GetOrdinal("Campus")) : null,
+                    CommissionType = HasColumn(r, "CommissionType") && !r.IsDBNull(r.GetOrdinal("CommissionType"))
+                    ? r.GetString(r.GetOrdinal("CommissionType")) : null,
                 });
         }
         catch (Exception ex)
@@ -544,6 +546,8 @@ public class InvoiceRepository : IInvoiceRepository
         InvoiceAmount = r.GetDecimal(r.GetOrdinal("InvoiceAmount")),
         GSTPercentage = r.GetDecimal(r.GetOrdinal("GSTPercentage")),
         IsBonus = HasColumn(r, "IsBonus") && !r.IsDBNull(r.GetOrdinal("IsBonus")) && Convert.ToBoolean(r["IsBonus"]),
+        CommissionType = HasColumn(r, "CommissionType")? (r["CommissionType"]?.ToString() ?? string.Empty): string.Empty,
+        CricosCode = HasColumn(r, "CricosCode")? (r["CricosCode"]?.ToString() ?? string.Empty): string.Empty,
     };
     private static bool HasColumn(SqlDataReader reader, string column)
     {
